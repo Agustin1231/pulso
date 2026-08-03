@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     .join("\n");
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-5"),
+    model: anthropic("claude-sonnet-4-6"),
     system: SYSTEM,
     messages: [
       {

@@ -114,7 +114,7 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 | Push | `web-push` + VAPID | Ver limitaciones: la UI no está montada |
 | Deploy | Coolify (self-hosted) | Hetzner VPS, auto-deploy desde `main` |
 
-> `src/app/api/analisis-metricas/route.ts` usa `claude-sonnet-4-5` mientras las otras 7 rutas usan `claude-sonnet-4-6`. Ambos IDs son válidos; la inconsistencia es intencional de documentar, no un typo pendiente de arreglar.
+Las 7 rutas de IA de texto usan el mismo modelo (`claude-sonnet-4-6`).
 
 ---
 
