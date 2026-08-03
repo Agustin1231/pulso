@@ -1,11 +1,6 @@
-import { createClient } from "@supabase/supabase-js";
+import { pool } from "@/lib/db/pool";
 
 export const runtime = "nodejs";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export async function POST(req: Request) {
   const { uid, subscription } = await req.json();
@@ -14,13 +9,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "Datos incompletos" }, { status: 400 });
   }
 
-  const { error } = await supabase
-    .from("suscripciones_push")
-    .upsert(
-      { uid, endpoint: subscription.endpoint, keys: subscription.keys },
-      { onConflict: "uid,endpoint" }
+  try {
+    await pool.query(
+      `insert into suscripciones_push (uid, endpoint, keys)
+       values ($1, $2, $3::jsonb)
+       on conflict (uid, endpoint)
+         do update set keys = excluded.keys`,
+      [uid, subscription.endpoint, JSON.stringify(subscription.keys ?? {})]
     );
-
-  if (error) return Response.json({ error: error.message }, { status: 500 });
-  return Response.json({ ok: true });
+    return Response.json({ ok: true });
+  } catch (err) {
+    const mensaje = err instanceof Error ? err.message : String(err);
+    return Response.json({ error: mensaje }, { status: 500 });
+  }
 }

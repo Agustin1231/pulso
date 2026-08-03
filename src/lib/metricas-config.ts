@@ -1,4 +1,4 @@
-import type { MetricaType } from "./supabase/types";
+import type { MetricaType } from "./db/types";
 
 export type Estado = "normal" | "atencion" | "riesgo" | "sin-datos";
 

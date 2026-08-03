@@ -11,12 +11,13 @@ import { Button } from "@/components/ui/button";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
 import {
   guardarReceta, getRecetasGuardadas, eliminarReceta, calificarReceta,
-  uploadRecetaImagen, type RecetaRow,
-} from "@/lib/supabase/recetas";
+  uploadRecetaImagen,
+} from "@/lib/db/recetas";
+import type { RecetaRow } from "@/lib/db/types";
 import {
   guardarListaMercado, getListasMercado, eliminarListaMercado,
-  type ListaMercadoRow,
-} from "@/lib/supabase/mercado";
+} from "@/lib/db/mercado";
+import type { ListaMercadoRow } from "@/lib/db/types";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 

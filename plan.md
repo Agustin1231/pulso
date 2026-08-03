@@ -96,7 +96,7 @@ Chat donde el usuario escribe sus ingredientes. La respuesta llega en tiempo rea
 1. Usuario escribe ingredientes
 2. Claude responde en streaming con la receta cardioprotectora
 3. Al finalizar el texto, Gemini genera la imagen del plato (~3s)
-4. La receta se puede guardar con su imagen en Supabase
+4. La receta se puede guardar con su imagen en el volumen de medios (servido por /api/img)
 
 **Tab Mercado:**
 - Lista de compras generada por IA con ingredientes de la receta
@@ -161,8 +161,8 @@ Dos secciones integradas en una sola pantalla.
 | UI | Tailwind CSS 4 + shadcn/ui | Dark mode nativo |
 | IA Texto | Claude API (`claude-sonnet-4-6`) | Via Vercel AI SDK |
 | IA Streaming | Vercel AI SDK | streaming + typewriter word-by-word |
-| IA Imágenes | Imagen 3 (`imagen-3.0-generate-002`) | Google AI SDK — imágenes de recetas |
-| Base de datos | Supabase (PostgreSQL) | UUID anónimo como PK |
+| IA Imágenes | `gemini-3.1-flash-image-preview` | Google AI SDK `@google/genai` — imágenes de recetas |
+| Base de datos | PostgreSQL 17 (`pg`, sin ORM) | `uid` anónimo como columna de propietario |
 | Gráficas | Recharts | Tendencias de métricas |
 | Deploy | Coolify (self-hosted) | Hetzner VPS |
 | PWA | Web App Manifest + Service Worker manual | Instalable en iOS/Android |
@@ -172,16 +172,14 @@ Dos secciones integradas en una sola pantalla.
 ### Variables de entorno requeridas
 
 ```
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+# PostgreSQL
+DATABASE_URL=postgres://usuario:password@host:5432/pulso
+MEDIA_DIR=/data
 
 # IA
 ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 
-# Supabase Access Token (solo para script de setup de BD)
-SUPABASE_ACCESS_TOKEN=
 ```
 
 ---
@@ -191,12 +189,12 @@ SUPABASE_ACCESS_TOKEN=
 ### Estrategia anónima
 1. Primera visita → se genera UUID v4 aleatorio en el browser
 2. Se guarda en `localStorage` del dispositivo
-3. Todos los datos en Supabase se vinculan solo a ese UUID
+3. Todos los datos en PostgreSQL se vinculan solo a ese UUID
 4. Sin email, sin nombre, sin datos personales
 5. Si el usuario borra la caché → pierde el historial (aceptable en MVP)
 6. Futuro: opción de "guardar progreso" vinculando un email al UUID
 
-### Tablas en Supabase
+### Tablas en PostgreSQL
 
 | Tabla | Descripción |
 |---|---|
@@ -238,8 +236,8 @@ Usuario (iOS/Android/Web)
    Next.js App (Docker container en Hetzner VPS)
         ↓
    ┌─────────────┬──────────────┬─────────────┐
-   Supabase    Claude API    Gemini API
-   (PostgreSQL)  (Anthropic)   (Google)
+   PostgreSQL  Claude API    Gemini API
+   (Coolify)    (Anthropic)   (Google)
 ```
 
 **CI/CD:** Push a `main` en GitHub → Coolify auto-deploy
@@ -262,8 +260,8 @@ Usuario (iOS/Android/Web)
 - [x] Next.js 15 + Tailwind 4 + shadcn/ui
 - [x] Paleta dark mode Pulso
 - [x] Layout mobile-first: sidebar (desktop) + bottom nav (móvil)
-- [x] Sistema UUID anónimo (localStorage + Supabase)
-- [x] Tablas en Supabase
+- [x] Sistema UUID anónimo (localStorage + PostgreSQL)
+- [x] Tablas en PostgreSQL (`db/schema.sql`)
 - [x] PWA manifest + Service Worker
 - [x] Onboarding con disclaimer médico obligatorio
 - [x] Deploy en Coolify con CI/CD automático
@@ -279,8 +277,8 @@ Usuario (iOS/Android/Web)
 
 ### Semana 5–6 — IA Conversacional ✅
 - [x] Chat de recetas con streaming en tiempo real
-- [x] Generación de imagen del plato al terminar (Imagen 3)
-- [x] Guardar recetas favoritas con imagen (Supabase Storage)
+- [x] Generación de imagen del plato al terminar (Gemini)
+- [x] Guardar recetas favoritas con imagen (volumen persistente)
 - [x] Vista de receta completa full-screen (createPortal)
 - [x] Calificación de estrellas en recetas guardadas
 - [x] Tab Mercado: lista de compras generada por IA

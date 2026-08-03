@@ -4,9 +4,10 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
-import { getUltimasMetricas, type MetricaRow } from "@/lib/supabase/metricas";
+import { getUltimasMetricas } from "@/lib/db/metricas";
+import type { MetricaRow } from "@/lib/db/types";
 import { getEstado, METRICA_MAP, type Estado } from "@/lib/metricas-config";
-import type { MetricaType } from "@/lib/supabase/types";
+import type { MetricaType } from "@/lib/db/types";
 
 // ─── cálculo del score ────────────────────────────────────────────────────────
 

@@ -11,8 +11,8 @@ import {
   ESTADO_LABEL,
   type MetricaConfig,
 } from "@/lib/metricas-config";
-import { guardarMetrica, type MetricaRow } from "@/lib/supabase/metricas";
-import type { MetricaType } from "@/lib/supabase/types";
+import { guardarMetrica } from "@/lib/db/metricas";
+import type { MetricaRow, MetricaType } from "@/lib/db/types";
 
 interface Props {
   metricas:      MetricaRow[];

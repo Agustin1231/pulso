@@ -15,6 +15,9 @@ build/
 .env.test.local
 .env.production.local
 
+# Archivos subidos en desarrollo (MEDIA_DIR)
+.data/
+
 # Misc
 .DS_Store
 *.pem

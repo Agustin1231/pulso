@@ -1,5 +1,5 @@
 import { GoogleGenAI, Modality } from "@google/genai";
-import { uploadRecetaImagen } from "@/lib/supabase/recetas";
+import { uploadRecetaImagen } from "@/lib/db/recetas";
 
 export const runtime = "nodejs";
 
@@ -45,15 +45,15 @@ export async function POST(req: Request) {
 
     const base64DataUrl = `data:${mimeType};base64,${imageBytes}`;
 
-    // Subir a Supabase Storage si hay uid
+    // Guardar en el volumen de medios si hay uid
     if (uid) {
-      console.log("[imagen] Subiendo a Supabase Storage, uid:", uid);
+      console.log("[imagen] Guardando imagen en disco, uid:", uid);
       const publicUrl = await uploadRecetaImagen(uid, base64DataUrl);
       console.log("[imagen] URL pública:", publicUrl);
       if (publicUrl) {
         return Response.json({ imagen: publicUrl });
       }
-      console.warn("[imagen] Upload a Supabase falló, usando fallback base64");
+      console.warn("[imagen] Guardado en disco falló, usando fallback base64");
     }
 
     // Fallback: devolver base64 si no hay uid o falló el upload

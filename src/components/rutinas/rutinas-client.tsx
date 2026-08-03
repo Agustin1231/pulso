@@ -16,11 +16,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
-import { getUltimasMetricas } from "@/lib/supabase/metricas";
+import { getUltimasMetricas } from "@/lib/db/metricas";
 import {
   guardarRutina, getRutinasGuardadas, eliminarRutina,
-  type RutinaRow, type Ejercicio,
-} from "@/lib/supabase/rutinas";
+} from "@/lib/db/rutinas";
+import type { RutinaRow, Ejercicio } from "@/lib/db/types";
 
 // ─── parser de ejercicios ─────────────────────────────────────────────────────
 

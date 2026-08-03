@@ -2,13 +2,14 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
-import { getUltimasMetricas, getHistorialMetrica, type MetricaRow } from "@/lib/supabase/metricas";
+import { getUltimasMetricas, getHistorialMetrica } from "@/lib/db/metricas";
+import type { MetricaRow } from "@/lib/db/types";
 import { METRICA_MAP } from "@/lib/metricas-config";
 import { RegistrarMetrica } from "./registrar-metrica";
 import { TarjetasResumen }  from "./tarjetas-resumen";
 import { GraficaMetrica }   from "./grafica-metrica";
 import { AnalisisIA }       from "./analisis-ia";
-import type { MetricaType } from "@/lib/supabase/types";
+import type { MetricaType } from "@/lib/db/types";
 import { Loader2 } from "lucide-react";
 
 export function DashboardClient() {

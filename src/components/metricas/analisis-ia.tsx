@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getEstado, ESTADO_LABEL, METRICA_MAP } from "@/lib/metricas-config";
-import type { MetricaRow } from "@/lib/supabase/metricas";
+import type { MetricaRow } from "@/lib/db/types";
 
 // ─── helpers markdown (mismo estilo que recetas) ─────────────────────────────
 

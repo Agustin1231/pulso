@@ -4,12 +4,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, X, Check, Loader2, ChevronRight, Pencil, Clock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
-import { getRutinasGuardadas, type RutinaRow, type Ejercicio } from "@/lib/supabase/rutinas";
+import { getRutinasGuardadas } from "@/lib/db/rutinas";
+import type { RutinaRow, Ejercicio } from "@/lib/db/types";
 import {
   getHabitosDefinicion, crearHabitoDefinicion, editarHabitoDefinicion, eliminarHabitoDefinicion,
   getHabitosFecha, getHabitosSemana, toggleHabitoFijo, toggleHabitoRegistro,
-  type HabitoDefinicionRow, type HabitoFormData, type Frecuencia,
-} from "@/lib/supabase/habitos";
+} from "@/lib/db/habitos";
+import type { HabitoDefinicionRow, HabitoFormData, Frecuencia } from "@/lib/db/types";
 
 // ─── constantes ───────────────────────────────────────────────────────────────
 

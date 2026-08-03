@@ -5,8 +5,8 @@ import { Plus, X, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { METRICAS } from "@/lib/metricas-config";
-import { guardarMetrica } from "@/lib/supabase/metricas";
-import type { MetricaType } from "@/lib/supabase/types";
+import { guardarMetrica } from "@/lib/db/metricas";
+import type { MetricaType } from "@/lib/db/types";
 
 interface Props {
   uid:       string;

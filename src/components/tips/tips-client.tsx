@@ -4,9 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
-import { getUltimasMetricas } from "@/lib/supabase/metricas";
+import { getUltimasMetricas } from "@/lib/db/metricas";
 import { METRICAS, getEstado } from "@/lib/metricas-config";
-import type { MetricaRow } from "@/lib/supabase/metricas";
+import type { MetricaRow } from "@/lib/db/types";
 
 // ─── artículos curados ─────────────────────────────────────────────────────────
 

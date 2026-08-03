@@ -12,8 +12,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { METRICA_MAP } from "@/lib/metricas-config";
-import type { MetricaRow } from "@/lib/supabase/metricas";
-import type { MetricaType } from "@/lib/supabase/types";
+import type { MetricaRow, MetricaType } from "@/lib/db/types";
 
 const COLOR_MAP: Record<string, string> = {
   coral:  "#ff6b6b",
