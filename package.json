@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "setup-db": "node scripts/setup-db.mjs"
+    "setup-db": "node scripts/setup-db.mjs",
+    "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",

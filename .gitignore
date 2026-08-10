@@ -18,6 +18,9 @@ build/
 # Archivos subidos en desarrollo (MEDIA_DIR)
 .data/
 
+# Salida temporal de npm run test:fallback
+.tmp-test/
+
 # Misc
 .DS_Store
 *.pem

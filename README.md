@@ -106,7 +106,7 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 |------|-----------|-------|
 | Frontend | Next.js 15 (App Router) | SSR + API routes + server actions |
 | UI | Tailwind CSS 4 + shadcn/ui | Tema oscuro único (no hay toggle claro/oscuro) |
-| IA Texto | Claude Sonnet 4.6 (`claude-sonnet-4-6`) | Vía Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), streaming |
+| IA Texto | Claude Sonnet 4.6 (`claude-sonnet-4-6`) | Vía Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), streaming. Dos modos de auth — ver abajo |
 | IA Imágenes | `gemini-3.1-flash-image-preview` | Google AI SDK `@google/genai` |
 | Base de datos | PostgreSQL 17 | `pg` + SQL parametrizado, sin ORM |
 | Storage | Volumen persistente en disco | Servido por `/api/img/[...path]` |
@@ -114,7 +114,30 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 | Push | `web-push` + VAPID | Ver limitaciones: la UI no está montada |
 | Deploy | Coolify (self-hosted) | Hetzner VPS, auto-deploy desde `main` |
 
-Las 7 rutas de IA de texto usan el mismo modelo (`claude-sonnet-4-6`).
+Las 7 rutas de IA de texto usan el mismo modelo (`claude-sonnet-4-6`), y todas lo obtienen del mismo lugar: `modeloClaude()` en `src/lib/ai/provider.ts`. Ninguna ruta instancia el proveedor por su cuenta.
+
+---
+
+## Auth de Claude: `apikey` vs `oauth`
+
+`CLAUDE_AUTH_MODE` decide contra qué se resuelven las peticiones de IA.
+
+| Modo | Cómo resuelve | Contra qué se cobra |
+|---|---|---|
+| `apikey` (default) | `ANTHROPIC_API_KEY` directo a `api.anthropic.com` | La API, por token |
+| `oauth` | Un proxy externo que habla el protocolo de la Messages API y resuelve con el CLI de Claude Code | La suscripción de Claude |
+
+En modo `oauth` hacen falta `CLAUDE_PROXY_URL` y `CLAUDE_PROXY_TOKEN`; si falta cualquiera de las dos, `provider.ts` tira error en vez de arrancar con una credencial vacía.
+
+**El proxy no vive en este repo.** Es un servicio aparte, y quien monte el proyecto desde cero no lo tiene: por eso el default es `apikey`.
+
+**Fallback.** En modo `oauth`, si el proxy da un error de red o un 5xx, la misma petición se reintenta contra `api.anthropic.com` con `ANTHROPIC_API_KEY`, y queda un `console.warn`. Por eso conviene dejar la API key puesta incluso en modo `oauth`. Dos límites del fallback, a propósito:
+
+- **No cubre 4xx.** Un 401/403 (token mal configurado) o un 429 (suscripción agotada) se propagan tal cual: taparlos los volvería invisibles y movería el gasto a la API sin que nadie se enterara.
+- **Solo actúa antes de las cabeceras de respuesta.** Si el proxy responde 200 y se corta a mitad del stream, ya no hay vuelta atrás.
+- **No hay timeout de fetch.** Estas peticiones son streaming y pueden durar minutos legítimamente; un timeout cortaría respuestas válidas. Un proxy colgado es problema de su propia supervisión.
+
+> Una suscripción de Claude cubre el uso interactivo de quien la paga. Servir con ella el backend de una app a terceros es el caso de uso de la API, no de la suscripción. El modo `oauth` está documentado porque existe en el código, no porque sea el camino recomendado para producción.
 
 ---
 
@@ -135,8 +158,15 @@ MEDIA_DIR=/data           # en dev cae a ./.data
 TZ=America/Argentina/Buenos_Aires
 
 # IA
+CLAUDE_AUTH_MODE=apikey   # apikey (default) | oauth
 ANTHROPIC_API_KEY=sk-ant-...
 GEMINI_API_KEY=AIza...
+
+# Solo en modo oauth. El proxy escucha en la red interna del host:
+# lo alcanza cualquier contenedor que esté en la misma red Docker,
+# así que CLAUDE_PROXY_TOKEN es el único límite real.
+CLAUDE_PROXY_URL=
+CLAUDE_PROXY_TOKEN=
 
 # Web Push — generá el par con: npx web-push generate-vapid-keys
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=
@@ -144,7 +174,14 @@ VAPID_PRIVATE_KEY=
 VAPID_EMAIL=mailto:tu@email.com
 ```
 
-Las **9** variables las lee el código. `NEXT_PUBLIC_VAPID_PUBLIC_KEY` tiene que estar disponible en **build time**: Next.js inyecta las `NEXT_PUBLIC_*` en el bundle del browser al compilar, no al arrancar.
+El código lee **12** variables (más `TZ`, que la usa Node y no el código):
+
+- **Requeridas:** `DATABASE_URL`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
+- **Con default, se pueden omitir:** `MEDIA_DIR`, `PGSSL`, `PGPOOL_MAX`, `CLAUDE_AUTH_MODE`
+- **Solo si `CLAUDE_AUTH_MODE=oauth`:** `CLAUDE_PROXY_URL`, `CLAUDE_PROXY_TOKEN`
+- **Solo para push:** las tres de VAPID — y hoy el push no está montado, ver [Limitaciones conocidas](#limitaciones-conocidas)
+
+`NEXT_PUBLIC_VAPID_PUBLIC_KEY` tiene que estar disponible en **build time**: Next.js inyecta las `NEXT_PUBLIC_*` en el bundle del browser al compilar, no al arrancar.
 
 ---
 
