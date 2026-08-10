@@ -1,5 +1,5 @@
 import { streamText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
+import { modeloClaude } from "@/lib/ai/provider";
 
 export const runtime = "nodejs";
 
@@ -80,7 +80,7 @@ ${contextoParts.join("\n")}
   `.trim();
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-6"),
+    model: modeloClaude(),
     system: SYSTEM,
     messages: [
       {
