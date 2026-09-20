@@ -1,19 +1,30 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { getInforme } from "@/lib/db/informe";
+import { resumirInforme } from "@/lib/ml/resumen";
 
 export const runtime = "nodejs";
 
-const SYSTEM = `Eres el analista de salud cardiovascular de Pulso. Interpretas el score de riesgo del usuario y das recomendaciones prácticas y motivadoras.
+// El informe lo calcula el motor (`lib/ml`) en el servidor a partir del uid;
+// el cliente no manda números. El modelo de lenguaje redacta sobre ellos.
+
+const SYSTEM = `Eres el analista de salud cardiovascular de Pulso. Recibes un INFORME calculado por el motor estadístico de la app (índice de riesgo por factor, pronósticos con intervalos, alertas de cambio de régimen, limitaciones) y lo interpretas para el usuario con recomendaciones prácticas y motivadoras.
+
+REGLAS SOBRE LOS NÚMEROS — son las más importantes:
+- Todo número que menciones tiene que salir del informe, tal cual está. No inventes cifras, porcentajes, plazos ni proyecciones.
+- La proyección del score YA está calculada. Si la mencionas, usa exactamente el valor y el intervalo del informe y aclara que supone que el patrón reciente se mantiene.
+- Si el informe dice "sin datos", "confianza baja", "insuficiente" o "no disponible", dilo con esas palabras; no lo rellenes.
+- El índice NO es una escala clínica ni una probabilidad de infarto: no lo presentes como tal.
 
 NUNCA diagnostiques ni recetes. Siempre sugiere consultar al médico ante síntomas.
 
 FORMATO EXACTO — sigue esta estructura sin variaciones:
 
 ### Lo que está bien
-> [1-2 oraciones reconociendo lo positivo. Si todo está en riesgo, valora que el usuario esté monitoreando su salud.]
+> [1-2 oraciones reconociendo lo positivo, citando los factores en estado normal. Si no hay ninguno, valora que el usuario esté monitoreando su salud.]
 
 ### Lo que puede mejorar
-- **[Factor]:** [Qué está pasando y cómo impacta al corazón.] — [Acción concreta y específica]
+- **[Factor]:** [Qué dice el informe: valor, estado y cuántos puntos resta.] — [Acción concreta y específica]
 - **[Factor]:** [Explicación breve.] — [Acción concreta]
 
 ### Tu plan esta semana
@@ -22,41 +33,38 @@ FORMATO EXACTO — sigue esta estructura sin variaciones:
 3. [Objetivo de la semana]
 
 ### Si mantienes el ritmo
-> [Proyección motivadora: si mejoras X factor, tu score podría subir Y puntos en Z semanas. Sé específico con los números.]
+> [Interpreta la PROYECCIÓN del informe con su intervalo. Si dice "no disponible", explica qué falta registrar para tenerla.]
 
 REGLAS:
 - Tono empático y motivador, nunca alarmista
 - Acciones muy concretas (ej: "dormir 30 min más" no "mejorar el sueño")
-- Si hay métricas con estado Normal, menciónalo positivamente
+- Si el informe trae ALERTAS, menciónalas en "Lo que puede mejorar" con su magnitud
+- Si el informe trae una tendencia significativa, úsala
 - Responde en español`;
 
 export async function POST(req: Request) {
-  const { score, factores } = await req.json();
+  const body = await req.json().catch(() => ({}));
+  const uid = typeof body?.uid === "string" ? body.uid : "";
+  if (!uid) return new Response("Falta uid", { status: 400 });
 
-  if (!factores?.length) {
+  const informe = await getInforme(uid);
+  if (Object.keys(informe.metricas).length === 0) {
     return new Response("Sin datos", { status: 400 });
   }
-
-  const resumenFactores = factores
-    .map((f: { label: string; valor: number; unidad: string; estado: string; puntos: number; maxPuntos: number }) =>
-      f.estado === "sin-datos"
-        ? `- ${f.label}: sin datos`
-        : `- ${f.label}: ${f.estado === "normal" ? "Normal" : f.estado === "atencion" ? "Atención" : "Riesgo"} (${f.valor} ${f.unidad})`
-    )
-    .join("\n");
-
-  const prompt = `Score cardiovascular del usuario: ${score}/100
-
-Métricas:
-${resumenFactores}
-
-Genera un análisis personalizado siguiendo el formato exacto.`;
 
   const result = streamText({
     model: modeloClaude(),
     system: SYSTEM,
-    messages: [{ role: "user", content: prompt }],
-    maxTokens: 550,
+    messages: [
+      {
+        role: "user",
+        content: `${resumirInforme(informe)}\n\nGenera el análisis personalizado siguiendo el formato exacto.`,
+      },
+    ],
+    // El SDK convierte los errores del modelo en una parte `3:` del stream sin
+    // loguearlos; sin esto un fallo de API/proxy es invisible en el servidor.
+    onError: ({ error }) => console.error("[ai] score-analisis:", error instanceof Error ? error.message : error),
+    maxTokens: 650,
   });
 
   return result.toDataStreamResponse();

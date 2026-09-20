@@ -3,8 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getEstado, ESTADO_LABEL, METRICA_MAP } from "@/lib/metricas-config";
-import type { MetricaRow } from "@/lib/db/types";
 
 // ─── helpers markdown (mismo estilo que recetas) ─────────────────────────────
 
@@ -75,10 +73,12 @@ function formatearContenido(texto: string): React.ReactNode {
 // ─── componente ───────────────────────────────────────────────────────────────
 
 interface Props {
-  metricas: MetricaRow[];
+  uid:      string;
+  /** Si no hay ninguna métrica registrada, el botón no se muestra. */
+  hayDatos: boolean;
 }
 
-export function AnalisisIA({ metricas }: Props) {
+export function AnalisisIA({ uid, hayDatos }: Props) {
   const [textoCompleto, setTextoCompleto] = useState("");
   const [textoMostrado, setTextoMostrado] = useState("");
   const textoRef = useRef("");
@@ -99,25 +99,20 @@ export function AnalisisIA({ metricas }: Props) {
   const hayContenido = textoMostrado.length > 0;
 
   async function analizar() {
-    if (metricas.length === 0) return;
+    if (!hayDatos) return;
     setLoading(true);
     setTextoCompleto("");
     setTextoMostrado("");
     textoRef.current = "";
     setListo(false);
 
-    const payload = metricas.map((m) => ({
-      label:  METRICA_MAP[m.tipo]?.label ?? m.tipo,
-      valor:  m.valor,
-      unidad: m.unidad,
-      estado: ESTADO_LABEL[getEstado(m.tipo, m.valor)],
-    }));
-
     try {
+      // El servidor calcula el informe del motor (tendencias, pronósticos,
+      // alertas) a partir del uid; la IA redacta sobre esos números.
       const res = await fetch("/api/analisis-metricas", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ metricas: payload }),
+        body:    JSON.stringify({ uid }),
       });
 
       if (!res.ok || !res.body) throw new Error("Error al conectar con la IA");
@@ -145,6 +140,11 @@ export function AnalisisIA({ metricas }: Props) {
                 setTextoCompleto(acumulado);
               }
             } catch { /* ignorar líneas malformadas */ }
+          } else if (line.startsWith("3:")) {
+            // Parte de error del stream: el modelo no respondió.
+            acumulado += "\nNo se pudo generar el análisis: el servicio de IA no respondió. Las tendencias y pronósticos de arriba los calcula el motor y siguen siendo válidos.";
+            textoRef.current = acumulado;
+            setTextoCompleto(acumulado);
           }
         }
       }
@@ -160,7 +160,7 @@ export function AnalisisIA({ metricas }: Props) {
     }
   }
 
-  if (metricas.length === 0) {
+  if (!hayDatos) {
     return (
       <div className="rounded-xl border border-border bg-surface p-4 text-center text-sm text-muted-foreground">
         Registra al menos una métrica para obtener tu análisis personalizado.
@@ -192,7 +192,7 @@ export function AnalisisIA({ metricas }: Props) {
         {!hayContenido && !loading && (
           <div className="text-center space-y-3">
             <p className="text-xs text-muted-foreground">
-              La IA analiza tus métricas y te da recomendaciones personalizadas.
+              La IA interpreta tus tendencias, pronósticos y alertas y te da recomendaciones personalizadas.
             </p>
             <Button variant="ghost" className="gap-2 text-purple border border-purple/30" onClick={analizar}>
               <Sparkles className="h-4 w-4" />

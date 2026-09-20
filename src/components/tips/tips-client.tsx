@@ -5,7 +5,6 @@ import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp, Loader2, BookOpen }
 import { cn } from "@/lib/utils";
 import { useAnonymousId } from "@/hooks/use-anonymous-id";
 import { getUltimasMetricas } from "@/lib/db/metricas";
-import { METRICAS, getEstado } from "@/lib/metricas-config";
 import type { MetricaRow } from "@/lib/db/types";
 
 // ─── artículos curados ─────────────────────────────────────────────────────────
@@ -422,21 +421,16 @@ export function TipsClient() {
   }, [tipsTexto, textoMostrado]);
 
   const generarTips = useCallback(async () => {
+    if (!uid) return;
     setEstadoIA("cargando");
     setTipsTexto(""); setTextoMostrado(""); tipsRef.current = "";
 
-    // Construir contexto de métricas
-    const metricasCtx = METRICAS.map((cfg) => {
-      const row = metricas.find((m) => m.tipo === cfg.tipo);
-      const valor = row?.valor ?? null;
-      const estado = valor !== null ? getEstado(cfg.tipo, valor) : "sin-datos";
-      return { label: cfg.label, valor, unidad: cfg.unidad, estado };
-    });
-
+    // El servidor calcula el informe del motor (factores, alertas, tendencias)
+    // a partir del uid; la IA redacta los tips sobre esos números.
     const res = await fetch("/api/tips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ metricas: metricasCtx }),
+      body: JSON.stringify({ uid }),
     });
 
     if (!res.ok || !res.body) { setEstadoIA("idle"); return; }
@@ -457,11 +451,14 @@ export function TipsClient() {
           const chunk = line.slice(3, -1).replace(/\\n/g, "\n").replace(/\\"/g, '"');
           tipsRef.current += chunk;
           setTipsTexto(tipsRef.current);
+        } else if (line.startsWith("3:")) {
+          tipsRef.current += "\nNo se pudieron generar los tips: el servicio de IA no respondió. Probá de nuevo en un momento.";
+          setTipsTexto(tipsRef.current);
         }
       }
     }
     setEstadoIA("listo");
-  }, [metricas]);
+  }, [uid]);
 
   const articulosFiltrados = categoriaFiltro === "Todos"
     ? ARTICULOS
@@ -499,7 +496,7 @@ export function TipsClient() {
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {tieneDatos
-                  ? "Basados en tus métricas de hoy"
+                  ? "Basados en tus tendencias, alertas y factores de riesgo"
                   : "Registra métricas para tips más precisos"}
               </p>
             </div>

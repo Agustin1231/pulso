@@ -20,9 +20,11 @@ interface Props {
   onSelect:      (tipo: MetricaType) => void;
   seleccion:     MetricaType | null;
   onActualizar:  () => void;
+  /** Métricas con una alerta de cambio de régimen (atención o alta) del motor. */
+  alertas?:      Set<MetricaType>;
 }
 
-export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualizar }: Props) {
+export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualizar, alertas }: Props) {
   const mapaUltimas = Object.fromEntries(metricas.map((m) => [m.tipo, m.valor]));
 
   return (
@@ -34,6 +36,7 @@ export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualiz
           valor={mapaUltimas[cfg.tipo]}
           uid={uid}
           activa={seleccion === cfg.tipo}
+          alerta={alertas?.has(cfg.tipo) ?? false}
           onSelect={onSelect}
           onActualizar={onActualizar}
         />
@@ -45,12 +48,13 @@ export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualiz
 // ─── tarjeta individual con edición inline ────────────────────────────────────
 
 function MetricaCard({
-  cfg, valor, uid, activa, onSelect, onActualizar,
+  cfg, valor, uid, activa, alerta, onSelect, onActualizar,
 }: {
   cfg:          MetricaConfig;
   valor:        number | undefined;
   uid:          string;
   activa:       boolean;
+  alerta:       boolean;
   onSelect:     (tipo: MetricaType) => void;
   onActualizar: () => void;
 }) {
@@ -192,7 +196,15 @@ function MetricaCard({
       )}
     >
       <div className="flex items-start justify-between mb-2">
-        <span className="text-xl">{cfg.emoji}</span>
+        <span className="text-xl relative">
+          {cfg.emoji}
+          {alerta && (
+            <span
+              title="Cambio sostenido detectado — ver detalle abajo"
+              className="absolute -top-1 -right-2 h-2.5 w-2.5 rounded-full bg-coral ring-2 ring-surface animate-pulse"
+            />
+          )}
+        </span>
         <div className="flex items-center gap-1">
           <span className={cn("text-[10px] font-semibold px-2 py-0.5 rounded-full border", ESTADO_BG[estado])}>
             {ESTADO_LABEL[estado]}
