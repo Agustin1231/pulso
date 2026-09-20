@@ -136,3 +136,19 @@ create table if not exists suscripciones_push (
 );
 
 create index if not exists suscripciones_push_uid_idx on suscripciones_push (uid);
+
+-- ─── Perfil anónimo (motor de riesgo) ────────────────────────────────────────
+-- Una fila por usuario: por eso acá `uid` SÍ es la primary key (en el resto de
+-- las tablas es solo la columna de propietario). Lo lee `lib/ml` para calcular
+-- IMC (peso / altura²), el factor tabaquismo y el contexto edad/sexo del índice
+-- de riesgo. Todo es opcional: el índice excluye lo que falte y lo reporta.
+-- `fumador` admite null = "no respondió", distinto de false.
+
+create table if not exists perfil (
+  uid            text primary key,
+  edad           int check (edad between 18 and 120),
+  sexo           text check (sexo in ('m', 'f', 'otro')),
+  altura_cm      int check (altura_cm between 100 and 250),
+  fumador        boolean,
+  actualizado_at timestamptz not null default now()
+);

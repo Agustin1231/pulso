@@ -129,3 +129,23 @@ export interface HabitoRegistroRow {
   tipo:   string;
   ref_id: string;
 }
+
+// ─── Perfil ───────────────────────────────────────────────────────────────────
+
+export type Sexo = "m" | "f" | "otro";
+
+export interface PerfilRow {
+  uid:            string;
+  edad:           number | null;
+  sexo:           Sexo | null;
+  altura_cm:      number | null;
+  fumador:        boolean | null;
+  actualizado_at: string;
+}
+
+export interface PerfilFormData {
+  edad:      number | null;
+  sexo:      Sexo | null;
+  altura_cm: number | null;
+  fumador:   boolean | null;
+}

@@ -92,3 +92,28 @@ export async function getHistorialMetrica(
     return [];
   }
 }
+
+/**
+ * Historial de TODAS las métricas en una sola query (últimos N días), para el
+ * motor de predicción (`lib/ml`). Ordenado por tipo y fecha ascendente.
+ */
+export async function getHistorialMetricas(
+  uid:  string,
+  dias: number = 90
+): Promise<MetricaRow[]> {
+  const desde = new Date();
+  desde.setDate(desde.getDate() - dias);
+
+  try {
+    const { rows } = await pool.query<MetricaRow>(
+      `select * from metricas
+        where uid = $1 and created_at >= $2
+        order by tipo, created_at asc`,
+      [uid, desde.toISOString()]
+    );
+    return rows;
+  } catch (err) {
+    console.error("[db/metricas] getHistorialMetricas:", mensajeError(err));
+    return [];
+  }
+}

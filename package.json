@@ -8,7 +8,13 @@
     "start": "next start",
     "lint": "next lint",
     "setup-db": "node scripts/setup-db.mjs",
-    "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs"
+    "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs",
+    "test:ml": "tsc -p tsconfig.ml.json && node --test \".tmp-test/ml/tests/ml/**/*.test.js\"",
+    "evaluar": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/evaluar.js",
+    "test": "npm run test:fallback && npm run test:ml",
+    "seed:demo": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/seed-demo.js",
+    "entrenar": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/entrenar.js",
+    "figuras": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/exportar-figuras.js docs/figuras/datos-figuras.json && python3 scripts/figuras.py"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^1.2.12",

@@ -192,3 +192,35 @@ export async function getHabitosSemana(
     return { fijos: [], registro: [] };
   }
 }
+
+// ─── Adherencia diaria (motor de predicción) ─────────────────────────────────
+
+export interface AdherenciaDiaRow {
+  fecha:       string;
+  completados: number;
+}
+
+/**
+ * Cuántos hábitos fijos se completaron cada día del rango. El motor lo divide
+ * por la cantidad de hábitos fijos para obtener una fracción 0–1.
+ */
+export async function getAdherenciaDiaria(
+  uid:   string,
+  desde: string,
+  hasta: string
+): Promise<AdherenciaDiaRow[]> {
+  try {
+    const { rows } = await pool.query<AdherenciaDiaRow>(
+      `select fecha, count(*) filter (where completado)::int as completados
+         from habitos
+        where uid = $1 and fecha >= $2 and fecha <= $3
+        group by fecha
+        order by fecha asc`,
+      [uid, desde, hasta]
+    );
+    return rows;
+  } catch (err) {
+    console.error("[db/habitos] getAdherenciaDiaria:", mensajeError(err));
+    return [];
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "target": "es2022",
+    "lib": [
+      "es2022"
+    ],
+    "types": [
+      "node"
+    ],
+    "outDir": ".tmp-test/ml",
+    "rootDir": ".",
+    "incremental": false,
+    "sourceMap": false,
+    "declaration": false
+  },
+  "include": [
+    "src/lib/ml/**/*.ts",
+    "tests/ml/**/*.ts",
+    "scripts/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    ".tmp-test"
+  ]
+}
