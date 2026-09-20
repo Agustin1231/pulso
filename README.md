@@ -16,6 +16,7 @@ App de salud cardiovascular potenciada por IA. Monitorea tus métricas, descubre
 | 4 | Calendario de Hábitos | ✅ Completo | Rutina diaria fija + hábitos custom con frecuencia/hora/lugar, vista semana |
 | 5 | Score de Riesgo Cardiovascular | ✅ Completo | Score ponderado propio sobre las 4 métricas + análisis IA |
 | 6 | Centro de Tips Personalizados | ✅ Completo | Artículos por categoría generados según tus métricas |
+| 7 | Motor de predicción | ✅ Completo | Pronóstico por métrica con benchmarks, índice de riesgo con fuentes, detección de cambios de régimen; integrado en `/score`, `/dashboard` y en los prompts de IA |
 
 Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features a medio cablear que conviene saber antes de tocar el código.
 
@@ -32,8 +33,9 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 
 - Tarjetas con estado **Normal / Atención / Riesgo / Sin datos**
 - Edición inline con el ícono de lápiz (solo el lápiz abre la edición, no el cuerpo de la tarjeta)
-- Gráfica de tendencia de 30 días con Recharts — grafica los puntos existentes, no rellena días sin registro
-- Análisis con Claude en streaming, sobre los **últimos valores** (no sobre el historial completo)
+- Gráfica de 30 días con Recharts — grafica los puntos existentes, no rellena días sin registro — más el **pronóstico a 30 días** del motor, punteado y con bandas del 80 % y 95 %
+- Debajo de la gráfica: tendencia (OLS, con significancia), pronóstico a 7 y 30 días, modelo elegido con su MASE y la tabla de backtesting, y alertas de cambio sostenido. Las tarjetas marcan con un punto rojo la métrica con alerta.
+- Análisis con Claude en streaming, que redacta sobre el informe del motor (tendencias, pronósticos, alertas), no solo sobre los últimos valores
 - Un registro por métrica y por día: volver a guardar actualiza el del día en curso
 
 > Presión arterial quedó fuera del MVP por la complejidad de interpretación para el usuario general.
@@ -86,9 +88,12 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 
 ## Módulo 5 — Score de Riesgo Cardiovascular
 
-- Score ponderado **propio** sobre las 4 métricas registradas. **No implementa Framingham ni ninguna escala clínica validada.**
-- Cada métrica aporta según su estado (normal / atención / riesgo)
-- Análisis del resultado con Claude en streaming
+- Índice de riesgo calculado por el [motor de predicción](#motor-de-predicción): modelo log-lineal de riesgo relativo con coeficientes de meta-análisis (FC en reposo, sueño, estrés, IMC, tabaquismo). **No es Framingham ni ninguna escala clínica validada**, y la pantalla lo dice.
+- Gauge 0–100, riesgo relativo vs. referencia, contexto de edad/sexo aparte (no entra al score), desglose por factor con puntos perdidos y **fuente** expandible, evidencia débil marcada.
+- Perfil anónimo opcional (edad, sexo, altura, fumador) editable en la misma pantalla.
+- Proyección a 30 días con intervalo, calculada con los pronósticos de cada métrica — no estimada por la IA.
+- Cambios sostenidos detectados (CUSUM/EWMA) y sección "Cómo se calcula" con las limitaciones del informe.
+- Análisis con Claude en streaming, que **redacta sobre el informe del motor** (recibe el `uid`, el servidor calcula el informe).
 - Disclaimer médico visible en el módulo
 
 ---
@@ -97,6 +102,33 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 
 - Artículos generados con Claude según el estado de tus métricas
 - Agrupados por categoría, con extracto expandible, fuente y tiempo de lectura
+
+---
+
+## Motor de predicción
+
+Está en `src/lib/ml/` y es la parte del proyecto que no depende de ninguna API externa: TypeScript puro, sin dependencias, implementado desde cero. Toma el historial de cada métrica y produce un `Informe` con:
+
+- **Pronóstico a 30 días** por métrica, con intervalos del 80 % y 95 %. El modelo se elige por usuario y por métrica con **backtesting rolling-origin** entre 8 candidatos: cuatro benchmarks (naïve, naïve estacional, media móvil, drift) y cuatro modelos (OLS, Theil-Sen, Holt amortiguado, Holt-Winters). Gana el de menor MASE; si un benchmark es lo mejor, se dice.
+- **Índice de riesgo**: modelo log-lineal de riesgo relativo con coeficientes de meta-análisis publicados (FC en reposo, sueño, estrés, IMC, tabaquismo), atribución exacta de puntos por factor, contexto de edad/sexo aparte y proyección del score alimentada por los pronósticos. No es una escala clínica; está documentado por qué.
+- **Alertas de cambio de régimen** con CUSUM y EWMA sobre una línea base personal auto-iniciada ("tu FC en reposo subió ~8 bpm de forma sostenida desde el 16 jul").
+- **Limitaciones en texto**, listas para el disclaimer y para el prompt.
+
+El modelo de lenguaje pasa a ser consumidor de este informe: `/api/score-analisis`, `/api/analisis-metricas` y `/api/tips` reciben solo `{ uid }`, calculan el informe en el servidor (`getInforme` en `src/lib/db/informe.ts`) y le pasan a Claude el resumen de `src/lib/ml/resumen.ts` con la instrucción de no inventar números. `/score` y `/dashboard` consumen el mismo informe.
+
+Además, para demostrar entrenamiento supervisado con datos reales, `src/lib/ml/supervisado/` implementa desde cero una **regresión logística (IRLS)** y **k-NN**, entrenados y validados por validación cruzada estratificada 5×10 sobre el dataset público **UCI Heart Disease** (297 pacientes): AUC 0.904 ± 0.032, coeficientes verificados contra numpy a 10⁻¹⁴. Los coeficientes aprendidos **no** se usan en el índice de la app, y el capítulo explica por qué con datos (cohorte de derivación).
+
+```bash
+npm run test:ml      # 63 tests con node --test (compila con tsconfig.ml.json)
+npm run evaluar      # evaluación reproducible sobre una cohorte sintética con verdad conocida
+npm run entrenar     # experimento supervisado sobre UCI: validación cruzada + coeficientes
+npm run figuras      # figuras del informe (matplotlib) en docs/figuras/
+npm run seed:demo -- --uid <pulso_uid> --limpiar   # usuario demo con 90 días sintéticos (para probar o presentar)
+```
+
+El `pulso_uid` es el UUID anónimo que la app guarda en `localStorage` (consola del navegador: `localStorage.getItem("pulso_uid")`).
+
+Capítulo técnico completo, con fórmulas, fuentes y resultados: **[`docs/motor-prediccion.md`](docs/motor-prediccion.md)**. Guía para la defensa (preguntas del jurado, demo, glosario): **[`docs/sustentacion.md`](docs/sustentacion.md)**. Resultados: [`docs/evaluacion-sintetica.txt`](docs/evaluacion-sintetica.txt), [`docs/entrenamiento-uci.txt`](docs/entrenamiento-uci.txt). Figuras: [`docs/figuras/`](docs/figuras/). Capturas de la app: [`docs/capturas/`](docs/capturas/).
 
 ---
 
@@ -110,6 +142,7 @@ Ver **[Limitaciones conocidas](#limitaciones-conocidas)** al final: hay features
 | IA Imágenes | `gemini-3.1-flash-image-preview` | Google AI SDK `@google/genai` |
 | Base de datos | PostgreSQL 17 | `pg` + SQL parametrizado, sin ORM |
 | Storage | Volumen persistente en disco | Servido por `/api/img/[...path]` |
+| Predicción | TypeScript propio (`src/lib/ml`) | Sin dependencias. Backtesting, OLS/Theil-Sen/Holt/Holt-Winters, índice de riesgo, CUSUM/EWMA |
 | Gráficas | Recharts | Tendencias de métricas |
 | Push | `web-push` + VAPID | Ver limitaciones: la UI no está montada |
 | Deploy | Coolify (self-hosted) | Hetzner VPS, auto-deploy desde `main` |
@@ -190,7 +223,7 @@ El código lee **12** variables (más `TZ`, que la usa Node y no el código):
 ```bash
 npm install
 cp .env.example .env.local     # y completá los valores
-npm run setup-db               # crea las 8 tablas (idempotente)
+npm run setup-db               # crea las 9 tablas (idempotente)
 npm run dev
 ```
 
@@ -219,6 +252,7 @@ El schema completo está en **`db/schema.sql`** y se aplica con `npm run setup-d
 | `listas_mercado` | Listas de compras generadas |
 | `rutinas` | Sesiones generadas (`contenido` jsonb, baja lógica vía `activa`) |
 | `suscripciones_push` | Suscripciones Web Push — único `(uid, endpoint)` |
+| `perfil` | Perfil anónimo (edad, sexo, altura, fumador) para el motor de riesgo — `uid` es la PK, una fila por usuario |
 
 Notas de diseño que importan si tocás el schema:
 
@@ -240,7 +274,9 @@ src/lib/db/
   recetas.ts    |  "use server" — server actions con SQL parametrizado
   mercado.ts    |
   rutinas.ts    |
-  habitos.ts   /
+  habitos.ts    |
+  perfil.ts     |
+  informe.ts   /   carga historial + perfil + adherencia y llama al motor (`lib/ml`)
 ```
 
 `types.ts` está aparte porque un archivo `"use server"` solo puede exportar funciones async. Los componentes cliente importan las funciones de los módulos y los tipos de `types.ts`.
@@ -280,7 +316,10 @@ Cosas que existen en el código pero no funcionan end-to-end. Están acá para q
 - **La PWA no es instalable.** `public/manifest.json` referencia `/icons/icon-192.png` y `/icons/icon-512.png`, y **ninguno de los dos existe** en el repo. Chrome exige un ícono de 192px resoluble para ofrecer el prompt de instalación.
 - **`next-pwa` está en `package.json` pero nunca se configura.** `next.config.ts` está vacío. El service worker es `public/sw.js`, escrito a mano, y solo maneja `install` / `activate` / `push` / `notificationclick`.
 - **No hay soporte offline.** `sw.js` no tiene ningún listener de `fetch` y su `CACHE_NAME` nunca se usa.
-- **El score no es una escala clínica.** Es una ponderación propia; no compararlo con Framingham, ASCVD ni similares.
+- **El índice de riesgo no es una escala clínica.** Cita de dónde sale cada coeficiente, pero eso no lo convierte en Framingham, ASCVD ni similares; no compararlo con ellas.
+- **El motor se evaluó sobre datos sintéticos.** Demuestra que la implementación es correcta bajo patrones conocidos, no desempeño sobre usuarios reales.
+- **`getInforme` recalcula el backtesting en cada carga** de `/dashboard` y `/score` (~100–300 ms por usuario con 90 días). No hay caché; si crece el uso, cachear por uid y fecha.
+- **Recharts + React 19: no usar fragmentos `<>…</>` como hijos de un chart.** Recharts los aplana con `isFragment` de `react-is@16`, que no reconoce los elementos de React 19, y descarta silenciosamente todo lo que hay adentro (así estuvieron invisibles las líneas de rango normal de la gráfica hasta que se corrigió). Cada `<Line>`, `<Area>` o `<ReferenceLine>` va como hijo directo, condicionado por separado.
 - **El límite del día en el upsert de métricas usa la hora del servidor**, no la del browser. Fijá `TZ` en el contenedor para que coincida con tus usuarios.
 
 ---

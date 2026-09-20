@@ -1,0 +1,458 @@
+Motor de predicción — evaluación sobre cohorte sintética
+semilla 42 · horizonte 7 días · 28 series · backtesting rolling-origin
+
+━━ frecuencia_cardiaca · estable   n=76  cobertura=84 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 3.46 │ 4.45 │ 1.13 │ 92 % │   │
+│ Media móvil (7)        │ 2.61 │ 3.26 │ 0.86 │ 84 % │ ★ │
+│ Drift                  │ 3.63 │ 4.62 │ 1.19 │ 93 % │   │
+│ Naïve estacional (7 d) │ 3.25 │ 4.16 │ 1.05 │ 76 % │   │
+│ Regresión lineal (OLS) │ 2.64 │ 3.34 │ 0.87 │ 77 % │   │
+│ Theil-Sen              │ 2.63 │ 3.38 │ 0.87 │ 77 % │   │
+│ Holt amortiguado       │ 2.61 │ 3.25 │ 0.86 │ 73 % │   │
+│ Holt-Winters (7 d)     │ 3.37 │ 4.14 │ 1.10 │ 77 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 0 · EWMA 0
+
+━━ frecuencia_cardiaca · tendencia_suave   n=76  cobertura=84 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 3.27 │ 4.00 │ 1.19 │ 93 % │   │
+│ Media móvil (7)        │ 2.45 │ 2.93 │ 0.90 │ 74 % │   │
+│ Drift                  │ 3.47 │ 4.20 │ 1.26 │ 94 % │   │
+│ Naïve estacional (7 d) │ 3.38 │ 4.01 │ 1.23 │ 72 % │   │
+│ Regresión lineal (OLS) │ 2.34 │ 2.81 │ 0.85 │ 74 % │ ★ │
+│ Theil-Sen              │ 2.39 │ 2.85 │ 0.87 │ 74 % │   │
+│ Holt amortiguado       │ 2.38 │ 2.86 │ 0.87 │ 67 % │   │
+│ Holt-Winters (7 d)     │ 2.90 │ 3.36 │ 1.06 │ 73 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.050 → OLS 0.077 · Theil-Sen 0.079 · Holt 0.121
+  alertas: CUSUM 2 · EWMA 1
+
+━━ frecuencia_cardiaca · tendencia_fuerte   n=78  cobertura=87 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 3.29 │ 4.11 │ 0.98 │ 96 % │   │
+│ Media móvil (7)        │ 2.77 │ 3.39 │ 0.83 │ 84 % │   │
+│ Drift                  │ 3.40 │ 4.26 │ 1.02 │ 96 % │   │
+│ Naïve estacional (7 d) │ 3.53 │ 4.23 │ 1.05 │ 78 % │   │
+│ Regresión lineal (OLS) │ 2.54 │ 3.16 │ 0.76 │ 86 % │ ★ │
+│ Theil-Sen              │ 2.64 │ 3.25 │ 0.79 │ 86 % │   │
+│ Holt amortiguado       │ 2.97 │ 3.68 │ 0.89 │ 78 % │   │
+│ Holt-Winters (7 d)     │ 2.87 │ 3.56 │ 0.86 │ 79 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.150 → OLS 0.160 · Theil-Sen 0.167 · Holt 0.176
+  alertas: CUSUM 1 · EWMA 1
+
+━━ frecuencia_cardiaca · estacional   n=78  cobertura=87 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 4.31 │ 5.32 │ 1.14 │ 93 % │   │
+│ Media móvil (7)        │ 3.29 │ 3.93 │ 0.88 │ 81 % │ ★ │
+│ Drift                  │ 4.52 │ 5.58 │ 1.20 │ 93 % │   │
+│ Naïve estacional (7 d) │ 3.92 │ 4.84 │ 1.04 │ 81 % │   │
+│ Regresión lineal (OLS) │ 3.37 │ 3.98 │ 0.90 │ 78 % │   │
+│ Theil-Sen              │ 3.45 │ 4.10 │ 0.91 │ 78 % │   │
+│ Holt amortiguado       │ 3.31 │ 3.94 │ 0.88 │ 71 % │   │
+│ Holt-Winters (7 d)     │ 3.34 │ 4.14 │ 0.89 │ 81 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  amplitud semanal verdadera 4.00 → Holt-Winters 4.62
+  alertas: CUSUM 0 · EWMA 0
+
+━━ frecuencia_cardiaca · cambio_regimen   n=78  cobertura=87 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 3.80 │ 4.75 │ 0.97 │ 94 % │   │
+│ Media móvil (7)        │ 3.14 │ 3.98 │ 0.80 │ 80 % │ ★ │
+│ Drift                  │ 4.05 │ 5.01 │ 1.03 │ 95 % │   │
+│ Naïve estacional (7 d) │ 4.04 │ 5.12 │ 1.03 │ 79 % │   │
+│ Regresión lineal (OLS) │ 3.57 │ 4.36 │ 0.91 │ 76 % │   │
+│ Theil-Sen              │ 3.78 │ 4.62 │ 0.96 │ 73 % │   │
+│ Holt amortiguado       │ 3.22 │ 4.14 │ 0.82 │ 72 % │   │
+│ Holt-Winters (7 d)     │ 3.79 │ 4.68 │ 0.96 │ 79 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  cambio de régimen el 2026-07-16 → CUSUM +5 d · EWMA +5 d
+
+━━ frecuencia_cardiaca · ruidoso   n=79  cobertura=88 %
+┌────────────────────────┬──────┬───────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │  RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼───────┼──────┼──────┼───┤
+│ Naïve                  │ 8.09 │ 10.09 │ 0.95 │ 94 % │   │
+│ Media móvil (7)        │ 6.24 │  7.78 │ 0.73 │ 80 % │   │
+│ Drift                  │ 8.44 │ 10.57 │ 0.99 │ 94 % │   │
+│ Naïve estacional (7 d) │ 7.87 │  9.60 │ 0.92 │ 75 % │   │
+│ Regresión lineal (OLS) │ 6.31 │  7.70 │ 0.74 │ 76 % │   │
+│ Theil-Sen              │ 6.35 │  7.85 │ 0.75 │ 81 % │   │
+│ Holt amortiguado       │ 5.93 │  7.45 │ 0.70 │ 74 % │ ★ │
+│ Holt-Winters (7 d)     │ 6.88 │  8.69 │ 0.80 │ 82 % │   │
+└────────────────────────┴──────┴───────┴──────┴──────┴───┘
+  alertas: CUSUM 0 · EWMA 0
+
+━━ frecuencia_cardiaca · disperso   n=47  cobertura=52 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 3.42 │ 4.65 │ 1.31 │ 92 % │   │
+│ Media móvil (7)        │ 2.64 │ 3.75 │ 1.01 │ 79 % │   │
+│ Drift                  │ 3.57 │ 4.83 │ 1.37 │ 92 % │   │
+│ Naïve estacional (7 d) │ 3.20 │ 4.37 │ 1.23 │ 78 % │   │
+│ Regresión lineal (OLS) │ 2.61 │ 3.62 │ 1.00 │ 79 % │ ★ │
+│ Theil-Sen              │ 2.69 │ 3.77 │ 1.02 │ 73 % │   │
+│ Holt amortiguado       │ 2.77 │ 3.41 │ 1.08 │ 69 % │   │
+│ Holt-Winters (7 d)     │ 4.04 │ 4.78 │ 1.66 │ 81 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.050 → OLS 0.076 · Theil-Sen 0.070 · Holt -0.005
+  alertas: CUSUM 1 · EWMA 1
+
+━━ horas_sueno · estable   n=74  cobertura=82 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.57 │ 0.75 │ 1.34 │ 89 % │   │
+│ Media móvil (7)        │ 0.46 │ 0.61 │ 1.09 │ 78 % │ ★ │
+│ Drift                  │ 0.63 │ 0.80 │ 1.47 │ 90 % │   │
+│ Naïve estacional (7 d) │ 0.61 │ 0.76 │ 1.40 │ 78 % │   │
+│ Regresión lineal (OLS) │ 0.50 │ 0.66 │ 1.19 │ 69 % │   │
+│ Theil-Sen              │ 0.49 │ 0.64 │ 1.15 │ 73 % │   │
+│ Holt amortiguado       │ 0.51 │ 0.66 │ 1.21 │ 74 % │   │
+│ Holt-Winters (7 d)     │ 0.60 │ 0.74 │ 1.38 │ 77 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 1 · EWMA 0
+
+━━ horas_sueno · tendencia_suave   n=72  cobertura=80 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.67 │ 0.81 │ 0.91 │ 97 % │   │
+│ Media móvil (7)        │ 0.52 │ 0.64 │ 0.72 │ 81 % │   │
+│ Drift                  │ 0.71 │ 0.86 │ 0.97 │ 97 % │   │
+│ Naïve estacional (7 d) │ 0.71 │ 0.89 │ 0.96 │ 82 % │   │
+│ Regresión lineal (OLS) │ 0.52 │ 0.63 │ 0.71 │ 80 % │ ★ │
+│ Theil-Sen              │ 0.53 │ 0.65 │ 0.73 │ 80 % │   │
+│ Holt amortiguado       │ 0.55 │ 0.68 │ 0.75 │ 72 % │   │
+│ Holt-Winters (7 d)     │ 0.65 │ 0.80 │ 0.89 │ 76 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.010 → OLS -0.007 · Theil-Sen -0.006 · Holt 0.005
+  alertas: CUSUM 1 · EWMA 0
+
+━━ horas_sueno · tendencia_fuerte   n=77  cobertura=86 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.77 │ 0.97 │ 1.04 │ 93 % │   │
+│ Media móvil (7)        │ 0.57 │ 0.70 │ 0.78 │ 84 % │   │
+│ Drift                  │ 0.81 │ 1.01 │ 1.09 │ 93 % │   │
+│ Naïve estacional (7 d) │ 0.72 │ 0.90 │ 0.97 │ 79 % │   │
+│ Regresión lineal (OLS) │ 0.55 │ 0.70 │ 0.76 │ 81 % │   │
+│ Theil-Sen              │ 0.57 │ 0.72 │ 0.78 │ 82 % │   │
+│ Holt amortiguado       │ 0.55 │ 0.68 │ 0.75 │ 75 % │ ★ │
+│ Holt-Winters (7 d)     │ 0.63 │ 0.76 │ 0.85 │ 87 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.030 → OLS -0.029 · Theil-Sen -0.030 · Holt -0.028
+  alertas: CUSUM 2 · EWMA 1
+
+━━ horas_sueno · estacional   n=75  cobertura=83 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.03 │ 1.27 │ 1.00 │ 94 % │   │
+│ Media móvil (7)        │ 0.75 │ 0.92 │ 0.73 │ 91 % │   │
+│ Drift                  │ 1.10 │ 1.35 │ 1.06 │ 94 % │   │
+│ Naïve estacional (7 d) │ 0.69 │ 0.85 │ 0.66 │ 86 % │   │
+│ Regresión lineal (OLS) │ 0.77 │ 0.95 │ 0.75 │ 83 % │   │
+│ Theil-Sen              │ 0.76 │ 0.94 │ 0.74 │ 86 % │   │
+│ Holt amortiguado       │ 0.76 │ 0.93 │ 0.74 │ 82 % │   │
+│ Holt-Winters (7 d)     │ 0.65 │ 0.79 │ 0.61 │ 88 % │ ★ │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  amplitud semanal verdadera 1.60 → Holt-Winters 1.76
+  alertas: CUSUM 0 · EWMA 0
+
+━━ horas_sueno · cambio_regimen   n=73  cobertura=81 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.74 │ 0.90 │ 0.99 │ 96 % │   │
+│ Media móvil (7)        │ 0.57 │ 0.70 │ 0.76 │ 83 % │   │
+│ Drift                  │ 0.79 │ 0.96 │ 1.05 │ 96 % │   │
+│ Naïve estacional (7 d) │ 0.79 │ 0.98 │ 1.06 │ 82 % │   │
+│ Regresión lineal (OLS) │ 0.59 │ 0.73 │ 0.80 │ 78 % │   │
+│ Theil-Sen              │ 0.64 │ 0.77 │ 0.86 │ 76 % │   │
+│ Holt amortiguado       │ 0.56 │ 0.68 │ 0.75 │ 76 % │ ★ │
+│ Holt-Winters (7 d)     │ 0.68 │ 0.85 │ 0.90 │ 80 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  cambio de régimen el 2026-07-16 → CUSUM +9 d · EWMA +12 d
+
+━━ horas_sueno · ruidoso   n=74  cobertura=82 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.35 │ 1.70 │ 1.40 │ 88 % │   │
+│ Media móvil (7)        │ 1.08 │ 1.32 │ 1.11 │ 71 % │   │
+│ Drift                  │ 1.42 │ 1.77 │ 1.47 │ 90 % │   │
+│ Naïve estacional (7 d) │ 1.38 │ 1.72 │ 1.41 │ 70 % │   │
+│ Regresión lineal (OLS) │ 1.07 │ 1.31 │ 1.11 │ 62 % │ ★ │
+│ Theil-Sen              │ 1.08 │ 1.33 │ 1.11 │ 61 % │   │
+│ Holt amortiguado       │ 1.12 │ 1.36 │ 1.17 │ 65 % │   │
+│ Holt-Winters (7 d)     │ 1.32 │ 1.66 │ 1.36 │ 68 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 2 · EWMA 0
+
+━━ horas_sueno · disperso   n=54  cobertura=60 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.67 │ 0.81 │ 1.12 │ 89 % │   │
+│ Media móvil (7)        │ 0.42 │ 0.53 │ 0.70 │ 79 % │ ★ │
+│ Drift                  │ 0.72 │ 0.86 │ 1.20 │ 89 % │   │
+│ Naïve estacional (7 d) │ 0.58 │ 0.70 │ 0.97 │ 85 % │   │
+│ Regresión lineal (OLS) │ 0.44 │ 0.54 │ 0.73 │ 78 % │   │
+│ Theil-Sen              │ 0.45 │ 0.55 │ 0.75 │ 80 % │   │
+│ Holt amortiguado       │ 0.60 │ 0.74 │ 1.02 │ 78 % │   │
+│ Holt-Winters (7 d)     │ 0.63 │ 0.84 │ 1.09 │ 78 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.010 → OLS -0.010 · Theil-Sen -0.008 · Holt -0.006
+  alertas: CUSUM 1 · EWMA 0
+
+━━ nivel_estres · estable   n=72  cobertura=80 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.15 │ 1.47 │ 1.00 │ 97 % │   │
+│ Media móvil (7)        │ 0.99 │ 1.18 │ 0.87 │ 89 % │   │
+│ Drift                  │ 1.24 │ 1.57 │ 1.08 │ 97 % │   │
+│ Naïve estacional (7 d) │ 1.18 │ 1.57 │ 1.03 │ 91 % │   │
+│ Regresión lineal (OLS) │ 0.98 │ 1.18 │ 0.86 │ 89 % │   │
+│ Theil-Sen              │ 0.86 │ 1.07 │ 0.75 │ 90 % │ ★ │
+│ Holt amortiguado       │ 0.99 │ 1.20 │ 0.87 │ 77 % │   │
+│ Holt-Winters (7 d)     │ 1.15 │ 1.44 │ 1.01 │ 78 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 0 · EWMA 0
+
+━━ nivel_estres · tendencia_suave   n=80  cobertura=89 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.23 │ 1.54 │ 0.95 │ 93 % │   │
+│ Media móvil (7)        │ 0.97 │ 1.21 │ 0.75 │ 81 % │   │
+│ Drift                  │ 1.30 │ 1.62 │ 1.01 │ 93 % │   │
+│ Naïve estacional (7 d) │ 1.21 │ 1.55 │ 0.94 │ 83 % │   │
+│ Regresión lineal (OLS) │ 0.93 │ 1.17 │ 0.72 │ 79 % │   │
+│ Theil-Sen              │ 0.88 │ 1.18 │ 0.68 │ 81 % │ ★ │
+│ Holt amortiguado       │ 0.96 │ 1.20 │ 0.75 │ 78 % │   │
+│ Holt-Winters (7 d)     │ 1.11 │ 1.36 │ 0.86 │ 79 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.020 → OLS 0.016 · Theil-Sen 0.000 · Holt 0.019
+  alertas: CUSUM 2 · EWMA 2
+
+━━ nivel_estres · tendencia_fuerte   n=72  cobertura=80 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.32 │ 1.69 │ 1.37 │ 88 % │   │
+│ Media móvil (7)        │ 1.06 │ 1.28 │ 1.11 │ 69 % │   │
+│ Drift                  │ 1.40 │ 1.77 │ 1.45 │ 88 % │   │
+│ Naïve estacional (7 d) │ 1.28 │ 1.54 │ 1.33 │ 68 % │   │
+│ Regresión lineal (OLS) │ 0.95 │ 1.18 │ 1.01 │ 74 % │ ★ │
+│ Theil-Sen              │ 0.98 │ 1.20 │ 1.04 │ 73 % │   │
+│ Holt amortiguado       │ 1.11 │ 1.42 │ 1.20 │ 64 % │   │
+│ Holt-Winters (7 d)     │ 1.12 │ 1.40 │ 1.19 │ 68 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.050 → OLS 0.048 · Theil-Sen 0.048 · Holt 0.030
+  alertas: CUSUM 2 · EWMA 1
+
+━━ nivel_estres · estacional   n=75  cobertura=83 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.29 │ 1.62 │ 1.03 │ 98 % │   │
+│ Media móvil (7)        │ 1.02 │ 1.22 │ 0.81 │ 93 % │   │
+│ Drift                  │ 1.38 │ 1.71 │ 1.09 │ 98 % │   │
+│ Naïve estacional (7 d) │ 1.02 │ 1.43 │ 0.79 │ 80 % │   │
+│ Regresión lineal (OLS) │ 1.09 │ 1.32 │ 0.85 │ 87 % │   │
+│ Theil-Sen              │ 0.96 │ 1.21 │ 0.75 │ 83 % │ ★ │
+│ Holt amortiguado       │ 1.01 │ 1.20 │ 0.80 │ 82 % │   │
+│ Holt-Winters (7 d)     │ 1.04 │ 1.29 │ 0.83 │ 89 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  amplitud semanal verdadera 2.30 → Holt-Winters 2.23
+  alertas: CUSUM 0 · EWMA 0
+
+━━ nivel_estres · cambio_regimen   n=72  cobertura=80 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.25 │ 1.62 │ 1.16 │ 90 % │   │
+│ Media móvil (7)        │ 1.12 │ 1.52 │ 1.05 │ 80 % │   │
+│ Drift                  │ 1.35 │ 1.70 │ 1.25 │ 91 % │   │
+│ Naïve estacional (7 d) │ 1.31 │ 1.78 │ 1.22 │ 80 % │   │
+│ Regresión lineal (OLS) │ 1.24 │ 1.57 │ 1.15 │ 73 % │   │
+│ Theil-Sen              │ 1.28 │ 1.68 │ 1.20 │ 76 % │   │
+│ Holt amortiguado       │ 1.12 │ 1.46 │ 1.04 │ 73 % │ ★ │
+│ Holt-Winters (7 d)     │ 1.38 │ 1.78 │ 1.28 │ 82 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  cambio de régimen el 2026-07-16 → CUSUM +2 d · EWMA +4 d
+
+━━ nivel_estres · ruidoso   n=77  cobertura=86 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 2.17 │ 2.76 │ 1.23 │ 90 % │   │
+│ Media móvil (7)        │ 1.60 │ 2.02 │ 0.90 │ 78 % │   │
+│ Drift                  │ 2.29 │ 2.87 │ 1.30 │ 90 % │   │
+│ Naïve estacional (7 d) │ 2.30 │ 2.82 │ 1.29 │ 65 % │   │
+│ Regresión lineal (OLS) │ 1.64 │ 2.07 │ 0.94 │ 75 % │   │
+│ Theil-Sen              │ 1.53 │ 2.01 │ 0.87 │ 75 % │ ★ │
+│ Holt amortiguado       │ 1.60 │ 2.03 │ 0.92 │ 72 % │   │
+│ Holt-Winters (7 d)     │ 2.05 │ 2.51 │ 1.16 │ 78 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 0 · EWMA 0
+
+━━ nivel_estres · disperso   n=49  cobertura=54 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.70 │ 2.08 │ 1.33 │ 96 % │   │
+│ Media móvil (7)        │ 1.10 │ 1.36 │ 0.87 │ 86 % │   │
+│ Drift                  │ 1.83 │ 2.21 │ 1.43 │ 96 % │   │
+│ Naïve estacional (7 d) │ 1.36 │ 1.67 │ 1.08 │ 85 % │   │
+│ Regresión lineal (OLS) │ 1.06 │ 1.39 │ 0.85 │ 79 % │   │
+│ Theil-Sen              │ 1.00 │ 1.34 │ 0.80 │ 88 % │ ★ │
+│ Holt amortiguado       │ 1.28 │ 1.50 │ 1.04 │ 67 % │   │
+│ Holt-Winters (7 d)     │ 1.58 │ 1.88 │ 1.32 │ 81 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera 0.020 → OLS 0.016 · Theil-Sen 0.000 · Holt 0.032
+  alertas: CUSUM 0 · EWMA 0
+
+━━ peso · estable   n=83  cobertura=92 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.49 │ 0.63 │ 1.03 │ 94 % │   │
+│ Media móvil (7)        │ 0.35 │ 0.46 │ 0.73 │ 83 % │ ★ │
+│ Drift                  │ 0.52 │ 0.66 │ 1.09 │ 94 % │   │
+│ Naïve estacional (7 d) │ 0.51 │ 0.67 │ 1.07 │ 81 % │   │
+│ Regresión lineal (OLS) │ 0.37 │ 0.49 │ 0.77 │ 81 % │   │
+│ Theil-Sen              │ 0.37 │ 0.48 │ 0.77 │ 83 % │   │
+│ Holt amortiguado       │ 0.36 │ 0.47 │ 0.75 │ 80 % │   │
+│ Holt-Winters (7 d)     │ 0.40 │ 0.51 │ 0.84 │ 87 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 1 · EWMA 1
+
+━━ peso · tendencia_suave   n=81  cobertura=90 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.52 │ 0.65 │ 1.07 │ 94 % │   │
+│ Media móvil (7)        │ 0.45 │ 0.54 │ 0.91 │ 78 % │   │
+│ Drift                  │ 0.53 │ 0.67 │ 1.10 │ 95 % │   │
+│ Naïve estacional (7 d) │ 0.49 │ 0.60 │ 1.01 │ 78 % │   │
+│ Regresión lineal (OLS) │ 0.39 │ 0.49 │ 0.80 │ 71 % │   │
+│ Theil-Sen              │ 0.39 │ 0.49 │ 0.80 │ 74 % │ ★ │
+│ Holt amortiguado       │ 0.43 │ 0.51 │ 0.88 │ 71 % │   │
+│ Holt-Winters (7 d)     │ 0.47 │ 0.60 │ 0.98 │ 76 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.030 → OLS -0.031 · Theil-Sen -0.031 · Holt -0.021
+  alertas: CUSUM 1 · EWMA 1
+
+━━ peso · tendencia_fuerte   n=81  cobertura=90 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.60 │ 0.74 │ 1.10 │ 97 % │   │
+│ Media móvil (7)        │ 0.64 │ 0.79 │ 1.19 │ 72 % │   │
+│ Drift                  │ 0.54 │ 0.67 │ 1.00 │ 97 % │   │
+│ Naïve estacional (7 d) │ 0.74 │ 0.93 │ 1.36 │ 81 % │   │
+│ Regresión lineal (OLS) │ 0.42 │ 0.50 │ 0.76 │ 85 % │ ★ │
+│ Theil-Sen              │ 0.42 │ 0.50 │ 0.77 │ 86 % │   │
+│ Holt amortiguado       │ 0.45 │ 0.56 │ 0.83 │ 82 % │   │
+│ Holt-Winters (7 d)     │ 0.51 │ 0.63 │ 0.95 │ 85 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.080 → OLS -0.080 · Theil-Sen -0.080 · Holt -0.060
+  alertas: CUSUM 1 · EWMA 1
+
+━━ peso · estacional   n=76  cobertura=84 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.54 │ 0.68 │ 1.07 │ 93 % │   │
+│ Media móvil (7)        │ 0.40 │ 0.51 │ 0.80 │ 78 % │ ★ │
+│ Drift                  │ 0.57 │ 0.71 │ 1.13 │ 93 % │   │
+│ Naïve estacional (7 d) │ 0.58 │ 0.70 │ 1.14 │ 75 % │   │
+│ Regresión lineal (OLS) │ 0.44 │ 0.55 │ 0.87 │ 73 % │   │
+│ Theil-Sen              │ 0.42 │ 0.54 │ 0.84 │ 76 % │   │
+│ Holt amortiguado       │ 0.43 │ 0.55 │ 0.85 │ 73 % │   │
+│ Holt-Winters (7 d)     │ 0.53 │ 0.63 │ 1.01 │ 75 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  amplitud semanal verdadera 0.40 → Holt-Winters 0.40
+  alertas: CUSUM 0 · EWMA 0
+
+━━ peso · cambio_regimen   n=79  cobertura=88 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.71 │ 1.10 │ 1.14 │ 91 % │   │
+│ Media móvil (7)        │ 0.64 │ 0.95 │ 1.02 │ 84 % │   │
+│ Drift                  │ 0.76 │ 1.17 │ 1.22 │ 91 % │   │
+│ Naïve estacional (7 d) │ 0.76 │ 1.11 │ 1.21 │ 82 % │   │
+│ Regresión lineal (OLS) │ 0.77 │ 1.07 │ 1.21 │ 80 % │   │
+│ Theil-Sen              │ 0.89 │ 1.20 │ 1.38 │ 71 % │   │
+│ Holt amortiguado       │ 0.63 │ 0.94 │ 1.01 │ 83 % │ ★ │
+│ Holt-Winters (7 d)     │ 0.80 │ 1.12 │ 1.27 │ 81 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  cambio de régimen el 2026-07-16 → CUSUM +2 d · EWMA +2 d
+
+━━ peso · ruidoso   n=75  cobertura=83 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 1.13 │ 1.38 │ 1.10 │ 92 % │   │
+│ Media móvil (7)        │ 0.84 │ 1.05 │ 0.82 │ 86 % │ ★ │
+│ Drift                  │ 1.25 │ 1.56 │ 1.23 │ 93 % │   │
+│ Naïve estacional (7 d) │ 1.28 │ 1.53 │ 1.25 │ 71 % │   │
+│ Regresión lineal (OLS) │ 0.96 │ 1.20 │ 0.95 │ 73 % │   │
+│ Theil-Sen              │ 0.89 │ 1.12 │ 0.88 │ 79 % │   │
+│ Holt amortiguado       │ 0.86 │ 1.08 │ 0.84 │ 68 % │   │
+│ Holt-Winters (7 d)     │ 1.09 │ 1.33 │ 1.06 │ 84 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  alertas: CUSUM 0 · EWMA 0
+
+━━ peso · disperso   n=43  cobertura=48 %
+┌────────────────────────┬──────┬──────┬──────┬──────┬───┐
+│ Modelo                 │  MAE │ RMSE │ MASE │ IC80 │   │
+├────────────────────────┼──────┼──────┼──────┼──────┼───┤
+│ Naïve                  │ 0.55 │ 0.70 │ 0.97 │ 93 % │   │
+│ Media móvil (7)        │ 0.54 │ 0.65 │ 0.95 │ 76 % │   │
+│ Drift                  │ 0.57 │ 0.71 │ 1.01 │ 95 % │   │
+│ Naïve estacional (7 d) │ 0.74 │ 0.98 │ 1.31 │ 76 % │   │
+│ Regresión lineal (OLS) │ 0.51 │ 0.59 │ 0.90 │ 82 % │ ★ │
+│ Theil-Sen              │ 0.51 │ 0.59 │ 0.91 │ 84 % │   │
+└────────────────────────┴──────┴──────┴──────┴──────┴───┘
+  pendiente/día verdadera -0.030 → OLS -0.027 · Theil-Sen -0.026 · Holt —
+  alertas: CUSUM 2 · EWMA 1
+
+━━ Resumen por modelo (sobre las series con backtesting)
+┌────────────────────────────────────┬────────┬────────────┬──────────────┬────────────┬──────┐
+│ Modelo                             │ series │ MASE medio │ MASE mediana │ IC80 medio │ ganó │
+├────────────────────────────────────┼────────┼────────────┼──────────────┼────────────┼──────┤
+│ Naïve (benchmark)                  │     28 │       1.11 │         1.10 │       93 % │    0 │
+│ Media móvil (7) (benchmark)        │     28 │       0.88 │         0.87 │       81 % │    8 │
+│ Drift (benchmark)                  │     28 │       1.17 │         1.13 │       93 % │    0 │
+│ Naïve estacional (7 d) (benchmark) │     28 │       1.11 │         1.07 │       78 % │    0 │
+│ Regresión lineal (OLS)             │     28 │       0.88 │         0.86 │       78 % │    8 │
+│ Theil-Sen                          │     28 │       0.88 │         0.86 │       78 % │    6 │
+│ Holt amortiguado                   │     27 │       0.90 │         0.87 │       74 % │    5 │
+│ Holt-Winters (7 d)                 │     27 │       1.04 │         1.01 │       80 % │    1 │
+└────────────────────────────────────┴────────┴────────────┴──────────────┴────────────┴──────┘
+
+Modelo seleccionado con MASE < 1 (le gana al naïve): 23/28
+Modelo seleccionado que no es un benchmark: 20/28
+Cambios de régimen detectados: CUSUM 4/4 (retraso medio 4.5 d) · EWMA 4/4 (retraso medio 5.8 d)
+Falsas alarmas en perfiles estables (estable/ruidoso): 5 en 8 series
+Alertas en perfiles estacionales: 0 en 4 series (las cartas no modelan el patrón semanal: un fin de semana de +2σ puede dispararlas)
+
+Resultados escritos en docs/evaluacion-sintetica.json

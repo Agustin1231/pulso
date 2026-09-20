@@ -126,15 +126,12 @@ Tres tabs: **Hoy**, **Semana**, **Gestionar**. Hábitos fijos del sistema más h
 - Historial semanal de adherencia
 
 ### 5. Score de Riesgo Cardiovascular ✅
-Score visual 0–100 basado en las métricas registradas. Desglose por factor con barras de progreso y badge de estado. Proyección de mejora. Siempre con disclaimer médico visible.
+Índice 0–100 calculado por el motor de predicción (`src/lib/ml/riesgo`): modelo log-lineal de riesgo relativo con coeficientes de meta-análisis publicados. Desglose por factor con puntos perdidos y fuente, riesgo relativo vs. referencia, contexto de edad/sexo aparte, proyección a 30 días con intervalo (alimentada por los pronósticos), alertas de cambio sostenido y perfil anónimo editable. Siempre con disclaimer médico visible.
 
-**Factores del score:**
-- Frecuencia cardíaca — peso 35 pts
-- Horas de sueño — peso 35 pts
-- Nivel de estrés — peso 30 pts
+**Factores del índice (modificables):** frecuencia cardíaca en reposo, horas de sueño, nivel de estrés, IMC (peso + altura del perfil), tabaquismo. La edad y el sexo se muestran como contexto y no entran al score.
 
-**Cálculo:** normalizado a las métricas disponibles (no penaliza por falta de datos).
-**Análisis IA:** Claude streaming genera 4 secciones (qué está bien, qué mejorar, plan semanal, proyección).
+**Cálculo:** `score = 100 · (1 − Σ logRR_i / Σ logRR_max_i)` sobre los factores con datos; la atribución por factor es exacta y aditiva. No es una escala clínica validada. Ver `docs/motor-prediccion.md`.
+**Análisis IA:** Claude streaming genera 4 secciones (qué está bien, qué mejorar, plan semanal, proyección) **redactando sobre el informe del motor**, sin inventar números.
 
 ### 6. Centro de Tips Personalizados ✅
 Dos secciones integradas en una sola pantalla.
@@ -205,7 +202,7 @@ GEMINI_API_KEY=
 | `recetas_guardadas` | Recetas guardadas con imagen, calificación de estrellas |
 | `listas_mercado` | Listas de compras generadas por IA (checklist persistido en localStorage) |
 | `rutinas` | Planes de ejercicio semanales generados por IA (JSON con ejercicios por bloque) |
-| `perfil_usuario` | Perfil anónimo del usuario (edad, objetivos, disclaimer aceptado) |
+| `perfil` | Perfil anónimo para el motor de riesgo: edad, sexo, altura, fumador (una fila por `uid`) |
 
 ### Schema `habitos_definicion`
 ```sql
@@ -302,6 +299,26 @@ Usuario (iOS/Android/Web)
 - [x] Centro de Tips: tips IA personalizados por métricas
 - [x] 8 artículos curados con filtro por categoría y expansión inline
 
+### Motor de predicción — tanda 1 ✅ (19 de septiembre de 2026)
+- [x] `src/lib/ml/`: motor puro en TypeScript, sin dependencias
+- [x] Benchmarks (naïve, estacional, media móvil, drift) + OLS, Theil-Sen, Holt amortiguado, Holt-Winters
+- [x] Backtesting rolling-origin, MAE/RMSE/MASE, cobertura de intervalos, selección por métrica y usuario
+- [x] Índice de riesgo log-lineal con coeficientes de literatura, atribución por factor, contexto edad/sexo, proyección a 30 días
+- [x] CUSUM + EWMA con línea base auto-iniciada, winsorización y consolidación de alertas
+- [x] Cohorte sintética con verdad conocida, `npm run evaluar`, 53 tests con `node --test`
+- [x] Tabla `perfil` + `getInforme(uid)` como seam para la UI
+- [x] `docs/motor-prediccion.md` (capítulo técnico)
+
+### Motor de predicción — tanda 2 (integración) ✅ (20 de septiembre de 2026)
+- [x] Formulario de perfil (edad, sexo, altura, tabaquismo) en `/score`
+- [x] `/score` consume `getInforme(uid)`: gauge, riesgo relativo, contexto, atribución por factor con fuentes, proyección con intervalo, alertas, "cómo se calcula"
+- [x] `/dashboard`: pronóstico punteado con bandas 80/95 %, tendencia, modelo elegido con tabla de backtesting, alertas y punto rojo en la tarjeta
+- [x] Prompts de `/api/score-analisis`, `/api/analisis-metricas`, `/api/tips` reciben `{ uid }`, calculan el informe en el servidor y redactan sobre `resumirInforme()`
+- [x] `npm run seed:demo`: usuario de demostración con 90 días sintéticos
+- [x] Experimento supervisado con datos reales (UCI Heart Disease): regresión logística IRLS y k-NN desde cero, validación cruzada 5×10, AUC 0.90, verificación con numpy
+- [x] Figuras del informe (`npm run figuras`) y guía de defensa (`docs/sustentacion.md`)
+- [ ] Dataset público real de series diarias (wearables) como segunda fuente de evaluación del pronóstico
+
 ### v2 — Wearables y Mejoras
 - [ ] Xiaomi Band 10 via Web Bluetooth API (Android Chrome)
 - [ ] Notificaciones push para recordatorios (VAPID / Web Push)
@@ -327,4 +344,4 @@ Usuario (iOS/Android/Web)
 
 ---
 
-*Última actualización: 12 de abril de 2026*
+*Última actualización: 20 de septiembre de 2026*

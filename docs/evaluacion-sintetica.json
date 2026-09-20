@@ -1,0 +1,3507 @@
+{
+  "semilla": 42,
+  "horizonte": 7,
+  "series": [
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "estable",
+      "n": 76,
+      "cobertura": 0.8444444444444444,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.8592670057624049,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 3.4622641509433962,
+          "rmse": 4.447810570148478,
+          "mape": 4.859804543616615,
+          "mase": 1.1293528751143302,
+          "cobertura80": 0.9221698113207547,
+          "cobertura95": 0.9858490566037735,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 2.611859838274932,
+          "rmse": 3.2627965544008566,
+          "mape": 3.6686348621541804,
+          "mase": 0.8592670057624049,
+          "cobertura80": 0.8372641509433962,
+          "cobertura95": 0.9316037735849056,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 3.6345938268815527,
+          "rmse": 4.6239758590710505,
+          "mape": 5.1024121224944,
+          "mase": 1.1879950129419232,
+          "cobertura80": 0.9268867924528302,
+          "cobertura95": 0.9858490566037735,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 3.25,
+          "rmse": 4.161254346450005,
+          "mape": 4.531616852479856,
+          "mase": 1.050032143620904,
+          "cobertura80": 0.7617924528301887,
+          "cobertura95": 0.9009433962264151,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 2.6401958188078805,
+          "rmse": 3.34129177118993,
+          "mape": 3.7222454140065553,
+          "mase": 0.8706583729682079,
+          "cobertura80": 0.7712264150943396,
+          "cobertura95": 0.9174528301886793,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 2.6330792147942614,
+          "rmse": 3.376404910887726,
+          "mape": 3.723826286371532,
+          "mase": 0.8692139717234432,
+          "cobertura80": 0.7665094339622641,
+          "cobertura95": 0.9150943396226415,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 2.6105632116102475,
+          "rmse": 3.24915443324065,
+          "mape": 3.665966756402738,
+          "mase": 0.860065865370064,
+          "cobertura80": 0.7334905660377359,
+          "cobertura95": 0.9174528301886793,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 3.3711604130407378,
+          "rmse": 4.137125952150265,
+          "mape": 4.696732264610703,
+          "mase": 1.1007380639726938,
+          "cobertura80": 0.7704081632653061,
+          "cobertura95": 0.9336734693877551,
+          "nPronosticos": 392,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "tendencia_suave",
+      "n": 76,
+      "cobertura": 0.8444444444444444,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.8542018331030182,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 3.274698795180723,
+          "rmse": 4.001505740689507,
+          "mape": 4.340808360402313,
+          "mase": 1.1880743183699134,
+          "cobertura80": 0.9349397590361446,
+          "cobertura95": 0.9951807228915662,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 2.4530120481927704,
+          "rmse": 2.933925251914402,
+          "mape": 3.2301294922787513,
+          "mase": 0.8960104180471522,
+          "cobertura80": 0.7373493975903614,
+          "cobertura95": 0.980722891566265,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 3.4665349138001598,
+          "rmse": 4.203250344430931,
+          "mape": 4.606246228292118,
+          "mase": 1.2576851706937384,
+          "cobertura80": 0.9397590361445783,
+          "cobertura95": 0.9951807228915662,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 3.383132530120482,
+          "rmse": 4.006621026275479,
+          "mape": 4.478156218564528,
+          "mase": 1.2330744768260475,
+          "cobertura80": 0.7228915662650602,
+          "cobertura95": 0.9349397590361446,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 2.34273683665182,
+          "rmse": 2.8113662361277094,
+          "mape": 3.1103445650351436,
+          "mase": 0.8542018331030182,
+          "cobertura80": 0.7421686746987952,
+          "cobertura95": 0.9734939759036144,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 2.3901254565483523,
+          "rmse": 2.850118491195686,
+          "mape": 3.178001350968324,
+          "mase": 0.8708279900435919,
+          "cobertura80": 0.7397590361445783,
+          "cobertura95": 0.963855421686747,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 2.382889629095737,
+          "rmse": 2.8635547480418833,
+          "mape": 3.1467166037166283,
+          "mase": 0.869577629709485,
+          "cobertura80": 0.6650602409638554,
+          "cobertura95": 0.9132530120481928,
+          "nPronosticos": 415,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 2.8980167078711716,
+          "rmse": 3.3568446199405515,
+          "mape": 3.838188789287891,
+          "mase": 1.0620277575454393,
+          "cobertura80": 0.732620320855615,
+          "cobertura95": 0.9679144385026738,
+          "nPronosticos": 374,
+          "nOrigenes": 67,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.05,
+        "pendienteOLS": 0.07730862268931846,
+        "pendienteTheilSen": 0.07868937048503612,
+        "pendienteHolt": 0.12123672040588511
+      },
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "tendencia_fuerte",
+      "n": 78,
+      "cobertura": 0.8666666666666667,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.764369316246207,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 3.2857142857142856,
+          "rmse": 4.110020883494811,
+          "mape": 4.089538905658538,
+          "mase": 0.9842955217998297,
+          "cobertura80": 0.9648711943793911,
+          "cobertura95": 0.990632318501171,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 2.7708263633322163,
+          "rmse": 3.3906822456409467,
+          "mape": 3.416266500686259,
+          "mase": 0.8306983124468781,
+          "cobertura80": 0.8407494145199064,
+          "cobertura95": 0.9836065573770492,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 3.4026164003437054,
+          "rmse": 4.260154525234516,
+          "mape": 4.261696454204582,
+          "mase": 1.017930493451315,
+          "cobertura80": 0.9601873536299765,
+          "cobertura95": 0.990632318501171,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 3.531615925058548,
+          "rmse": 4.233246355607001,
+          "mape": 4.4113874003596765,
+          "mase": 1.0512945622585044,
+          "cobertura80": 0.7775175644028103,
+          "cobertura95": 0.9508196721311475,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 2.5418674597244286,
+          "rmse": 3.161925382939325,
+          "mape": 3.163694593807593,
+          "mase": 0.764369316246207,
+          "cobertura80": 0.8618266978922716,
+          "cobertura95": 0.9836065573770492,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 2.6442663290650126,
+          "rmse": 3.2479820789110434,
+          "mape": 3.2937000425141902,
+          "mase": 0.7945775336054685,
+          "cobertura80": 0.8594847775175644,
+          "cobertura95": 0.9836065573770492,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 2.965895475130431,
+          "rmse": 3.68031498721104,
+          "mape": 3.7017396555705155,
+          "mase": 0.8871913829022223,
+          "cobertura80": 0.7845433255269321,
+          "cobertura95": 0.955503512880562,
+          "nPronosticos": 427,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 2.8668040176353715,
+          "rmse": 3.55709923414704,
+          "mape": 3.5889103250370162,
+          "mase": 0.8585635185242924,
+          "cobertura80": 0.7917737789203085,
+          "cobertura95": 0.9640102827763496,
+          "nPronosticos": 389,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.15,
+        "pendienteOLS": 0.15988270094915433,
+        "pendienteTheilSen": 0.16666666666666666,
+        "pendienteHolt": 0.1760641096310107
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "estacional",
+      "n": 78,
+      "cobertura": 0.8666666666666667,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.8763954638437925,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 4.306636155606407,
+          "rmse": 5.321688278424725,
+          "mape": 6.054318528192891,
+          "mase": 1.1434947956544388,
+          "cobertura80": 0.9267734553775744,
+          "cobertura95": 0.9816933638443935,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 3.2873488067996064,
+          "rmse": 3.93428957683401,
+          "mape": 4.63305593283228,
+          "mase": 0.8763954638437925,
+          "cobertura80": 0.8100686498855835,
+          "cobertura95": 0.988558352402746,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 4.5173027114987265,
+          "rmse": 5.577966276821619,
+          "mape": 6.35726517534843,
+          "mase": 1.2006238416293546,
+          "cobertura80": 0.9290617848970252,
+          "cobertura95": 0.9816933638443935,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 3.9153318077803205,
+          "rmse": 4.840948523656873,
+          "mape": 5.467015474021573,
+          "mase": 1.0398004966336527,
+          "cobertura80": 0.8123569794050344,
+          "cobertura95": 0.9450800915331807,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 3.3736540830395496,
+          "rmse": 3.980018943693329,
+          "mape": 4.733405838747603,
+          "mase": 0.8971357852971428,
+          "cobertura80": 0.7803203661327232,
+          "cobertura95": 0.9702517162471396,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 3.44892856956191,
+          "rmse": 4.099800527646627,
+          "mape": 4.846885585896206,
+          "mase": 0.9138296029014584,
+          "cobertura80": 0.7848970251716247,
+          "cobertura95": 0.977116704805492,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 3.308418715386681,
+          "rmse": 3.9430033490856937,
+          "mape": 4.6650048514271365,
+          "mase": 0.8789256404384661,
+          "cobertura80": 0.7070938215102975,
+          "cobertura95": 0.9359267734553776,
+          "nPronosticos": 437,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 3.3438340475556187,
+          "rmse": 4.141865031628469,
+          "mape": 4.689633398911448,
+          "mase": 0.8889575707853209,
+          "cobertura80": 0.8087167070217918,
+          "cobertura95": 0.9612590799031477,
+          "nPronosticos": 413,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "amplitudVerdadera": 4,
+        "amplitudHW": 4.620921941810356
+      },
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "cambio_regimen",
+      "n": 78,
+      "cobertura": 0.8666666666666667,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.7976754728934671,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 3.800936768149883,
+          "rmse": 4.746254532187368,
+          "mape": 4.933471770867627,
+          "mase": 0.9705492545278342,
+          "cobertura80": 0.936768149882904,
+          "cobertura95": 0.9976580796252927,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 3.1391769822683138,
+          "rmse": 3.975700459091408,
+          "mape": 4.049909944355485,
+          "mase": 0.7976754728934671,
+          "cobertura80": 0.8009367681498829,
+          "cobertura95": 0.9484777517564403,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 4.05022127690392,
+          "rmse": 5.00848205732173,
+          "mape": 5.271810932826415,
+          "mase": 1.034593481277701,
+          "cobertura80": 0.9461358313817331,
+          "cobertura95": 0.9976580796252927,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 4.04215456674473,
+          "rmse": 5.120103189826653,
+          "mape": 5.228990804537279,
+          "mase": 1.027892858240065,
+          "cobertura80": 0.7868852459016393,
+          "cobertura95": 0.9203747072599532,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 3.566244947178921,
+          "rmse": 4.363582954727592,
+          "mape": 4.585231319248622,
+          "mase": 0.9055804802245682,
+          "cobertura80": 0.7564402810304449,
+          "cobertura95": 0.9320843091334895,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 3.776589836792949,
+          "rmse": 4.615560109334589,
+          "mape": 4.8493823790366966,
+          "mase": 0.9586730454814447,
+          "cobertura80": 0.7306791569086651,
+          "cobertura95": 0.9227166276346604,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 3.219067365820088,
+          "rmse": 4.135886845259382,
+          "mape": 4.149802126714607,
+          "mase": 0.8191613164617071,
+          "cobertura80": 0.7166276346604216,
+          "cobertura95": 0.9133489461358314,
+          "nPronosticos": 427,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 3.785934548552729,
+          "rmse": 4.6779680545009725,
+          "mape": 4.866618608816768,
+          "mase": 0.9586191229027372,
+          "cobertura80": 0.7933673469387755,
+          "cobertura95": 0.9260204081632653,
+          "nPronosticos": 392,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1,
+        "diaCambio": "2026-07-16",
+        "retrasoCusum": 5,
+        "retrasoEwma": 5
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "ruidoso",
+      "n": 79,
+      "cobertura": 0.8777777777777778,
+      "seleccion": {
+        "clave": "holt",
+        "nombre": "Holt amortiguado",
+        "mase": 0.6974508279079815,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 8.085253456221198,
+          "rmse": 10.094598637835293,
+          "mape": 11.631569880220265,
+          "mase": 0.947812890744789,
+          "cobertura80": 0.9423963133640553,
+          "cobertura95": 0.9930875576036866,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 6.235681369321914,
+          "rmse": 7.775879964736762,
+          "mape": 9.062500945313456,
+          "mase": 0.7324942008518223,
+          "cobertura80": 0.804147465437788,
+          "cobertura95": 0.9539170506912442,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 8.435827896069902,
+          "rmse": 10.57374239137943,
+          "mape": 12.09181846507642,
+          "mase": 0.9894986739681456,
+          "cobertura80": 0.9447004608294931,
+          "cobertura95": 0.9930875576036866,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 7.868663594470046,
+          "rmse": 9.598747038049332,
+          "mape": 11.13419902690861,
+          "mase": 0.9185004703290081,
+          "cobertura80": 0.7534562211981567,
+          "cobertura95": 0.9055299539170507,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 6.309281850704826,
+          "rmse": 7.699211916136548,
+          "mape": 8.992642342485345,
+          "mase": 0.7414158839187803,
+          "cobertura80": 0.7626728110599078,
+          "cobertura95": 0.9516129032258065,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 6.350487724912944,
+          "rmse": 7.851861900397885,
+          "mape": 9.071564621388346,
+          "mase": 0.7469715944529939,
+          "cobertura80": 0.8110599078341014,
+          "cobertura95": 0.9539170506912442,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 5.931349930090915,
+          "rmse": 7.452842227565894,
+          "mape": 8.575594547214097,
+          "mase": 0.6974508279079815,
+          "cobertura80": 0.7373271889400922,
+          "cobertura95": 0.9216589861751152,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 6.877973453145346,
+          "rmse": 8.685199724749108,
+          "mape": 9.90238999629924,
+          "mase": 0.8025243006555208,
+          "cobertura80": 0.8195488721804511,
+          "cobertura95": 0.9473684210526315,
+          "nPronosticos": 399,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "frecuencia_cardiaca",
+      "perfil": "disperso",
+      "n": 47,
+      "cobertura": 0.5222222222222223,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.9969778911963546,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 3.4186046511627906,
+          "rmse": 4.654080480210787,
+          "mape": 4.507751490096201,
+          "mase": 1.3116801064380355,
+          "cobertura80": 0.9162790697674419,
+          "cobertura95": 0.958139534883721,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 2.6445182724252474,
+          "rmse": 3.753814702675378,
+          "mape": 3.4615480957370366,
+          "mase": 1.0141750723092313,
+          "cobertura80": 0.7906976744186046,
+          "cobertura95": 0.9302325581395349,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 3.571850620362786,
+          "rmse": 4.830057674538766,
+          "mape": 4.719217980289391,
+          "mase": 1.3733972097492013,
+          "cobertura80": 0.9162790697674419,
+          "cobertura95": 0.958139534883721,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 3.1953488372093024,
+          "rmse": 4.374875413508473,
+          "mape": 4.182461842433086,
+          "mase": 1.2320387010417904,
+          "cobertura80": 0.7767441860465116,
+          "cobertura95": 0.9534883720930233,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 2.612665860628766,
+          "rmse": 3.621176595648953,
+          "mape": 3.4380844137682325,
+          "mase": 0.9969778911963546,
+          "cobertura80": 0.7906976744186046,
+          "cobertura95": 0.9209302325581395,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 2.6904598840297904,
+          "rmse": 3.7704388052833075,
+          "mape": 3.5092922534533515,
+          "mase": 1.024817288589346,
+          "cobertura80": 0.7348837209302326,
+          "cobertura95": 0.9348837209302325,
+          "nPronosticos": 215,
+          "nOrigenes": 65,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 2.7740080026086202,
+          "rmse": 3.4096901691108226,
+          "mape": 3.777169075735745,
+          "mase": 1.0829676846414746,
+          "cobertura80": 0.6948051948051948,
+          "cobertura95": 0.9090909090909091,
+          "nPronosticos": 154,
+          "nOrigenes": 50,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 4.043965002239936,
+          "rmse": 4.776534730011633,
+          "mape": 5.549170837113595,
+          "mase": 1.6589122389596633,
+          "cobertura80": 0.8110236220472441,
+          "cobertura95": 0.9448818897637795,
+          "nPronosticos": 127,
+          "nOrigenes": 42,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.05,
+        "pendienteOLS": 0.076230750586933,
+        "pendienteTheilSen": 0.06976744186046512,
+        "pendienteHolt": -0.004714095598184636
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "estable",
+      "n": 74,
+      "cobertura": 0.8222222222222222,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 1.0859177906419502,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.5749382716049385,
+          "rmse": 0.745444601778689,
+          "mape": 8.03563891662657,
+          "mase": 1.3394057294330741,
+          "cobertura80": 0.8938271604938272,
+          "cobertura95": 0.9604938271604938,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.46441269841269855,
+          "rmse": 0.6083057811712789,
+          "mape": 6.5048371081579095,
+          "mase": 1.0859177906419502,
+          "cobertura80": 0.7753086419753087,
+          "cobertura95": 0.908641975308642,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.6264882268599726,
+          "rmse": 0.7989575019231172,
+          "mape": 8.82341231118139,
+          "mase": 1.4691808010344058,
+          "cobertura80": 0.8987654320987655,
+          "cobertura95": 0.9604938271604938,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.6090123456790127,
+          "rmse": 0.757571656554556,
+          "mape": 8.516142833022448,
+          "mase": 1.399692525107124,
+          "cobertura80": 0.7753086419753087,
+          "cobertura95": 0.9160493827160494,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.5001342058109485,
+          "rmse": 0.6570880952491884,
+          "mape": 7.080560517060558,
+          "mase": 1.1905148204949532,
+          "cobertura80": 0.6938271604938272,
+          "cobertura95": 0.8271604938271605,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.48687205150322327,
+          "rmse": 0.6368434942473972,
+          "mape": 6.856164430316292,
+          "mase": 1.1529227079707953,
+          "cobertura80": 0.7283950617283951,
+          "cobertura95": 0.8493827160493828,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.5119979774364152,
+          "rmse": 0.6581004538861525,
+          "mape": 7.197575936353962,
+          "mase": 1.2104588484993049,
+          "cobertura80": 0.7432098765432099,
+          "cobertura95": 0.8839506172839506,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.5980372705513031,
+          "rmse": 0.7418792847499662,
+          "mape": 8.475965867506998,
+          "mase": 1.3808895250403659,
+          "cobertura80": 0.7727272727272727,
+          "cobertura95": 0.9385026737967914,
+          "nPronosticos": 374,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "tendencia_suave",
+      "n": 72,
+      "cobertura": 0.8,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.7072290488721923,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.6655555555555552,
+          "rmse": 0.8135809446443372,
+          "mape": 10.399512347374936,
+          "mase": 0.9113505488225969,
+          "cobertura80": 0.9715762273901809,
+          "cobertura95": 0.9974160206718347,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.5240974529346623,
+          "rmse": 0.6393162892684567,
+          "mape": 8.196096573333609,
+          "mase": 0.7162948051610369,
+          "cobertura80": 0.8062015503875969,
+          "cobertura95": 0.9483204134366925,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.7052470146076647,
+          "rmse": 0.863603689179642,
+          "mape": 11.048793686020627,
+          "mase": 0.9656649124428162,
+          "cobertura80": 0.9715762273901809,
+          "cobertura95": 0.9974160206718347,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7050645994832033,
+          "rmse": 0.8881912637097009,
+          "mape": 10.984085867571418,
+          "mase": 0.958946230297625,
+          "cobertura80": 0.8217054263565892,
+          "cobertura95": 0.9483204134366925,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.5173065474963252,
+          "rmse": 0.6330180988946743,
+          "mape": 8.169613532848869,
+          "mase": 0.7072290488721923,
+          "cobertura80": 0.7984496124031008,
+          "cobertura95": 0.9483204134366925,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.5338100915522997,
+          "rmse": 0.6524457003324375,
+          "mape": 8.411507400095978,
+          "mase": 0.7295247158599665,
+          "cobertura80": 0.7984496124031008,
+          "cobertura95": 0.9328165374677002,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.5463112866743601,
+          "rmse": 0.6775393809500642,
+          "mape": 8.53790824159584,
+          "mase": 0.746141750427482,
+          "cobertura80": 0.7157622739018088,
+          "cobertura95": 0.875968992248062,
+          "nPronosticos": 387,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.6508761101739724,
+          "rmse": 0.7992542282667263,
+          "mape": 10.142686905325498,
+          "mase": 0.8910792375293903,
+          "cobertura80": 0.7554347826086957,
+          "cobertura95": 0.9184782608695652,
+          "nPronosticos": 368,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.01,
+        "pendienteOLS": -0.006756657946547503,
+        "pendienteTheilSen": -0.006387500000000007,
+        "pendienteHolt": 0.005410522196650826
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "tendencia_fuerte",
+      "n": 77,
+      "cobertura": 0.8555555555555555,
+      "seleccion": {
+        "clave": "holt",
+        "nombre": "Holt amortiguado",
+        "mase": 0.7494924947986981,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.7706190476190468,
+          "rmse": 0.9658536811201448,
+          "mape": 14.690141124356026,
+          "mase": 1.0438371788984044,
+          "cobertura80": 0.930952380952381,
+          "cobertura95": 0.9880952380952381,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.5708333333333334,
+          "rmse": 0.6989178119576869,
+          "mape": 11.183404959104168,
+          "mase": 0.7765009367526806,
+          "cobertura80": 0.8404761904761905,
+          "cobertura95": 0.9928571428571429,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.8054127156531273,
+          "rmse": 1.0084650840542408,
+          "mape": 15.08500555571863,
+          "mase": 1.0917317651853604,
+          "cobertura80": 0.930952380952381,
+          "cobertura95": 0.9880952380952381,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7238571428571425,
+          "rmse": 0.8951001540131056,
+          "mape": 14.203871577441257,
+          "mase": 0.9740181763319804,
+          "cobertura80": 0.7928571428571428,
+          "cobertura95": 0.95,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.5541192595681075,
+          "rmse": 0.7047727509036896,
+          "mape": 10.084866225463934,
+          "mase": 0.7558663766132265,
+          "cobertura80": 0.8142857142857143,
+          "cobertura95": 0.9404761904761905,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.5704847408115616,
+          "rmse": 0.7202629927522893,
+          "mape": 10.307192852175632,
+          "mase": 0.7771998822889294,
+          "cobertura80": 0.8238095238095238,
+          "cobertura95": 0.9404761904761905,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.5505523626885208,
+          "rmse": 0.683161862656212,
+          "mape": 10.60733371594797,
+          "mase": 0.7494924947986981,
+          "cobertura80": 0.7476190476190476,
+          "cobertura95": 0.95,
+          "nPronosticos": 420,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.6257506730616729,
+          "rmse": 0.7604317846363614,
+          "mape": 11.86812888097771,
+          "mase": 0.8485081336265043,
+          "cobertura80": 0.8724489795918368,
+          "cobertura95": 0.9795918367346939,
+          "nPronosticos": 392,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.03,
+        "pendienteOLS": -0.02919599038125634,
+        "pendienteTheilSen": -0.02956439393939394,
+        "pendienteHolt": -0.02798406604892619
+      },
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "estacional",
+      "n": 75,
+      "cobertura": 0.8333333333333334,
+      "seleccion": {
+        "clave": "holt_winters",
+        "nombre": "Holt-Winters (7 d)",
+        "mase": 0.6112064398826119,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.0290024330900238,
+          "rmse": 1.2748451554272395,
+          "mape": 14.299140897239617,
+          "mase": 0.9961125974817304,
+          "cobertura80": 0.9367396593673966,
+          "cobertura95": 0.9927007299270073,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.7499513381995135,
+          "rmse": 0.9219099496215896,
+          "mape": 10.492814603847176,
+          "mase": 0.7305717411993319,
+          "cobertura80": 0.9148418491484185,
+          "cobertura95": 0.9805352798053528,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.0969615397946526,
+          "rmse": 1.3519586539842616,
+          "mape": 15.291382204613605,
+          "mase": 1.0646453754547933,
+          "cobertura80": 0.9367396593673966,
+          "cobertura95": 0.9927007299270073,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.6887104622871043,
+          "rmse": 0.845049704119876,
+          "mape": 9.694218356583576,
+          "mase": 0.6626023038632003,
+          "cobertura80": 0.8588807785888077,
+          "cobertura95": 0.948905109489051,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.7684227765574935,
+          "rmse": 0.9505819718846958,
+          "mape": 10.846558252904828,
+          "mase": 0.7535751932076993,
+          "cobertura80": 0.8321167883211679,
+          "cobertura95": 0.9683698296836983,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.7577912964009005,
+          "rmse": 0.9433964034469516,
+          "mape": 10.473935163540867,
+          "mase": 0.7400805751569663,
+          "cobertura80": 0.8588807785888077,
+          "cobertura95": 0.975669099756691,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.758291115174077,
+          "rmse": 0.931401215929754,
+          "mape": 10.714421576927027,
+          "mase": 0.7411594910134081,
+          "cobertura80": 0.8248175182481752,
+          "cobertura95": 0.9610705596107056,
+          "nPronosticos": 411,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.6460865490703225,
+          "rmse": 0.7912187551660489,
+          "mape": 9.041239332656795,
+          "mase": 0.6112064398826119,
+          "cobertura80": 0.876010781671159,
+          "cobertura95": 0.9622641509433962,
+          "nPronosticos": 371,
+          "nOrigenes": 66,
+          "seleccionado": true
+        }
+      ],
+      "recuperacion": {
+        "amplitudVerdadera": 1.6,
+        "amplitudHW": 1.7591581249640922
+      },
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "cambio_regimen",
+      "n": 73,
+      "cobertura": 0.8111111111111111,
+      "seleccion": {
+        "clave": "holt",
+        "nombre": "Holt amortiguado",
+        "mase": 0.750536600213737,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.7363010204081646,
+          "rmse": 0.8982169128050195,
+          "mape": 11.345622267605822,
+          "mase": 0.9875382258838545,
+          "cobertura80": 0.9591836734693877,
+          "cobertura95": 0.9872448979591837,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.5687864431486882,
+          "rmse": 0.6999947752229596,
+          "mape": 8.930217602824833,
+          "mase": 0.7639107763052431,
+          "cobertura80": 0.8341836734693877,
+          "cobertura95": 0.9948979591836735,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.7871807004053613,
+          "rmse": 0.9577576088470632,
+          "mape": 12.030730947431707,
+          "mase": 1.0545196296533013,
+          "cobertura80": 0.9642857142857143,
+          "cobertura95": 0.9872448979591837,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7948724489795927,
+          "rmse": 0.9770315047246382,
+          "mape": 12.456235699022464,
+          "mase": 1.0634371647349867,
+          "cobertura80": 0.8239795918367347,
+          "cobertura95": 0.9260204081632653,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.5933821614215365,
+          "rmse": 0.7291518415882398,
+          "mape": 9.337555611294952,
+          "mase": 0.7984491489095447,
+          "cobertura80": 0.7806122448979592,
+          "cobertura95": 0.9821428571428571,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.6384324267524706,
+          "rmse": 0.7731054509434235,
+          "mape": 10.091977418890234,
+          "mase": 0.8576848800715556,
+          "cobertura80": 0.7576530612244898,
+          "cobertura95": 0.9719387755102041,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.5589680675364038,
+          "rmse": 0.6846101060325224,
+          "mape": 8.759084251444381,
+          "mase": 0.750536600213737,
+          "cobertura80": 0.7627551020408163,
+          "cobertura95": 0.9795918367346939,
+          "nPronosticos": 392,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.6770846204137427,
+          "rmse": 0.8512996530546508,
+          "mape": 10.404886197335717,
+          "mase": 0.8961554825793439,
+          "cobertura80": 0.7983193277310925,
+          "cobertura95": 0.9719887955182073,
+          "nPronosticos": 357,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1,
+        "diaCambio": "2026-07-16",
+        "retrasoCusum": 9,
+        "retrasoEwma": 12
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "ruidoso",
+      "n": 74,
+      "cobertura": 0.8222222222222222,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 1.1088679865923357,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.349333333333332,
+          "rmse": 1.6952382111646116,
+          "mape": 19.189757937351963,
+          "mase": 1.3960241865045953,
+          "cobertura80": 0.8839506172839506,
+          "cobertura95": 0.9604938271604938,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.0819223985890651,
+          "rmse": 1.3186173710470406,
+          "mape": 15.46932002955987,
+          "mase": 1.1127591482401356,
+          "cobertura80": 0.7086419753086419,
+          "cobertura95": 0.9111111111111111,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.418230666283088,
+          "rmse": 1.7715705755117823,
+          "mape": 20.226316558032817,
+          "mase": 1.4709114185994034,
+          "cobertura80": 0.8987654320987655,
+          "cobertura95": 0.9604938271604938,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.3818518518518499,
+          "rmse": 1.7188580044628976,
+          "mape": 19.947886128452957,
+          "mase": 1.4131140689029111,
+          "cobertura80": 0.7012345679012346,
+          "cobertura95": 0.8444444444444444,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 1.073996185501466,
+          "rmse": 1.3082745571217667,
+          "mape": 15.725389871232917,
+          "mase": 1.1088679865923357,
+          "cobertura80": 0.6172839506172839,
+          "cobertura95": 0.8938271604938272,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 1.082531239560515,
+          "rmse": 1.333636190671278,
+          "mape": 16.219440369733874,
+          "mase": 1.1146816352244149,
+          "cobertura80": 0.6148148148148148,
+          "cobertura95": 0.8814814814814815,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.1225155573199943,
+          "rmse": 1.3624004181908003,
+          "mape": 15.985179595328539,
+          "mase": 1.1655313430187138,
+          "cobertura80": 0.6518518518518519,
+          "cobertura95": 0.8666666666666667,
+          "nPronosticos": 405,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.3229448008847824,
+          "rmse": 1.6628046111173422,
+          "mape": 19.118093670120068,
+          "mase": 1.3648768219053993,
+          "cobertura80": 0.675531914893617,
+          "cobertura95": 0.8909574468085106,
+          "nPronosticos": 376,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "horas_sueno",
+      "perfil": "disperso",
+      "n": 54,
+      "cobertura": 0.6,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.7044596027355685,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.6721402214022136,
+          "rmse": 0.8062493456617958,
+          "mape": 10.318596833202943,
+          "mase": 1.1230347695449043,
+          "cobertura80": 0.8929889298892989,
+          "cobertura95": 0.981549815498155,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.42332630469161847,
+          "rmse": 0.5341208140996963,
+          "mape": 6.618476883573206,
+          "mase": 0.7044596027355685,
+          "cobertura80": 0.7896678966789668,
+          "cobertura95": 0.9630996309963099,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.7178660608420642,
+          "rmse": 0.8586251365110783,
+          "mape": 10.9928477296827,
+          "mase": 1.2020334398219708,
+          "cobertura80": 0.8929889298892989,
+          "cobertura95": 0.985239852398524,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.5832103321033212,
+          "rmse": 0.7002511410319907,
+          "mape": 8.991550419803007,
+          "mase": 0.9697133173846768,
+          "cobertura80": 0.8450184501845018,
+          "cobertura95": 0.996309963099631,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.43537968098163776,
+          "rmse": 0.5380520272488627,
+          "mape": 6.755361463216175,
+          "mase": 0.7252954511349581,
+          "cobertura80": 0.7822878228782287,
+          "cobertura95": 0.988929889298893,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.45061940255288,
+          "rmse": 0.5545211443548426,
+          "mape": 7.0220347167244235,
+          "mase": 0.7517802109430389,
+          "cobertura80": 0.7970479704797048,
+          "cobertura95": 0.974169741697417,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.6048184206456457,
+          "rmse": 0.7363737537777221,
+          "mape": 9.29205625140838,
+          "mase": 1.0217077726218635,
+          "cobertura80": 0.7785977859778598,
+          "cobertura95": 0.915129151291513,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.6344599349351553,
+          "rmse": 0.8368962639246531,
+          "mape": 9.588002488257349,
+          "mase": 1.0859157727159638,
+          "cobertura80": 0.7822878228782287,
+          "cobertura95": 0.981549815498155,
+          "nPronosticos": 271,
+          "nOrigenes": 67,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.01,
+        "pendienteOLS": -0.009618668202617515,
+        "pendienteTheilSen": -0.008000000000000007,
+        "pendienteHolt": -0.005849247609928158
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "estable",
+      "n": 72,
+      "cobertura": 0.8,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.751722500135626,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.1508951406649617,
+          "rmse": 1.4657208451502381,
+          "mape": 34.95737425404942,
+          "mase": 1.0019985869263692,
+          "cobertura80": 0.9667519181585678,
+          "cobertura95": 0.9872122762148338,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.9901351845085867,
+          "rmse": 1.1756795712263914,
+          "mape": 30.75569358178055,
+          "mase": 0.8656565040532032,
+          "cobertura80": 0.887468030690537,
+          "cobertura95": 0.9820971867007673,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.2415533240980539,
+          "rmse": 1.5679187320304304,
+          "mape": 37.3711489813287,
+          "mase": 1.0793300631100635,
+          "cobertura80": 0.9667519181585678,
+          "cobertura95": 0.9872122762148338,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.1764705882352942,
+          "rmse": 1.5685528541512348,
+          "mape": 37.796248934356385,
+          "mase": 1.0271267517654765,
+          "cobertura80": 0.9104859335038363,
+          "cobertura95": 0.9616368286445013,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.9814181125153671,
+          "rmse": 1.175140662834753,
+          "mape": 29.682367478484796,
+          "mase": 0.8585862777252777,
+          "cobertura80": 0.887468030690537,
+          "cobertura95": 0.9974424552429667,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.8567774936061381,
+          "rmse": 1.0692158371413425,
+          "mape": 27.92838874680314,
+          "mase": 0.751722500135626,
+          "cobertura80": 0.8951406649616368,
+          "cobertura95": 0.9923273657289002,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.9897462333942724,
+          "rmse": 1.1950326476509128,
+          "mape": 30.226178733889082,
+          "mase": 0.8670039615595485,
+          "cobertura80": 0.7749360613810742,
+          "cobertura95": 0.9386189258312021,
+          "nPronosticos": 391,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.1497384721084243,
+          "rmse": 1.4393209342003845,
+          "mape": 31.324270274156955,
+          "mase": 1.0105716236966054,
+          "cobertura80": 0.7771428571428571,
+          "cobertura95": 0.98,
+          "nPronosticos": 350,
+          "nOrigenes": 68,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "tendencia_suave",
+      "n": 80,
+      "cobertura": 0.8888888888888888,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.6808890194683388,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.232662192393736,
+          "rmse": 1.5406497946350988,
+          "mape": 25.560083093640216,
+          "mase": 0.9532803363832417,
+          "cobertura80": 0.930648769574944,
+          "cobertura95": 0.9910514541387024,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.9702780441035466,
+          "rmse": 1.2125596364825364,
+          "mape": 20.23352965347217,
+          "mase": 0.7524964650278755,
+          "cobertura80": 0.8076062639821029,
+          "cobertura95": 0.9530201342281879,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.3039819550357812,
+          "rmse": 1.6194551641922363,
+          "mape": 27.05196740464768,
+          "mase": 1.0078246037866998,
+          "cobertura80": 0.930648769574944,
+          "cobertura95": 0.9910514541387024,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.2102908277404922,
+          "rmse": 1.5464471802915765,
+          "mape": 25.76435495898589,
+          "mase": 0.9366847002587434,
+          "cobertura80": 0.8322147651006712,
+          "cobertura95": 0.9865771812080537,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.9313238545934793,
+          "rmse": 1.1711207856820154,
+          "mape": 19.93875861817271,
+          "mase": 0.7233278317556022,
+          "cobertura80": 0.7919463087248322,
+          "cobertura95": 0.9485458612975392,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.8769574944071589,
+          "rmse": 1.181513078371296,
+          "mape": 18.17673378076066,
+          "mase": 0.6808890194683388,
+          "cobertura80": 0.8053691275167785,
+          "cobertura95": 0.9686800894854586,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.9622090102612633,
+          "rmse": 1.195455038634081,
+          "mape": 19.873264056294264,
+          "mase": 0.7461411207731079,
+          "cobertura80": 0.7785234899328859,
+          "cobertura95": 0.9217002237136466,
+          "nPronosticos": 447,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.1129016507850527,
+          "rmse": 1.3555065750110333,
+          "mape": 23.48443244187799,
+          "mase": 0.8599101103162637,
+          "cobertura80": 0.7880952380952381,
+          "cobertura95": 0.9738095238095238,
+          "nPronosticos": 420,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.02,
+        "pendienteOLS": 0.016415041550272187,
+        "pendienteTheilSen": 0,
+        "pendienteHolt": 0.019477868952152196
+      },
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 2
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "tendencia_fuerte",
+      "n": 72,
+      "cobertura": 0.8,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 1.0121182463593001,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.3195876288659794,
+          "rmse": 1.6929203706740903,
+          "mape": 19.86305432826052,
+          "mase": 1.3690206635995168,
+          "cobertura80": 0.8814432989690721,
+          "cobertura95": 0.9639175257731959,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.0555964653902816,
+          "rmse": 1.277362005229839,
+          "mape": 15.668963461673343,
+          "mase": 1.1110789288188185,
+          "cobertura80": 0.6881443298969072,
+          "cobertura95": 0.9432989690721649,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.3979169729948515,
+          "rmse": 1.7666919314494116,
+          "mape": 21.220802757528865,
+          "mase": 1.4517370180706302,
+          "cobertura80": 0.8788659793814433,
+          "cobertura95": 0.9664948453608248,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.2757731958762886,
+          "rmse": 1.5356586283026616,
+          "mape": 18.89819587628866,
+          "mase": 1.3281405760875873,
+          "cobertura80": 0.6778350515463918,
+          "cobertura95": 0.8943298969072165,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.9541722711185977,
+          "rmse": 1.1756847037544398,
+          "mape": 15.000155889440729,
+          "mase": 1.0121182463593001,
+          "cobertura80": 0.7371134020618557,
+          "cobertura95": 0.8891752577319587,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.9768620607770869,
+          "rmse": 1.2008516056983447,
+          "mape": 15.202042802668608,
+          "mase": 1.0368394028667305,
+          "cobertura80": 0.7268041237113402,
+          "cobertura95": 0.9149484536082474,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.1103513261710767,
+          "rmse": 1.4187485363278551,
+          "mape": 17.127061893750806,
+          "mase": 1.1959631279626795,
+          "cobertura80": 0.6391752577319587,
+          "cobertura95": 0.8298969072164949,
+          "nPronosticos": 388,
+          "nOrigenes": 71,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.1188139512147885,
+          "rmse": 1.403009752472967,
+          "mape": 17.444901342986245,
+          "mase": 1.194225221663935,
+          "cobertura80": 0.6772486772486772,
+          "cobertura95": 0.9074074074074074,
+          "nPronosticos": 378,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.05,
+        "pendienteOLS": 0.048276249556260996,
+        "pendienteTheilSen": 0.047619047619047616,
+        "pendienteHolt": 0.029853158289869074
+      },
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "estacional",
+      "n": 75,
+      "cobertura": 0.8333333333333334,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.75109513994264,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.294403892944039,
+          "rmse": 1.6150147076985786,
+          "mape": 40.60827250608271,
+          "mase": 1.028524856438975,
+          "cobertura80": 0.975669099756691,
+          "cobertura95": 0.9975669099756691,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.020159888773031,
+          "rmse": 1.2170275124400636,
+          "mape": 33.119568995481494,
+          "mase": 0.805895579493599,
+          "cobertura80": 0.9294403892944039,
+          "cobertura95": 1,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.3821321467417211,
+          "rmse": 1.7091685078162528,
+          "mape": 42.80825492339202,
+          "mase": 1.092755430796168,
+          "cobertura80": 0.975669099756691,
+          "cobertura95": 0.9975669099756691,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.0170316301703164,
+          "rmse": 1.4347104797079937,
+          "mape": 30.81914030819147,
+          "mase": 0.7925277014704298,
+          "cobertura80": 0.7980535279805353,
+          "cobertura95": 0.9537712895377128,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 1.0900878606999846,
+          "rmse": 1.3193089711963302,
+          "mape": 32.27472193314763,
+          "mase": 0.8493864738119199,
+          "cobertura80": 0.8710462287104623,
+          "cobertura95": 1,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.9552549989725844,
+          "rmse": 1.2117302756275468,
+          "mape": 32.92516747839735,
+          "mase": 0.75109513994264,
+          "cobertura80": 0.8345498783454988,
+          "cobertura95": 0.9829683698296837,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.011916106267862,
+          "rmse": 1.2033911015879977,
+          "mape": 32.05237797233145,
+          "mase": 0.7972815180200865,
+          "cobertura80": 0.8175182481751825,
+          "cobertura95": 0.9732360097323601,
+          "nPronosticos": 411,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.037181921519756,
+          "rmse": 1.2918141777026433,
+          "mape": 32.24775514958031,
+          "mase": 0.8303791173482479,
+          "cobertura80": 0.8888888888888888,
+          "cobertura95": 0.9841269841269841,
+          "nPronosticos": 378,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "amplitudVerdadera": 2.3,
+        "amplitudHW": 2.225702078055964
+      },
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "cambio_regimen",
+      "n": 72,
+      "cobertura": 0.8,
+      "seleccion": {
+        "clave": "holt",
+        "nombre": "Holt amortiguado",
+        "mase": 1.0437951450163476,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.2487179487179487,
+          "rmse": 1.6180076384086441,
+          "mape": 22.929690679690708,
+          "mase": 1.1584157301475915,
+          "cobertura80": 0.9,
+          "cobertura95": 0.9897435897435898,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.1238095238095251,
+          "rmse": 1.5195223574079044,
+          "mape": 20.503590325018912,
+          "mase": 1.0500166027717466,
+          "cobertura80": 0.7974358974358975,
+          "cobertura95": 0.8923076923076924,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.346259308929444,
+          "rmse": 1.7017758163815944,
+          "mape": 24.68472356422032,
+          "mase": 1.2502445751705378,
+          "cobertura80": 0.9051282051282051,
+          "cobertura95": 0.9897435897435898,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.3102564102564103,
+          "rmse": 1.7795130420052185,
+          "mape": 23.8703703703704,
+          "mase": 1.2232427315926209,
+          "cobertura80": 0.7974358974358975,
+          "cobertura95": 0.8897435897435897,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 1.2396820776501605,
+          "rmse": 1.5738309984078644,
+          "mape": 22.500001687376635,
+          "mase": 1.1542629880941988,
+          "cobertura80": 0.7333333333333333,
+          "cobertura95": 0.8846153846153846,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 1.2783988000110598,
+          "rmse": 1.6805490622089374,
+          "mape": 21.868891487449666,
+          "mase": 1.1952369751021243,
+          "cobertura80": 0.7589743589743589,
+          "cobertura95": 0.8794871794871795,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.1189984913160669,
+          "rmse": 1.4553116716513352,
+          "mape": 20.596090882702978,
+          "mase": 1.0437951450163476,
+          "cobertura80": 0.7282051282051282,
+          "cobertura95": 0.8692307692307693,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.375943272330866,
+          "rmse": 1.7817831718180306,
+          "mape": 25.36540063103599,
+          "mase": 1.2845603518159565,
+          "cobertura80": 0.8179487179487179,
+          "cobertura95": 0.9282051282051282,
+          "nPronosticos": 390,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1,
+        "diaCambio": "2026-07-16",
+        "retrasoCusum": 2,
+        "retrasoEwma": 4
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "ruidoso",
+      "n": 77,
+      "cobertura": 0.8555555555555555,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.8724306274581979,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 2.167452830188679,
+          "rmse": 2.7596315039758204,
+          "mape": 77.41174378556452,
+          "mase": 1.2263294885293177,
+          "cobertura80": 0.9033018867924528,
+          "cobertura95": 0.9764150943396226,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.596361185983828,
+          "rmse": 2.0244700576316768,
+          "mape": 64.35572027553165,
+          "mase": 0.9044541262375299,
+          "cobertura80": 0.7783018867924528,
+          "cobertura95": 0.9174528301886793,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 2.2908555221537656,
+          "rmse": 2.8715155935388696,
+          "mape": 79.1494470520828,
+          "mase": 1.2992048259864863,
+          "cobertura80": 0.9009433962264151,
+          "cobertura95": 0.9740566037735849,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 2.3042452830188678,
+          "rmse": 2.8246722969055473,
+          "mape": 87.56747903563952,
+          "mase": 1.2947231318123218,
+          "cobertura80": 0.6462264150943396,
+          "cobertura95": 0.9363207547169812,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 1.6377356908749308,
+          "rmse": 2.066363216020759,
+          "mape": 59.40669111689804,
+          "mase": 0.9363491329398503,
+          "cobertura80": 0.75,
+          "cobertura95": 0.9080188679245284,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 1.5256833120537192,
+          "rmse": 2.011093855459307,
+          "mape": 58.746320282938846,
+          "mase": 0.8724306274581979,
+          "cobertura80": 0.75,
+          "cobertura95": 0.9504716981132075,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.6020610518429113,
+          "rmse": 2.033378818155223,
+          "mape": 62.46961234697186,
+          "mase": 0.9152157776329454,
+          "cobertura80": 0.7216981132075472,
+          "cobertura95": 0.8655660377358491,
+          "nPronosticos": 424,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 2.0539504042193877,
+          "rmse": 2.513239937687953,
+          "mape": 80.42978806621751,
+          "mase": 1.1550811947092234,
+          "cobertura80": 0.7780612244897959,
+          "cobertura95": 0.9209183673469388,
+          "nPronosticos": 392,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "nivel_estres",
+      "perfil": "disperso",
+      "n": 49,
+      "cobertura": 0.5444444444444444,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.8043545743484386,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.7004405286343611,
+          "rmse": 2.0799017259061334,
+          "mape": 39.59198657436546,
+          "mase": 1.325930447109113,
+          "cobertura80": 0.960352422907489,
+          "cobertura95": 0.9823788546255506,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 1.0962869729389537,
+          "rmse": 1.3634628110089415,
+          "mape": 25.508106326230973,
+          "mase": 0.8705793743473654,
+          "cobertura80": 0.8634361233480177,
+          "cobertura95": 0.973568281938326,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.831887474931916,
+          "rmse": 2.2149520816928088,
+          "mape": 43.31684506629696,
+          "mase": 1.4309839577660224,
+          "cobertura80": 0.960352422907489,
+          "cobertura95": 0.9823788546255506,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.3568281938325992,
+          "rmse": 1.673846502681009,
+          "mape": 30.43685756240827,
+          "mase": 1.082091673773511,
+          "cobertura80": 0.8458149779735683,
+          "cobertura95": 1,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 1.0641582179623776,
+          "rmse": 1.3866138830280705,
+          "mape": 27.084488903372133,
+          "mase": 0.8489482547200681,
+          "cobertura80": 0.788546255506608,
+          "cobertura95": 0.9383259911894273,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 1.003952917943723,
+          "rmse": 1.335347212821564,
+          "mape": 24.790115955238193,
+          "mase": 0.8043545743484386,
+          "cobertura80": 0.8810572687224669,
+          "cobertura95": 0.9823788546255506,
+          "nPronosticos": 227,
+          "nOrigenes": 68,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 1.28255356598805,
+          "rmse": 1.5010714395712745,
+          "mape": 31.665518414287924,
+          "mase": 1.0425006207667158,
+          "cobertura80": 0.6708074534161491,
+          "cobertura95": 0.8757763975155279,
+          "nPronosticos": 161,
+          "nOrigenes": 48,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.583945129170754,
+          "rmse": 1.8843534487652382,
+          "mape": 38.50239092959877,
+          "mase": 1.3184429240128888,
+          "cobertura80": 0.8091603053435115,
+          "cobertura95": 0.9465648854961832,
+          "nPronosticos": 131,
+          "nOrigenes": 37,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": 0.02,
+        "pendienteOLS": 0.01619370275682096,
+        "pendienteTheilSen": 0,
+        "pendienteHolt": 0.03212959290453415
+      },
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "estable",
+      "n": 83,
+      "cobertura": 0.9222222222222223,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.7300356822167434,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.4939393939393934,
+          "rmse": 0.6302614038868614,
+          "mape": 0.5875768091312991,
+          "mase": 1.0324135425700507,
+          "cobertura80": 0.9415584415584416,
+          "cobertura95": 0.9913419913419913,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.348113790970933,
+          "rmse": 0.45926090190937835,
+          "mape": 0.4140884301113553,
+          "mase": 0.7300356822167434,
+          "cobertura80": 0.8333333333333334,
+          "cobertura95": 0.9523809523809523,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.523143766688746,
+          "rmse": 0.663341747114749,
+          "mape": 0.6223355499790153,
+          "mase": 1.09317296623314,
+          "cobertura80": 0.9393939393939394,
+          "cobertura95": 0.9891774891774892,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.5140692640692636,
+          "rmse": 0.6699001670146337,
+          "mape": 0.6114215378479181,
+          "mase": 1.072983295707712,
+          "cobertura80": 0.8051948051948052,
+          "cobertura95": 0.9199134199134199,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.3688771247278314,
+          "rmse": 0.4907516097166407,
+          "mape": 0.43901996341480004,
+          "mase": 0.7738411507190536,
+          "cobertura80": 0.8116883116883117,
+          "cobertura95": 0.9069264069264069,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.3697132765663042,
+          "rmse": 0.4840188555494066,
+          "mape": 0.4400724449301813,
+          "mase": 0.774805799423037,
+          "cobertura80": 0.8311688311688312,
+          "cobertura95": 0.9285714285714286,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.35599912361557245,
+          "rmse": 0.4703646593324437,
+          "mape": 0.4235269356651034,
+          "mase": 0.7456193006474421,
+          "cobertura80": 0.7965367965367965,
+          "cobertura95": 0.9112554112554112,
+          "nPronosticos": 462,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.40308255640872226,
+          "rmse": 0.5104442456653472,
+          "mape": 0.47938770037290157,
+          "mase": 0.8430277470374252,
+          "cobertura80": 0.8709677419354839,
+          "cobertura95": 0.9516129032258065,
+          "nPronosticos": 434,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "tendencia_suave",
+      "n": 81,
+      "cobertura": 0.9,
+      "seleccion": {
+        "clave": "theil_sen",
+        "nombre": "Theil-Sen",
+        "mase": 0.7980488701114522,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.5160714285714282,
+          "rmse": 0.6454511157765097,
+          "mape": 0.6265883623633813,
+          "mase": 1.0662770415192349,
+          "cobertura80": 0.9441964285714286,
+          "cobertura95": 0.9821428571428571,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.44512117346938673,
+          "rmse": 0.5416099899331019,
+          "mape": 0.5414275775577041,
+          "mase": 0.9148675399547092,
+          "cobertura80": 0.7790178571428571,
+          "cobertura95": 0.9196428571428571,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.533399936826393,
+          "rmse": 0.6690687848566507,
+          "mape": 0.6470743385857607,
+          "mase": 1.1033748308828981,
+          "cobertura80": 0.9486607142857143,
+          "cobertura95": 0.9821428571428571,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.4935267857142846,
+          "rmse": 0.6047985201701458,
+          "mape": 0.5990308013550366,
+          "mase": 1.0135817761700412,
+          "cobertura80": 0.7834821428571429,
+          "cobertura95": 0.9933035714285714,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.3871804088134422,
+          "rmse": 0.4850053036322237,
+          "mape": 0.46967914119373183,
+          "mase": 0.8004200160880829,
+          "cobertura80": 0.7142857142857143,
+          "cobertura95": 0.9196428571428571,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.38551565400028587,
+          "rmse": 0.49311042299312785,
+          "mape": 0.46722747581490487,
+          "mase": 0.7980488701114522,
+          "cobertura80": 0.7366071428571429,
+          "cobertura95": 0.8973214285714286,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.4269810613613031,
+          "rmse": 0.5087892099461032,
+          "mape": 0.5187692476829721,
+          "mase": 0.8780622425010692,
+          "cobertura80": 0.7120535714285714,
+          "cobertura95": 0.8683035714285714,
+          "nPronosticos": 448,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.47367637914385846,
+          "rmse": 0.5953063195511218,
+          "mape": 0.5744203137255779,
+          "mase": 0.9756289008727427,
+          "cobertura80": 0.7590361445783133,
+          "cobertura95": 0.944578313253012,
+          "nPronosticos": 415,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.03,
+        "pendienteOLS": -0.030536774506240195,
+        "pendienteTheilSen": -0.030930735930735795,
+        "pendienteHolt": -0.021467238029857717
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "tendencia_fuerte",
+      "n": 81,
+      "cobertura": 0.9,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.7606000559095601,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.5951002227171495,
+          "rmse": 0.7417249503720721,
+          "mape": 0.7490041794156704,
+          "mase": 1.1003860154240104,
+          "cobertura80": 0.9665924276169265,
+          "cobertura95": 0.9955456570155902,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.6445116131084945,
+          "rmse": 0.7929376121837061,
+          "mape": 0.8132410798271799,
+          "mase": 1.194052561850021,
+          "cobertura80": 0.7216035634743875,
+          "cobertura95": 0.9420935412026726,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.5435861883029176,
+          "rmse": 0.6671087307548239,
+          "mape": 0.6820551229675103,
+          "mase": 0.9971032942901619,
+          "cobertura80": 0.9710467706013363,
+          "cobertura95": 0.9977728285077951,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7418708240534498,
+          "rmse": 0.9267732656744145,
+          "mape": 0.934822738797628,
+          "mase": 1.3629618787692688,
+          "cobertura80": 0.8084632516703786,
+          "cobertura95": 0.9977728285077951,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.4167915016867857,
+          "rmse": 0.502332619113958,
+          "mape": 0.5222473801847207,
+          "mase": 0.7606000559095601,
+          "cobertura80": 0.8507795100222717,
+          "cobertura95": 0.9844097995545658,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.4200297308689984,
+          "rmse": 0.50334599976921,
+          "mape": 0.5262096337188681,
+          "mase": 0.7655929402104872,
+          "cobertura80": 0.8552338530066815,
+          "cobertura95": 0.9866369710467706,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.4504544613936404,
+          "rmse": 0.5555742958373429,
+          "mape": 0.5666399308758212,
+          "mase": 0.8346941819580014,
+          "cobertura80": 0.8151447661469933,
+          "cobertura95": 0.9643652561247216,
+          "nPronosticos": 449,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.5131874049992865,
+          "rmse": 0.6331902779698195,
+          "mape": 0.6439523983646914,
+          "mase": 0.9515350234212012,
+          "cobertura80": 0.8459715639810427,
+          "cobertura95": 0.9881516587677726,
+          "nPronosticos": 422,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.08,
+        "pendienteOLS": -0.0799332005402116,
+        "pendienteTheilSen": -0.08000000000000013,
+        "pendienteHolt": -0.05991123239566451
+      },
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "estacional",
+      "n": 76,
+      "cobertura": 0.8444444444444444,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.7990473327705352,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.5442583732057422,
+          "rmse": 0.6758832604956134,
+          "mape": 0.6483858023887173,
+          "mase": 1.0735022002913241,
+          "cobertura80": 0.9282296650717703,
+          "cobertura95": 0.992822966507177,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.4049897470950108,
+          "rmse": 0.5109961628136872,
+          "mape": 0.48235132380455864,
+          "mase": 0.7990473327705352,
+          "cobertura80": 0.7799043062200957,
+          "cobertura95": 0.930622009569378,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.5734053411447148,
+          "rmse": 0.7140925203952391,
+          "mape": 0.6830574009675937,
+          "mase": 1.1327989455073628,
+          "cobertura80": 0.930622009569378,
+          "cobertura95": 0.992822966507177,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.5767942583732066,
+          "rmse": 0.7001537766839392,
+          "mape": 0.6871901113527276,
+          "mase": 1.1365573729804703,
+          "cobertura80": 0.7511961722488039,
+          "cobertura95": 0.9497607655502392,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.43758441502647766,
+          "rmse": 0.5466823862951667,
+          "mape": 0.5214096562852207,
+          "mase": 0.8651926714268826,
+          "cobertura80": 0.7344497607655502,
+          "cobertura95": 0.9258373205741627,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.4232295240718156,
+          "rmse": 0.5355847587254811,
+          "mape": 0.5042914052274448,
+          "mase": 0.8378620892431672,
+          "cobertura80": 0.7607655502392344,
+          "cobertura95": 0.9354066985645934,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.42833998253166794,
+          "rmse": 0.5477895508992362,
+          "mape": 0.5102895988407224,
+          "mase": 0.84783277233689,
+          "cobertura80": 0.7296650717703349,
+          "cobertura95": 0.8708133971291866,
+          "nPronosticos": 418,
+          "nOrigenes": 75,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.5284330257769356,
+          "rmse": 0.6319025880475553,
+          "mape": 0.6296409180653956,
+          "mase": 1.0141226661661022,
+          "cobertura80": 0.753968253968254,
+          "cobertura95": 0.9153439153439153,
+          "nPronosticos": 378,
+          "nOrigenes": 68,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "amplitudVerdadera": 0.4,
+        "amplitudHW": 0.404198272636048
+      },
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "cambio_regimen",
+      "n": 79,
+      "cobertura": 0.8777777777777778,
+      "seleccion": {
+        "clave": "holt",
+        "nombre": "Holt amortiguado",
+        "mase": 1.0053933323798259,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.7099078341013833,
+          "rmse": 1.1019776942886275,
+          "mape": 0.8272725184574387,
+          "mase": 1.1410656119076898,
+          "cobertura80": 0.9101382488479263,
+          "cobertura95": 0.9631336405529954,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.6394338380513491,
+          "rmse": 0.9524789833242572,
+          "mape": 0.7442310701480739,
+          "mase": 1.0177593197750838,
+          "cobertura80": 0.836405529953917,
+          "cobertura95": 0.868663594470046,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.7564415745910565,
+          "rmse": 1.1700051521409127,
+          "mape": 0.8816573521161983,
+          "mase": 1.215079366344157,
+          "cobertura80": 0.9124423963133641,
+          "cobertura95": 0.9631336405529954,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7629032258064496,
+          "rmse": 1.1099570299317592,
+          "mape": 0.8886712363916305,
+          "mase": 1.2058884738658233,
+          "cobertura80": 0.8202764976958525,
+          "cobertura95": 0.8870967741935484,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.7702917514226927,
+          "rmse": 1.0722004990482457,
+          "mape": 0.8955374449734413,
+          "mase": 1.2140818208490665,
+          "cobertura80": 0.8018433179723502,
+          "cobertura95": 0.8571428571428571,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.8866336370008763,
+          "rmse": 1.196996627331558,
+          "mape": 1.0303164247816778,
+          "mase": 1.384952079551611,
+          "cobertura80": 0.7096774193548387,
+          "cobertura95": 0.8456221198156681,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.6310725633458635,
+          "rmse": 0.9399190100367703,
+          "mape": 0.734871424496134,
+          "mase": 1.0053933323798259,
+          "cobertura80": 0.8317972350230415,
+          "cobertura95": 0.8755760368663594,
+          "nPronosticos": 434,
+          "nOrigenes": 74,
+          "seleccionado": true
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 0.8049770307707468,
+          "rmse": 1.115108657953611,
+          "mape": 0.9362929371009873,
+          "mase": 1.273623905466357,
+          "cobertura80": 0.81,
+          "cobertura95": 0.8825,
+          "nPronosticos": 400,
+          "nOrigenes": 69,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 1,
+        "alertasEwma": 1,
+        "diaCambio": "2026-07-16",
+        "retrasoCusum": 2,
+        "retrasoEwma": 2
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "ruidoso",
+      "n": 75,
+      "cobertura": 0.8333333333333334,
+      "seleccion": {
+        "clave": "media_movil",
+        "nombre": "Media móvil (7)",
+        "mase": 0.820276676331214,
+        "confianza": "alta"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 1.1262650602409643,
+          "rmse": 1.3802566550228763,
+          "mape": 1.3414976152713651,
+          "mase": 1.1042653267063252,
+          "cobertura80": 0.9204819277108434,
+          "cobertura95": 0.9903614457831326,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.8357314974182437,
+          "rmse": 1.045265180123662,
+          "mape": 0.9959323246527332,
+          "mase": 0.820276676331214,
+          "cobertura80": 0.8578313253012049,
+          "cobertura95": 0.9710843373493976,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": true
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 1.2498273285483648,
+          "rmse": 1.5587550198686009,
+          "mape": 1.4913797229059893,
+          "mase": 1.2304843715505251,
+          "cobertura80": 0.9253012048192771,
+          "cobertura95": 0.9903614457831326,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 1.2821686746987933,
+          "rmse": 1.5295089376533393,
+          "mape": 1.5284252890666015,
+          "mase": 1.2524625183975249,
+          "cobertura80": 0.7060240963855422,
+          "cobertura95": 0.9662650602409638,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.9628342175738859,
+          "rmse": 1.1990973557987743,
+          "mape": 1.151388053606908,
+          "mase": 0.9511790882401803,
+          "cobertura80": 0.7253012048192771,
+          "cobertura95": 0.9397590361445783,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.8948665194278601,
+          "rmse": 1.1244091492143178,
+          "mape": 1.0694487787951519,
+          "mase": 0.8815575632357407,
+          "cobertura80": 0.7855421686746988,
+          "cobertura95": 0.9397590361445783,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt",
+          "nombre": "Holt amortiguado",
+          "mae": 0.8562015273779888,
+          "rmse": 1.0784100826516738,
+          "mape": 1.021678719600974,
+          "mase": 0.8421557634654033,
+          "cobertura80": 0.6771084337349398,
+          "cobertura95": 0.908433734939759,
+          "nPronosticos": 415,
+          "nOrigenes": 73,
+          "seleccionado": false
+        },
+        {
+          "clave": "holt_winters",
+          "nombre": "Holt-Winters (7 d)",
+          "mae": 1.0880941809690683,
+          "rmse": 1.3293211811621353,
+          "mape": 1.2974598340369574,
+          "mase": 1.06452592426681,
+          "cobertura80": 0.8363636363636363,
+          "cobertura95": 0.9792207792207792,
+          "nPronosticos": 385,
+          "nOrigenes": 68,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {},
+      "deteccion": {
+        "alertasCusum": 0,
+        "alertasEwma": 0
+      }
+    },
+    {
+      "metrica": "peso",
+      "perfil": "disperso",
+      "n": 43,
+      "cobertura": 0.4777777777777778,
+      "seleccion": {
+        "clave": "ols",
+        "nombre": "Regresión lineal (OLS)",
+        "mase": 0.8959590496209565,
+        "confianza": "media"
+      },
+      "tabla": [
+        {
+          "clave": "naive",
+          "nombre": "Naïve",
+          "mae": 0.5473684210526305,
+          "rmse": 0.6955497636288942,
+          "mape": 0.6660130852706346,
+          "mase": 0.9728496308801913,
+          "cobertura80": 0.9263157894736842,
+          "cobertura95": 1,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": false
+        },
+        {
+          "clave": "media_movil",
+          "nombre": "Media móvil (7)",
+          "mae": 0.5366917293233068,
+          "rmse": 0.6547160157079457,
+          "mape": 0.6536527470665893,
+          "mase": 0.9454639106533503,
+          "cobertura80": 0.7631578947368421,
+          "cobertura95": 0.9631578947368421,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": false
+        },
+        {
+          "clave": "drift",
+          "nombre": "Drift",
+          "mae": 0.5652074297840122,
+          "rmse": 0.7050918129893093,
+          "mape": 0.6875021894883722,
+          "mase": 1.0094242993381066,
+          "cobertura80": 0.9473684210526315,
+          "cobertura95": 1,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": false
+        },
+        {
+          "clave": "naive_estacional",
+          "nombre": "Naïve estacional (7 d)",
+          "mae": 0.7442105263157887,
+          "rmse": 0.9758127516669309,
+          "mape": 0.9069566131526242,
+          "mase": 1.3096785872026526,
+          "cobertura80": 0.7631578947368421,
+          "cobertura95": 0.8368421052631579,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": false
+        },
+        {
+          "clave": "ols",
+          "nombre": "Regresión lineal (OLS)",
+          "mae": 0.5052170249891355,
+          "rmse": 0.5890003289868617,
+          "mape": 0.6145832547150453,
+          "mase": 0.8959590496209565,
+          "cobertura80": 0.8157894736842105,
+          "cobertura95": 1,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": true
+        },
+        {
+          "clave": "theil_sen",
+          "nombre": "Theil-Sen",
+          "mae": 0.5118446584529395,
+          "rmse": 0.5882638736217685,
+          "mape": 0.6224936634555497,
+          "mase": 0.9106388186271868,
+          "cobertura80": 0.8368421052631579,
+          "cobertura95": 1,
+          "nPronosticos": 190,
+          "nOrigenes": 57,
+          "seleccionado": false
+        }
+      ],
+      "recuperacion": {
+        "pendienteVerdadera": -0.03,
+        "pendienteOLS": -0.027085282716214437,
+        "pendienteTheilSen": -0.02564102564102564
+      },
+      "deteccion": {
+        "alertasCusum": 2,
+        "alertasEwma": 1
+      }
+    }
+  ]
+}
