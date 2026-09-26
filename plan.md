@@ -319,6 +319,12 @@ Usuario (iOS/Android/Web)
 - [x] Figuras del informe (`npm run figuras`) y guía de defensa (`docs/sustentacion.md`)
 - [ ] Dataset público real de series diarias (wearables) como segunda fuente de evaluación del pronóstico
 
+### Motor de predicción — tanda 3 (validación con datos reales) ✅ (26 de septiembre de 2026)
+- [x] NHANES 2021-2023 con las variables de la app: lector SAS XPORT propio, muestra analítica versionada (5.043 adultos), `npm run entrenar:nhanes`
+- [x] Gradient boosting desde cero; índice sin entrenar vs. logística entrenada (0.799 vs 0.805, no significativa), bootstrap de ΔAUC, calibración, recalibración del índice
+- [x] Réplica exacta de la muestra del documento v4 y corrección de los valores p de UCI
+- [x] Documento del seminario v5 (`docs/documento/`), centrado en el motor
+
 ### v2 — Wearables y Mejoras
 - [ ] Xiaomi Band 10 via Web Bluetooth API (Android Chrome)
 - [ ] Notificaciones push para recordatorios (VAPID / Web Push)

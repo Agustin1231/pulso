@@ -816,7 +816,7 @@
             <div class="detail-icon">📚</div>
             <div class="detail-text">
               <h4>Fuentes</h4>
-              <p>Cada factor cita el meta-análisis del que sale su riesgo relativo; atribución exacta de puntos por factor</p>
+              <p>Cada factor cita el meta-análisis del que sale su riesgo relativo; atribución exacta de puntos por factor. Validado en NHANES sin entrenar: AUC 0.799 con edad y sexo</p>
             </div>
           </div>
           <div class="detail-item">
@@ -841,7 +841,7 @@
           <div class="module-number">3</div>
           <div class="module-title">
             <h3>Entrenamiento supervisado con datos reales</h3>
-            <p>Regresión logística por IRLS entrenada desde cero sobre UCI Heart Disease (297 pacientes)</p>
+            <p>Modelos entrenados desde cero sobre NHANES 2021-2023 (5.043 adultos, mismas variables que la app) y UCI Heart Disease (297 pacientes)</p>
           </div>
           <span class="module-status status-complete">✅ Validado</span>
         </div>
@@ -853,21 +853,21 @@
             <div class="detail-icon">🏋️</div>
             <div class="detail-text">
               <h4>Entrenamiento</h4>
-              <p>Regresión logística (Newton-Raphson) y k-NN implementados sin librerías de ML</p>
+              <p>Regresión logística (Newton-Raphson), gradient boosting y k-NN implementados sin librerías de ML, más un lector propio de los archivos del CDC</p>
             </div>
           </div>
           <div class="detail-item">
             <div class="detail-icon">✅</div>
             <div class="detail-text">
               <h4>Resultado</h4>
-              <p>AUC 0.904 ± 0.032 en validación cruzada estratificada 5×10; accuracy 83.6 %</p>
+              <p>NHANES: logística 0.805 vs índice sin entrenar 0.799 (diferencia no significativa), calibración 0.99. UCI: AUC 0.904 ± 0.032. Validación cruzada 5×10</p>
             </div>
           </div>
           <div class="detail-item">
             <div class="detail-icon">🔬</div>
             <div class="detail-text">
               <h4>Verificación</h4>
-              <p>Coeficientes idénticos a una reimplementación independiente en numpy (diferencia 10⁻¹⁴)</p>
+              <p>Coeficientes idénticos a una reimplementación independiente en numpy (diferencia 10⁻¹⁵ en NHANES, 10⁻¹⁴ en UCI)</p>
             </div>
           </div>
         </div>
