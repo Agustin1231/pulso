@@ -13,7 +13,7 @@ import { GraficaMetrica }   from "./grafica-metrica";
 import { PronosticoInfo }   from "./pronostico-info";
 import { AnalisisIA }       from "./analisis-ia";
 import type { MetricaType } from "@/lib/db/types";
-import { Loader2 } from "lucide-react";
+import { Loader2, WifiOff, RefreshCw } from "lucide-react";
 
 export function DashboardClient() {
   const uid = useAnonymousId();
@@ -23,30 +23,38 @@ export function DashboardClient() {
   const [historial,  setHistorial]  = useState<MetricaRow[]>([]);
   const [seleccion,  setSeleccion]  = useState<MetricaType | null>(null);
   const [cargando,   setCargando]   = useState(true);
+  const [sinConexion, setSinConexion] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     if (!uid) return;
     setCargando(true);
+    setSinConexion(false);
     // El informe (pronósticos, alertas, modelo elegido) lo calcula el motor en
     // el servidor sobre los últimos 90 días; se pide junto con los últimos valores.
-    const [data, inf] = await Promise.all([
-      getUltimasMetricas(uid),
-      getInforme(uid).catch(() => null),
-    ]);
-    setUltimas(data);
-    setInforme(inf);
-    // Seleccionar la primera métrica con datos por defecto
-    if (data.length > 0 && !seleccion) {
-      setSeleccion(data[0].tipo);
+    try {
+      const [data, inf] = await Promise.all([
+        getUltimasMetricas(uid),
+        getInforme(uid).catch(() => null),
+      ]);
+      setUltimas(data);
+      setInforme(inf);
+      // Seleccionar la primera métrica con datos por defecto
+      if (data.length > 0 && !seleccion) {
+        setSeleccion(data[0].tipo);
+      }
+    } catch {
+      // Sin conexión (la app abrió desde el caché del service worker) o servidor caído.
+      setSinConexion(true);
+    } finally {
+      setCargando(false);
     }
-    setCargando(false);
   }, [uid, seleccion]);
 
   useEffect(() => { cargarDatos(); }, [uid]);
 
   useEffect(() => {
     if (!uid || !seleccion) return;
-    getHistorialMetrica(uid, seleccion, 30).then(setHistorial);
+    getHistorialMetrica(uid, seleccion, 30).then(setHistorial).catch(() => setHistorial([]));
   }, [uid, seleccion]);
 
   function handleSeleccion(tipo: MetricaType) {
@@ -58,6 +66,23 @@ export function DashboardClient() {
       <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />
         <span className="text-sm">Cargando métricas...</span>
+      </div>
+    );
+  }
+
+  if (sinConexion) {
+    return (
+      <div className="flex flex-col items-center justify-center h-48 gap-3 text-center text-muted-foreground">
+        <WifiOff className="h-6 w-6" />
+        <p className="text-sm max-w-xs">
+          No se pudieron cargar tus métricas. Revisa la conexión: los datos y el motor de predicción corren en el servidor.
+        </p>
+        <button
+          onClick={cargarDatos}
+          className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground hover:bg-surface-2"
+        >
+          <RefreshCw className="h-4 w-4" /> Reintentar
+        </button>
       </div>
     );
   }

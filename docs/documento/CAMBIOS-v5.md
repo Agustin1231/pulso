@@ -87,8 +87,10 @@ PWA, y las 15 referencias originales.
 
 ## Lo que sigue pendiente (no es del documento)
 
-- El alcance sigue declarando PWA instalable, offline y con notificaciones push como parte del
-  proyecto; en el v4 figuraban como no funcionales en el repo y en esta revisión no se verificaron.
+- ~~PWA instalable, offline y con push~~: resuelto el 2026-09-26 después de esta versión (íconos,
+  registro del service worker, caché offline básica, campana de notificaciones y metadata en el
+  `<head>`), verificado en Chromium por CDP: Chrome no reporta errores de instalabilidad, las
+  pantallas visitadas abren sin conexión y la suscripción push se crea y recibe envíos.
 - La validación del pronóstico con series reales de dispositivos portátiles.
 
 ## Cómo se compila

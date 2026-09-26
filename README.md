@@ -319,10 +319,10 @@ Las imágenes se guardan en `MEDIA_DIR` y se sirven por `src/app/api/img/[...pat
 
 Cosas que existen en el código pero no funcionan end-to-end. Están acá para que no las descubras debuggeando:
 
-- **Push notifications: no están activas.** El backend (`/api/notificaciones/*`), el service worker y el componente `PushManager` existen y son correctos, pero `PushManager` **no está montado en ningún layout ni página**. Hasta que se monte, no hay suscripción ni envío posible.
-- **La PWA no es instalable.** `public/manifest.json` referencia `/icons/icon-192.png` y `/icons/icon-512.png`, y **ninguno de los dos existe** en el repo. Chrome exige un ícono de 192px resoluble para ofrecer el prompt de instalación.
-- **`next-pwa` está en `package.json` pero nunca se configura.** `next.config.ts` está vacío. El service worker es `public/sw.js`, escrito a mano, y solo maneja `install` / `activate` / `push` / `notificationclick`.
-- **No hay soporte offline.** `sw.js` no tiene ningún listener de `fetch` y su `CACHE_NAME` nunca se usa.
+- **Push: los recordatorios programados solo salen con la app abierta.** La suscripción y el envío funcionan (campana del header → panel de notificaciones; `/api/notificaciones/*`), pero el "recordatorio programado" es un `setTimeout` en el navegador, no un cron del servidor. Sin `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en el build, el panel avisa que el push no está configurado.
+- **Offline básico, no completo.** `public/sw.js` guarda las pantallas visitadas (red primero) y los estáticos de `/_next/static/` (caché primero); una pantalla nunca visitada muestra "Sin conexión". Los datos se leen con server actions (POST), así que sin red la interfaz abre pero los números necesitan conexión. Al cambiar `sw.js`, subir `VERSION`.
+- **`htmlLimitedBots: /.*/` en `next.config.ts` no se toca.** Next 15.5 manda la metadata de las páginas dinámicas en streaming dentro del `<body>`, y Chrome solo reconoce el `<link rel="manifest">` en el `<head>`: sin esa línea la PWA deja de ser instalable ("no-manifest").
+- **`next-pwa` está en `package.json` pero no se usa.** El service worker es `public/sw.js`, escrito a mano; los íconos se regeneran con `python3 scripts/iconos.py`.
 - **El índice de riesgo no es una escala clínica.** Cita de dónde sale cada coeficiente, pero eso no lo convierte en Framingham, ASCVD ni similares; no compararlo con ellas.
 - **El pronóstico se evaluó sobre datos sintéticos.** Demuestra que la implementación es correcta bajo patrones conocidos, no desempeño sobre usuarios reales. El índice sí se validó con datos reales (NHANES 2021-2023), pero ese dataset es transversal: mide antecedente cardiovascular, no incidencia futura.
 - **`getInforme` recalcula el backtesting en cada carga** de `/dashboard` y `/score` (~100–300 ms por usuario con 90 días). No hay caché; si crece el uso, cachear por uid y fecha.

@@ -16,6 +16,11 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 
 type PermisoState = "default" | "granted" | "denied" | "unsupported";
 
+// Se inyecta en el build: si falta, el servidor no puede firmar los envíos.
+const VAPID_PUBLICA = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+// El service worker solo se registra en producción (RegistroServiceWorker).
+const SIN_SW_EN_DESARROLLO = process.env.NODE_ENV !== "production";
+
 export function PushManager() {
   const uid = useAnonymousId();
   const [permiso, setPermiso] = useState<PermisoState>("default");
@@ -27,15 +32,13 @@ export function PushManager() {
   const [recordatorioProgramado, setRecordatorioProgramado] = useState(false);
   const [timerRef, setTimerRef] = useState<ReturnType<typeof setTimeout> | null>(null);
 
-  // Registrar service worker y leer estado
+  // Leer estado (el service worker lo registra RegistroServiceWorker en el layout)
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setPermiso("unsupported");
       return;
     }
-
-    // Registrar SW
-    navigator.serviceWorker.register("/sw.js").catch(console.error);
+    if (!VAPID_PUBLICA || SIN_SW_EN_DESARROLLO) return;
 
     // Estado actual
     setPermiso(Notification.permission as PermisoState);
@@ -65,21 +68,21 @@ export function PushManager() {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(
-          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
-        ),
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLICA!),
       });
 
       const subJson = sub.toJSON();
-      await fetch("/api/notificaciones/suscribir", {
+      const res = await fetch("/api/notificaciones/suscribir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ uid, subscription: subJson }),
       });
+      if (!res.ok) throw new Error(`suscribir: HTTP ${res.status}`);
 
       setSuscrito(true);
       setResultado("¡Notificaciones activadas!");
     } catch (err) {
+      console.error("[push] no se pudo activar:", err);
       setResultado("Error al activar. Intenta de nuevo.");
     }
 
@@ -155,6 +158,18 @@ export function PushManager() {
       <div className="rounded-xl border border-border bg-surface p-4">
         <p className="text-sm text-muted-foreground">
           Tu navegador no soporta notificaciones push. Prueba en Chrome o Firefox.
+        </p>
+      </div>
+    );
+  }
+
+  if (!VAPID_PUBLICA || SIN_SW_EN_DESARROLLO) {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-4">
+        <p className="text-sm text-muted-foreground">
+          {!VAPID_PUBLICA
+            ? "Las notificaciones push no están configuradas en este servidor (faltan las claves VAPID)."
+            : "En desarrollo el service worker está desactivado; las notificaciones se prueban con el build de producción."}
         </p>
       </div>
     );

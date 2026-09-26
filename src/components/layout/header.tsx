@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Heart, Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Heart } from "lucide-react";
+import { BotonNotificaciones } from "@/components/notificaciones/boton-notificaciones";
 
 const titles: Record<string, { label: string; desc: string }> = {
   "/dashboard":  { label: "Métricas",  desc: "Tu salud cardiovascular hoy" },
@@ -44,9 +44,7 @@ export function Header() {
         </div>
       </div>
 
-      <Button variant="ghost" size="icon-sm" aria-label="Notificaciones">
-        <Bell className="h-4 w-4" />
-      </Button>
+      <BotonNotificaciones />
     </header>
   );
 }

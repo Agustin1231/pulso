@@ -46,6 +46,18 @@ export async function POST(req: Request) {
     )
   );
 
+  // 404/410: el navegador dio de baja la suscripción; se borra para no reintentarla.
+  const vencidas = suscripciones.filter((_, i) => {
+    const r = resultados[i];
+    const status = r.status === "rejected" ? (r.reason as { statusCode?: number })?.statusCode : undefined;
+    return status === 404 || status === 410;
+  });
+  if (vencidas.length) {
+    await pool
+      .query(`delete from suscripciones_push where uid = $1 and endpoint = any($2)`, [uid, vencidas.map((v) => v.endpoint)])
+      .catch((err) => console.error("[push] no se pudieron borrar suscripciones vencidas:", err));
+  }
+
   const enviados = resultados.filter((r) => r.status === "fulfilled").length;
-  return Response.json({ ok: true, enviados });
+  return Response.json({ ok: true, enviados, vencidas: vencidas.length });
 }

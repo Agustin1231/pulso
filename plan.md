@@ -327,8 +327,9 @@ Usuario (iOS/Android/Web)
 
 ### v2 — Wearables y Mejoras
 - [ ] Xiaomi Band 10 via Web Bluetooth API (Android Chrome)
-- [ ] Notificaciones push para recordatorios (VAPID / Web Push)
-- [ ] Modo offline básico (caché con service worker)
+- [x] Notificaciones push (VAPID / Web Push): suscripción y envío desde la campana del header (2026-09-26)
+- [ ] Recordatorios push programados desde el servidor (hoy son un `setTimeout` con la app abierta)
+- [x] Modo offline básico (caché con service worker) e instalación como PWA (2026-09-26)
 - [ ] Activar sistema freemium con Stripe
 - [ ] Heatmap de adherencia (estilo GitHub contributions)
 - [ ] Resumen semanal de hábitos generado por Claude
