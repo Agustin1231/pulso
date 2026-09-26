@@ -14,6 +14,9 @@
     "test": "npm run test:fallback && npm run test:ml",
     "seed:demo": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/seed-demo.js",
     "entrenar": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/entrenar.js",
+    "nhanes:descargar": "mkdir -p data/nhanes-2021-2023/xpt && for f in DEMO_L BPXO_L BMX_L SLQ_L DPQ_L MCQ_L SMQ_L; do curl -fsSL -o data/nhanes-2021-2023/xpt/$f.xpt https://wwwn.cdc.gov/Nchs/Data/Nhanes/Public/2021/DataFiles/$f.xpt || exit 1; done",
+    "nhanes:muestra": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/nhanes-muestra.js",
+    "entrenar:nhanes": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/entrenar-nhanes.js",
     "figuras": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/exportar-figuras.js docs/figuras/datos-figuras.json && python3 scripts/figuras.py"
   },
   "dependencies": {

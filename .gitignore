@@ -29,3 +29,6 @@ npm-debug.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# NHANES: archivos .xpt originales del CDC (npm run nhanes:descargar); se versiona solo la muestra derivada
+data/nhanes-2021-2023/xpt/

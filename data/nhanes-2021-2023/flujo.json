@@ -1,0 +1,76 @@
+{
+  "flujo": [
+    {
+      "criterio": "Participantes del ciclo (DEMO_L)",
+      "n": 11933
+    },
+    {
+      "criterio": "Adultos de 18 años o más",
+      "n": 8153
+    },
+    {
+      "criterio": "Con pulso en reposo (BPXOPLS1)",
+      "n": 6123
+    },
+    {
+      "criterio": "Con peso e IMC medidos",
+      "n": 6061
+    },
+    {
+      "criterio": "Con horas de sueño (SLD012)",
+      "n": 6003
+    },
+    {
+      "criterio": "Con los nueve ítems del PHQ-9",
+      "n": 5282
+    },
+    {
+      "criterio": "Con desenlace cardiovascular conocido",
+      "n": 5043
+    }
+  ],
+  "archivos": [
+    {
+      "archivo": "DEMO_L.xpt",
+      "sha256": "ca4374a158b493b8b0163e1388da21d57a18d1b9cecff2aa4e2fa2bec494fe23",
+      "bytes": 2582160,
+      "filas": 11933
+    },
+    {
+      "archivo": "BPXO_L.xpt",
+      "sha256": "189aa9bed689d2c69cf8d780b01de85073276fea5694dd52cdf696229f9054a6",
+      "bytes": 696720,
+      "filas": 7801
+    },
+    {
+      "archivo": "BMX_L.xpt",
+      "sha256": "44440c416d9ad709e8b1708a5975378ab4d5b18edc39eb5015c2ae7186500170",
+      "bytes": 1563200,
+      "filas": 8860
+    },
+    {
+      "archivo": "SLQ_L.xpt",
+      "sha256": "918c3258b2f466ac1cae55ea45330c736dbdc573ee4dc72306e3d2b222764741",
+      "bytes": 375840,
+      "filas": 8501
+    },
+    {
+      "archivo": "DPQ_L.xpt",
+      "sha256": "25605a02685035fe997477b31a0991cca2776b0f72f24a8e61ac5b018456304b",
+      "bytes": 560000,
+      "filas": 6337
+    },
+    {
+      "archivo": "MCQ_L.xpt",
+      "sha256": "0889bb3eaa5adedf1a11c4af2d4776fc4c4c3cfdeea24fcedb77c4636b478f61",
+      "bytes": 3294000,
+      "filas": 11744
+    },
+    {
+      "archivo": "SMQ_L.xpt",
+      "sha256": "abbefebfa5585b1e19c079fa14be20c113a4649318070197214b258d05b93c50",
+      "bytes": 651120,
+      "filas": 9015
+    }
+  ]
+}

@@ -2,29 +2,37 @@
 """Verificación cruzada de la regresión logística del motor contra numpy.
 
 Reimplementa IRLS de forma independiente sobre el mismo dataset y el mismo
-conjunto de variables ("clínico básico"), y compara los coeficientes con los que
-escribió `npm run entrenar -- --json docs/entrenamiento-uci.json`.
+conjunto de variables, y compara los coeficientes con los que escribieron los
+scripts de TypeScript:
 
-    python3 scripts/verificar-logistica.py [docs/entrenamiento-uci.json]
+    python3 scripts/verificar-logistica.py docs/entrenamiento-uci.json      # UCI, "clínico básico"
+    python3 scripts/verificar-logistica.py docs/entrenamiento-nhanes.json   # NHANES, estilo de vida + edad y sexo
 """
-import json, sys
+import csv, json, sys
 import numpy as np
 
 ruta_json = sys.argv[1] if len(sys.argv) > 1 else "docs/entrenamiento-uci.json"
-ref = json.load(open(ruta_json))["coeficientes"]["estandarizados"]
-lam = json.load(open(ruta_json))["protocolo"]["lambda"]
+doc = json.load(open(ruta_json))
+lam = doc["protocolo"]["lambda"]
 
-filas = []
-for linea in open("data/uci-heart-disease/processed.cleveland.data"):
-    c = linea.strip().split(",")
-    if len(c) != 14 or "?" in c:
-        continue
-    filas.append([float(v) for v in c])
-D = np.array(filas)
-cols = ["age","sex","cp","trestbps","chol","fbs","restecg","thalach","exang","oldpeak","slope","ca","thal","num"]
-idx = [cols.index(n) for n in ref["nombres"]]
-X = D[:, idx]
-y = (D[:, -1] > 0).astype(float)
+if "nhanes" in ruta_json.lower():
+    ref = doc["coeficientes"]["completo"]["estandarizados"]
+    with open("data/nhanes-2021-2023/muestra-analitica.csv") as fh:
+        filas = list(csv.DictReader(fh))
+    X = np.array([[float(r[n]) for n in ref["nombres"]] for r in filas])
+    y = np.array([float(r["evento"]) for r in filas])
+else:
+    ref = doc["coeficientes"]["estandarizados"]
+    filas = []
+    for linea in open("data/uci-heart-disease/processed.cleveland.data"):
+        c = linea.strip().split(",")
+        if len(c) != 14 or "?" in c:
+            continue
+        filas.append([float(v) for v in c])
+    D = np.array(filas)
+    cols = ["age","sex","cp","trestbps","chol","fbs","restecg","thalach","exang","oldpeak","slope","ca","thal","num"]
+    X = D[:, [cols.index(n) for n in ref["nombres"]]]
+    y = (D[:, -1] > 0).astype(float)
 
 media, sd = X.mean(0), X.std(0, ddof=1)
 Xs = (X - media) / sd

@@ -4,7 +4,8 @@
     npm run figuras          (exporta los datos y corre este script)
     python3 scripts/figuras.py
 
-Entradas: docs/evaluacion-sintetica.json, docs/entrenamiento-uci.json, docs/figuras/datos-figuras.json
+Entradas: docs/evaluacion-sintetica.json, docs/entrenamiento-uci.json, docs/entrenamiento-nhanes.json,
+          docs/figuras/datos-figuras.json
 Salida:   docs/figuras/fig*.png (300 dpi) y .svg
 """
 import json, os
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
 import matplotlib.dates as mdates
+import matplotlib.ticker
 FECHA = mdates.DateFormatter("%d %b")
 
 OUT = "docs/figuras"
@@ -36,12 +38,14 @@ rcParams.update({
 
 def guardar(fig, nombre):
     for ext in ("png", "svg"):
-        fig.savefig(f"{OUT}/{nombre}.{ext}", dpi=300, bbox_inches="tight")
+        fig.savefig(f"{OUT}/{nombre}.{ext}", dpi=300, bbox_inches="tight",
+                    metadata={"Date": None} if ext == "svg" else None)
     plt.close(fig)
     print(f"✓ {nombre}.png / .svg")
 
 evaluacion = json.load(open("docs/evaluacion-sintetica.json", encoding="utf-8"))
 entrenamiento = json.load(open("docs/entrenamiento-uci.json", encoding="utf-8"))
+nhanes = json.load(open("docs/entrenamiento-nhanes.json", encoding="utf-8"))
 datos = json.load(open("docs/figuras/datos-figuras.json", encoding="utf-8"))
 
 # ── Fig. 1: MASE medio por modelo (cohorte sintética) ─────────────────────────
@@ -182,3 +186,87 @@ ax.grid(True); ax.set_axisbelow(True)
 ax.set_title("Recuperación de la tendencia real en 12 series sintéticas\n(pendientes normalizadas por el ruido; OLS y Theil-Sen casi coinciden)")
 ax.legend(loc="upper left")
 guardar(fig, "fig7-pendientes-recuperadas")
+
+# ── Fig. 8: AUC de todos los modelos sobre NHANES (escalera de benchmarks) ────
+GRUPO_COLOR = {"benchmark": DEEMPH, "sin_entrenamiento": S2, "entrenado": S1}
+rn = sorted(nhanes["resultados"], key=lambda r: r["auc"]["media"])
+fig, ax = plt.subplots(figsize=(6.6, 4.2))
+ys = np.arange(len(rn))
+for y, r in zip(ys, rn):
+    c = GRUPO_COLOR[r["grupo"]]
+    m, sdv = r["auc"]["media"], r["auc"]["sd"]
+    ax.plot([m - sdv, m + sdv], [y, y], color=c, lw=2, solid_capstyle="round")
+    ax.plot(m, y, "o", color=c, ms=7, mec=SURFACE, mew=1.2)
+    ax.text(m + sdv + 0.008, y, f"{m:.3f}", va="center", fontsize=7.5, color=INK)
+ax.axvline(0.5, color=INK2, lw=0.8, ls=(0, (3, 3)))
+ax.set_yticks(ys); ax.set_yticklabels([f"{r['modelo']} · {r['variables']}" if r["variables"] != "—" else r["modelo"] for r in rn], fontsize=7.5)
+ax.tick_params(axis="y", length=0)
+ax.set_xlim(0.45, 0.86)
+ax.set_xlabel(f"AUC-ROC (media ± sd, validación cruzada 5 × 10, n = {nhanes['dataset']['n']})")
+ax.xaxis.grid(True); ax.set_axisbelow(True)
+ax.set_title("Discriminación de antecedente cardiovascular en NHANES 2021-2023")
+ax.legend(handles=[Patch(color=S1, label="Entrenado sobre NHANES"), Patch(color=S2, label="Sin entrenamiento (reglas / literatura)"), Patch(color=DEEMPH, label="Benchmark")],
+          loc="upper center", bbox_to_anchor=(0.3, -0.14), ncol=3)
+guardar(fig, "fig8-auc-nhanes")
+
+# ── Fig. 9: curvas ROC sobre NHANES ────────────────────────────────────────────
+resn = {r["clave"]: r for r in nhanes["resultados"]}
+SERIES_N = [
+    ("log_completo", "Logística · estilo de vida + edad y sexo", S1, "-"),
+    ("indice_contexto", "Índice del motor + contexto (sin entrenar)", S3, "-"),
+    ("log_demografico", "Logística · solo edad y sexo", S4, (0, (4, 2))),
+    ("indice", "Índice del motor (sin entrenar)", S2, "-"),
+    ("heuristica_v1", "Heurística v1 de la app", DEEMPH, "-"),
+]
+fig, ax = plt.subplots(figsize=(5.2, 5.0))
+ax.plot([0, 1], [0, 1], color=DEEMPH, lw=1, ls=(0, (3, 3)))
+for clave, nombre, color, ls in SERIES_N:
+    pts = np.array(nhanes["roc"][clave])
+    ax.plot(pts[:, 0], pts[:, 1], color=color, lw=2, ls=ls, solid_joinstyle="round",
+            label=f"{nombre} — AUC {resn[clave]['auc']['media']:.3f}")
+ax.set_xlabel("Tasa de falsos positivos (1 − especificidad)"); ax.set_ylabel("Sensibilidad")
+ax.set_xlim(0, 1); ax.set_ylim(0, 1.02); ax.grid(True); ax.set_axisbelow(True)
+ax.set_title(f"Curvas ROC — NHANES 2021-2023 (n = {nhanes['dataset']['n']})\npredicciones fuera de muestra, validación cruzada 5 particiones")
+ax.legend(loc="lower right", fontsize=7.2)
+guardar(fig, "fig9-roc-nhanes")
+
+# ── Fig. 10: calibración por deciles de la logística de referencia ─────────────
+ref = nhanes["referencia"]
+dec = ref["calibracion"]["deciles"]
+fig, ax = plt.subplots(figsize=(4.6, 4.4))
+lim = max(max(d["predicha"] for d in dec), max(d["observada"] for d in dec)) * 1.12
+ax.plot([0, lim], [0, lim], color=DEEMPH, lw=1, ls=(0, (3, 3)), label="Calibración perfecta")
+ax.plot([d["predicha"] for d in dec], [d["observada"] for d in dec], color=S1, lw=2, marker="o", ms=6, mec=SURFACE, mew=1,
+        label=f"Logística · pendiente {ref['calibracion']['pendiente']:.2f}, intercepto {ref['calibracion']['intercepto']:.2f}")
+ax.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0, decimals=0))
+ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0, decimals=0))
+ax.set_xlim(0, lim); ax.set_ylim(0, lim)
+ax.set_xlabel("Riesgo predicho (media del decil)"); ax.set_ylabel("Frecuencia observada de antecedente CV")
+ax.grid(True); ax.set_axisbelow(True)
+ax.set_title("Calibración por deciles (fuera de muestra, n ≈ 504 por decil)")
+ax.legend(loc="upper left", fontsize=7.5)
+guardar(fig, "fig10-calibracion-nhanes")
+
+# ── Fig. 11: pesos aprendidos para cada componente del índice ─────────────────
+ETQ_F = {"logRR frecuencia_cardiaca": "FC en reposo", "logRR horas_sueno": "Sueño", "logRR nivel_estres": "Estrés (≈ PHQ-9)",
+         "logRR imc": "IMC", "logRR tabaquismo": "Tabaquismo", "logRR edad": "Edad (contexto)", "logRR sexo": "Sexo (contexto)"}
+pf = nhanes["coeficientes"]["factoresIndice"]["filas"]
+fig, ax = plt.subplots(figsize=(6.2, 3.4))
+ys = np.arange(len(pf))[::-1]
+for y, fila in zip(ys, pf):
+    color = S1 if fila["ic95"][0] <= 1 <= fila["ic95"][1] else S2
+    ax.plot(fila["ic95"], [y, y], color=color, lw=2, solid_capstyle="round")
+    ax.plot(fila["peso"], y, "o", color=color, ms=7, mec=SURFACE, mew=1.2)
+    ax.text(fila["ic95"][1] + 0.15, y, f"{fila['peso']:.2f}  [{fila['ic95'][0]:.2f} – {fila['ic95'][1]:.2f}]", va="center", fontsize=7.5, color=INK2)
+ax.axvline(1, color=INK2, lw=0.8)
+ax.set_ylim(-1.0, len(pf) - 0.5)
+ax.text(1.08, -0.7, "1 = magnitud de la literatura", fontsize=7.5, color=INK2, va="center")
+ax.axvline(0, color=DEEMPH, lw=0.8, ls=(0, (3, 3)))
+ax.set_xlim(-0.3, 10.2)
+ax.set_yticks(ys); ax.set_yticklabels([ETQ_F[f["variable"]] for f in pf]); ax.tick_params(axis="y", length=0)
+ax.set_xlabel("Peso aprendido sobre el log RR del motor (IC 95 %) — logística, n = 5043")
+ax.xaxis.grid(True); ax.set_axisbelow(True)
+ax.set_title("Recalibración del índice con datos reales")
+ax.legend(handles=[Patch(color=S1, label="Compatible con la literatura (el IC incluye 1)"), Patch(color=S2, label="Difiere de la literatura")],
+          loc="upper center", bbox_to_anchor=(0.45, -0.2), ncol=2)
+guardar(fig, "fig11-pesos-indice-nhanes")

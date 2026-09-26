@@ -4,15 +4,28 @@
 import type { Matriz } from "./algebra";
 
 export function predecirKNN(Xtrain: Matriz, ytrain: readonly number[], Xtest: Matriz, k = 7): number[] {
+  const kk = Math.min(k, Xtrain.length);
   return Xtest.map((x) => {
-    const dist = Xtrain.map((t, i) => {
-      let d = 0;
-      for (let j = 0; j < x.length; j++) d += (x[j] - t[j]) ** 2;
-      return { d, y: ytrain[i] };
-    });
-    dist.sort((a, b) => a.d - b.d);
+    // Selección parcial de los k más cercanos (inserción ordenada). Ante empates
+    // conserva el vecino de menor índice, igual que un ordenamiento estable.
+    const d = new Float64Array(kk).fill(Infinity);
+    const yv = new Float64Array(kk);
+    for (let i = 0; i < Xtrain.length; i++) {
+      const t = Xtrain[i];
+      let di = 0;
+      for (let j = 0; j < x.length; j++) di += (x[j] - t[j]) ** 2;
+      if (!(di < d[kk - 1])) continue;
+      let pos = kk - 1;
+      while (pos > 0 && d[pos - 1] > di) {
+        d[pos] = d[pos - 1];
+        yv[pos] = yv[pos - 1];
+        pos--;
+      }
+      d[pos] = di;
+      yv[pos] = ytrain[i];
+    }
     let positivos = 0;
-    for (let i = 0; i < Math.min(k, dist.length); i++) positivos += dist[i].y;
-    return positivos / Math.min(k, dist.length);
+    for (let i = 0; i < kk; i++) positivos += yv[i];
+    return positivos / kk;
   });
 }
