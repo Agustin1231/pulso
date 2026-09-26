@@ -116,11 +116,18 @@ Está en `src/lib/ml/` y es la parte del proyecto que no depende de ninguna API 
 
 El modelo de lenguaje pasa a ser consumidor de este informe: `/api/score-analisis`, `/api/analisis-metricas` y `/api/tips` reciben solo `{ uid }`, calculan el informe en el servidor (`getInforme` en `src/lib/db/informe.ts`) y le pasan a Claude el resumen de `src/lib/ml/resumen.ts` con la instrucción de no inventar números. `/score` y `/dashboard` consumen el mismo informe.
 
-Además, para demostrar entrenamiento supervisado con datos reales, `src/lib/ml/supervisado/` implementa desde cero una **regresión logística (IRLS)** y **k-NN**, entrenados y validados por validación cruzada estratificada 5×10 sobre el dataset público **UCI Heart Disease** (297 pacientes): AUC 0.904 ± 0.032, coeficientes verificados contra numpy a 10⁻¹⁴. Los coeficientes aprendidos **no** se usan en el índice de la app, y el capítulo explica por qué con datos (cohorte de derivación).
+Además, `src/lib/ml/supervisado/` implementa desde cero **regresión logística (IRLS)**, **gradient boosting**, **k-NN** y un lector del formato **SAS XPORT** del CDC, y los usa en dos experimentos con datos reales:
+
+- **NHANES 2021-2023** (5.043 adultos con las mismas variables que registra la app, 597 con antecedente cardiovascular): el índice del motor, **sin entrenar**, logra AUC 0.611 con los factores modificables (la heurística anterior, 0.564) y 0.799 con el contexto de edad y sexo, frente a 0.805 de una logística entrenada ahí (diferencia no significativa). Entrenar con las mismas variables no mejora al índice, y recalibrar sus pesos tampoco (0.801), así que la app mantiene los coeficientes publicados.
+- **UCI Heart Disease** (297 pacientes): AUC 0.904 ± 0.032 con las 13 variables clínicas; valida la implementación.
+
+Coeficientes verificados contra numpy (10⁻¹⁵ en NHANES, 10⁻¹⁴ en UCI). El documento de la tesis con todos los resultados está en [`docs/documento/pulso-seminario-1-v5.pdf`](docs/documento/pulso-seminario-1-v5.pdf).
 
 ```bash
-npm run test:ml      # 63 tests con node --test (compila con tsconfig.ml.json)
+npm run test:ml      # 70 tests con node --test (compila con tsconfig.ml.json)
 npm run evaluar      # evaluación reproducible sobre una cohorte sintética con verdad conocida
+npm run nhanes:descargar && npm run nhanes:muestra   # archivos del CDC → muestra analítica (versionada)
+npm run entrenar:nhanes -- --json docs/entrenamiento-nhanes.json   # índice vs. modelos entrenados sobre NHANES
 npm run entrenar     # experimento supervisado sobre UCI: validación cruzada + coeficientes
 npm run figuras      # figuras del informe (matplotlib) en docs/figuras/
 npm run seed:demo -- --uid <pulso_uid> --limpiar   # usuario demo con 90 días sintéticos (para probar o presentar)
@@ -128,7 +135,7 @@ npm run seed:demo -- --uid <pulso_uid> --limpiar   # usuario demo con 90 días s
 
 El `pulso_uid` es el UUID anónimo que la app guarda en `localStorage` (consola del navegador: `localStorage.getItem("pulso_uid")`).
 
-Capítulo técnico completo, con fórmulas, fuentes y resultados: **[`docs/motor-prediccion.md`](docs/motor-prediccion.md)**. Guía para la defensa (preguntas del jurado, demo, glosario): **[`docs/sustentacion.md`](docs/sustentacion.md)**. Resultados: [`docs/evaluacion-sintetica.txt`](docs/evaluacion-sintetica.txt), [`docs/entrenamiento-uci.txt`](docs/entrenamiento-uci.txt). Figuras: [`docs/figuras/`](docs/figuras/). Capturas de la app: [`docs/capturas/`](docs/capturas/).
+Capítulo técnico completo, con fórmulas, fuentes y resultados: **[`docs/motor-prediccion.md`](docs/motor-prediccion.md)**. Guía para la defensa (preguntas del jurado, demo, glosario): **[`docs/sustentacion.md`](docs/sustentacion.md)**. Resultados: [`docs/evaluacion-sintetica.txt`](docs/evaluacion-sintetica.txt), [`docs/entrenamiento-nhanes.txt`](docs/entrenamiento-nhanes.txt), [`docs/entrenamiento-uci.txt`](docs/entrenamiento-uci.txt). Figuras: [`docs/figuras/`](docs/figuras/). Capturas de la app: [`docs/capturas/`](docs/capturas/).
 
 ---
 

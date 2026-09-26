@@ -11,7 +11,7 @@ El motor invierte esa relación. Toma la serie temporal de cada métrica del usu
 
 ## 2. Qué es y qué no es
 
-**No es un clasificador supervisado de riesgo cardiovascular.** No existe *ground truth*: nadie registra en Pulso "tuve un evento cardíaco". Sin etiquetas de resultado no hay nada que entrenar, y afirmar lo contrario sería sobrevender. Lo que sí es defendible y está implementado:
+**No es un clasificador supervisado entrenado sobre los usuarios.** Dentro de la app no existe *ground truth*: nadie registra en Pulso "tuve un evento cardíaco". Lo que sí existe es un dataset poblacional público con las mismas variables y un desenlace (NHANES 2021-2023, §9c), y ahí el índice se valida y se contrasta con modelos entrenados. Lo que está implementado:
 
 1. **Pronóstico de series temporales** por métrica y por usuario, con modelos ajustados sobre el propio historial y validados contra benchmarks canónicos.
 2. **Índice de riesgo paramétrico**: un modelo log-lineal de riesgo relativo cuyos coeficientes salen de meta-análisis publicados. No se ajusta nada; se cita. No es una escala clínica validada (Framingham, SCORE) ni estima probabilidad absoluta de eventos.
@@ -55,13 +55,19 @@ src/lib/ml/
     knn.ts                 k vecinos más cercanos (comparador)
     metricas.ts            AUC, accuracy, F1, log-loss, Brier, curva ROC, calibración
     validacion.ts          validación cruzada estratificada reproducible
+    boosting.ts            gradient boosting con árboles de regresión (Friedman 2001)
     uci.ts                 carga y codificación del dataset UCI Heart Disease
+    xpt.ts                 lector del formato SAS XPORT v5 (archivos .xpt del CDC)
+    nhanes.ts              muestra analítica de NHANES 2021-2023 y conjuntos de variables
     algebra.ts             resolver e invertir sistemas chicos (Gauss con pivoteo)
 src/lib/db/informe.ts      único punto donde el motor toca la base (server action)
 data/uci-heart-disease/    dataset público (CC BY 4.0) para el experimento supervisado
-tests/ml/*.test.ts         63 tests, `node --test`
+data/nhanes-2021-2023/     muestra analítica derivada de NHANES (dominio público) + flujo y SHA-256
+tests/ml/*.test.ts         70 tests, `node --test`
 scripts/evaluar.ts         evaluación completa sobre la cohorte sintética
-scripts/entrenar.ts        experimento supervisado (validación cruzada, coeficientes)
+scripts/entrenar.ts        experimento supervisado sobre UCI (validación cruzada, coeficientes)
+scripts/nhanes-muestra.ts  .xpt del CDC → muestra analítica versionada
+scripts/entrenar-nhanes.ts benchmarks, índice sin entrenar y modelos entrenados sobre NHANES
 scripts/verificar-logistica.py  reimplementación independiente en numpy para verificar
 scripts/figuras.py         figuras del informe (matplotlib) a partir de los JSON
 scripts/seed-demo.ts       usuario de demostración con datos sintéticos en la base
@@ -298,8 +304,7 @@ sobre las predicciones fuera de muestra de la primera repetición.
 
 Lectura:
 
-- **AUC 0.90 con validación cruzada** es el desempeño de referencia publicado para modelos lineales en
-  este dataset: la implementación desde cero está a la altura de las librerías estándar.
+- **AUC 0.90 con validación cruzada** con las 13 variables clínicas.
 - **Verificación independiente:** `scripts/verificar-logistica.py` reimplementa IRLS en numpy sobre los
   mismos datos; los coeficientes y errores estándar coinciden con los del motor con diferencia máxima
   de 2·10⁻¹⁴.
@@ -315,11 +320,11 @@ Lectura:
 
 | Variable | OR | IC 95 % | por | p |
 |---|---|---|---|---|
-| Edad | 1.17 | 0.82 – 1.66 | +10 años | 0.32 (n.s.) |
+| Edad | 1.17 | 0.82 – 1.66 | +10 años | 0.38 (n.s.) |
 | Sexo | 6.00 | 3.08 – 11.68 | hombre vs. mujer | < 0.001 |
-| PA sistólica | 1.25 | 1.06 – 1.47 | +10 mm Hg | 0.007 |
-| Colesterol | 1.07 | 1.01 – 1.13 | +10 mg/dl | 0.011 |
-| Glucemia > 120 | 0.74 | 0.35 – 1.58 | sí vs. no | 0.37 (n.s.) |
+| PA sistólica | 1.25 | 1.06 – 1.47 | +10 mm Hg | 0.009 |
+| Colesterol | 1.07 | 1.01 – 1.13 | +10 mg/dl | 0.015 |
+| Glucemia > 120 | 0.74 | 0.35 – 1.58 | sí vs. no | 0.44 (n.s.) |
 | FC máxima | 0.63 | 0.54 – 0.73 | +10 bpm | < 0.001 |
 
 - La **edad no es significativa** y el **sexo tiene OR 6**: son las marcas de una cohorte de derivación
@@ -333,7 +338,68 @@ Lectura:
 Figuras: `figuras/fig4-roc-uci.png`, `figuras/fig5-calibracion-uci.png`, `figuras/fig6-odds-ratios-uci.png`.
 Salida completa: `docs/entrenamiento-uci.txt` y `.json`. Reproducir: `npm run entrenar`.
 
-## 9c. Figuras del informe
+## 9c. Validación externa del índice y entrenamiento con las variables de la app (NHANES 2021-2023)
+
+UCI valida la implementación pero no comparte con la app más que edad y sexo. NHANES 2021-2023 (CDC/NCHS,
+dominio público) mide lo mismo que Pulso: pulso en reposo (`BPXOPLS1`), peso e IMC medidos, horas de sueño
+(`SLD012`), PHQ-9 como aproximación al estrés, tabaquismo, edad y sexo, más el antecedente autorreportado
+de falla cardíaca, enfermedad coronaria, angina, infarto o ACV (`MCQ160B–F`). Los siete archivos `.xpt` se
+leen con un lector XPORT propio (`supervisado/xpt.ts`: registros de 80 bytes, descriptores de 140 bytes,
+coma flotante IBM de base 16). Flujo: 11.933 participantes → 8.153 adultos → … → **5.043 con todas las
+variables y desenlace conocido, 597 casos (11.8 %)** (`data/nhanes-2021-2023/README.md`). Esa muestra
+coincide exactamente con la del documento v4 del proyecto, cuyas cifras no tenían código en el repo.
+
+Protocolo: validación cruzada estratificada 5 × 10 (50 particiones de prueba), las mismas para todos los
+modelos; bootstrap pareado de 2.000 remuestreos para las diferencias de AUC sobre las predicciones fuera de
+muestra de la primera repetición. Para evaluar el índice, el PHQ-9 se lleva a la escala 1–10 de la app
+como `redondeo(1 + 9·PHQ/27)`; con esa equivalencia la heurística v1 da 0.5645 sobre la muestra completa,
+el mismo 0.565 del v4.
+
+| Modelo | Variables | AUC (media ± sd) | Brier |
+|---|---|---|---|
+| Prevalencia | — | 0.500 ± 0.000 | 0.104 |
+| Heurística v1 (sin entrenar) | FC, sueño, estrés | 0.564 ± 0.026 | — |
+| **Índice del motor (sin entrenar)** | FC, sueño, estrés, IMC, tabaco | **0.611 ± 0.025** | — |
+| Índice + contexto edad/sexo (sin entrenar) | índice + edad, sexo | 0.799 ± 0.015 | — |
+| Logística | solo edad y sexo | 0.769 ± 0.013 | 0.094 |
+| Logística | estilo de vida (5) | 0.608 ± 0.025 | 0.103 |
+| Gradient boosting | estilo de vida (5) | 0.605 ± 0.025 | 0.105 |
+| **Logística** | estilo de vida + edad, sexo (7) | **0.805 ± 0.014** | **0.091** |
+| Logística sobre los 7 log RR del motor | recalibración del índice | 0.801 ± 0.015 | 0.092 |
+| Gradient boosting | estilo de vida + edad, sexo (7) | 0.794 ± 0.016 | 0.093 |
+| k-NN (k = 65) | estilo de vida + edad, sexo (7) | 0.775 ± 0.017 | 0.094 |
+
+Lectura:
+
+- **El índice le gana a la heurística v1** (ΔAUC +0.046 [0.016; 0.075]): funciones continuas + IMC +
+  tabaquismo ordenan mejor que umbrales fijos.
+- **Entrenar no mejora al índice.** Con las mismas variables la logística da 0.608 (Δ −0.001
+  [−0.022; 0.019]); con edad y sexo, 0.805 vs 0.799 del índice + contexto (Δ +0.007 [−0.001; 0.015], no
+  significativa). El índice no vio estos datos.
+- **Las variables de la app aportan sobre la demografía:** +0.037 [0.025; 0.049] respecto de solo edad y
+  sexo. Edad y sexo son lo más fuerte (OR 2.27 por década [2.09–2.47]; hombre OR 2.00), pero no lo único.
+- **No hay no linealidad que explotar:** el boosting queda 0.010 por debajo de la logística
+  ([−0.018; −0.001]).
+- **Calibración** de la logística de referencia (fuera de muestra): pendiente 0.99, intercepto −0.02,
+  Brier 0.091 vs 0.104 de la prevalencia (−13 %). Youden: umbral 0.11, sensibilidad 0.822, especificidad
+  0.656, VPN 0.965, VPP 0.243.
+- **Recalibración del índice** (peso aprendido por componente; 1 = la literatura acierta la magnitud): FC
+  1.97 [0.68–3.26], sueño 1.00 [0.50–1.51], IMC 1.16 [0.88–1.44] compatibles con 1; estrés ≈ PHQ-9 5.32,
+  edad 1.28, sexo 1.58 por encima; tabaquismo 0.70 por debajo. Tabaquismo y PHQ-9 son los que un diseño
+  transversal distorsiona (dejar de fumar y síntomas depresivos después del evento), y reajustar los siete
+  pesos solo lleva el AUC de 0.799 a 0.801: los coeficientes publicados se mantienen.
+- Coeficientes de la logística de referencia verificados contra numpy: máx |Δβ| = 6·10⁻¹⁵.
+
+Limitaciones propias de este experimento: diseño transversal (antecedente, no incidencia), desenlace
+autorreportado, PHQ-9 ≠ estrés percibido, sin ponderadores de muestreo complejo, población de EE. UU., 7
+participantes sin dato de tabaquismo codificados como no fumadores, hiperparámetros de boosting y k-NN sin
+optimizar, umbral de Youden elegido sobre las mismas predicciones que se evalúan.
+
+Figuras: `figuras/fig8-auc-nhanes.png`, `fig9-roc-nhanes.png`, `fig10-calibracion-nhanes.png`,
+`fig11-pesos-indice-nhanes.png`. Salida completa: `docs/entrenamiento-nhanes.txt` y `.json`. Reproducir:
+`npm run nhanes:descargar && npm run nhanes:muestra && npm run entrenar:nhanes -- --json docs/entrenamiento-nhanes.json`.
+
+## 9d. Figuras del informe
 
 Generadas con `npm run figuras` (exporta datos del motor y dibuja con matplotlib; PNG a 300 dpi y SVG):
 
@@ -346,12 +412,16 @@ Generadas con `npm run figuras` (exporta datos del motor y dibuja con matplotlib
 | 5 | `figuras/fig5-calibracion-uci` | Diagrama de confiabilidad de la logística completa |
 | 6 | `figuras/fig6-odds-ratios-uci` | Odds ratios con IC 95 % del modelo clínico básico |
 | 7 | `figuras/fig7-pendientes-recuperadas` | Pendiente estimada vs. real (OLS, Theil-Sen, Holt) en 12 series con tendencia |
+| 8 | `figuras/fig8-auc-nhanes` | AUC ± sd de los once modelos sobre NHANES (benchmarks, sin entrenar, entrenados) |
+| 9 | `figuras/fig9-roc-nhanes` | Curvas ROC fuera de muestra sobre NHANES |
+| 10 | `figuras/fig10-calibracion-nhanes` | Calibración por deciles de la logística de referencia |
+| 11 | `figuras/fig11-pesos-indice-nhanes` | Pesos aprendidos para cada componente del índice (recalibración) |
 
 ## 10. Limitaciones y trabajo pendiente
 
 - **El índice no es una escala clínica.** Los coeficientes vienen de la literatura pero la combinación, la calibración de las curvas entre los puntos citados y la normalización por L_max son decisiones propias. El factor estrés es el de evidencia más débil. Sin presión arterial ni colesterol no se puede implementar una ecuación validada (Framingham no-lab necesita PA sistólica); esa fue una decisión de producto explícita.
 - **Evaluación sintética.** Demuestra que la implementación es correcta y cómo se comporta bajo patrones conocidos; no demuestra desempeño sobre usuarios reales. Un dataset público de wearables sería la segunda fuente natural.
-- **El experimento supervisado usa una cohorte chica y sesgada.** n = 297 da intervalos de confianza anchos, y `thalach` (FC máxima en ergometría) no es la FC en reposo que registra Pulso: la ablación "solo lo que Pulso captura" es una aproximación, no una evaluación del índice.
+- **El experimento sobre UCI usa una cohorte chica y sesgada.** n = 297 da intervalos de confianza anchos, y `thalach` (FC máxima en ergometría) no es la FC en reposo que registra Pulso: esa ablación es una aproximación. La evaluación del índice con las variables reales de la app es la de NHANES (§9c), con sus propias limitaciones (transversal, desenlace autorreportado, PHQ-9 como aproximación al estrés).
 - **Series cortas e irregulares.** Con menos de 21 registros no hay selección; con menos de 15, no hay alertas. El motor lo dice; no lo tapa.
 - **Las cartas no modelan la estacionalidad semanal**: un fin de semana muy distinto puede disparar CUSUM. No ocurrió en la cohorte, pero es una limitación estructural conocida.
 - **Intervalos de Theil-Sen**: reutilizan la fórmula de OLS; es una aproximación declarada y su cobertura empírica se mide en cada backtesting.
@@ -376,9 +446,11 @@ Capturas con ese usuario (Chromium headless, base local): [`capturas/dashboard.p
 ## 12. Cómo correrlo
 
 ```bash
-npm run test:ml      # compila el motor con tsconfig.ml.json y corre los 63 tests (node --test)
+npm run test:ml      # compila el motor con tsconfig.ml.json y corre los 70 tests (node --test)
 npm run entrenar     # experimento supervisado sobre UCI (validación cruzada, coeficientes)
-python3 scripts/verificar-logistica.py   # verificación independiente con numpy
+npm run nhanes:descargar && npm run nhanes:muestra   # .xpt del CDC → muestra analítica
+npm run entrenar:nhanes -- --json docs/entrenamiento-nhanes.json   # índice vs. modelos entrenados
+python3 scripts/verificar-logistica.py docs/entrenamiento-nhanes.json   # verificación independiente con numpy
 npm run figuras      # figuras del informe en docs/figuras/
 npm run evaluar      # evaluación completa sobre la cohorte sintética
 npm run evaluar -- --json docs/evaluacion-sintetica.json --horizonte 7 --semilla 42 --metrica horas_sueno
@@ -406,3 +478,6 @@ Desde la app, `getInforme(uid)` en `src/lib/db/informe.ts` carga 90 días de mé
 - Janosi, A., Steinbrunn, W., Pfisterer, M. & Detrano, R. (1988). Heart Disease. *UCI Machine Learning Repository*. Detrano, R. et al. (1989). International application of a new probability algorithm for the diagnosis of coronary artery disease. *Am J Cardiol* 64(5).
 - Hastie, T., Tibshirani, R. & Friedman, J. *The Elements of Statistical Learning* (regresión logística e IRLS §4.4; validación cruzada §7.10; k-NN §13.3).
 - Hanley, J. A. & McNeil, B. J. (1982). The meaning and use of the area under a ROC curve. *Radiology* 143(1).
+- Friedman, J. H. (2001). Greedy function approximation: a gradient boosting machine. *Annals of Statistics* 29(5).
+- Centers for Disease Control and Prevention, NCHS (2024). *National Health and Nutrition Examination Survey, August 2021 – August 2023*. Kroenke, K., Spitzer, R. L. & Williams, J. B. W. (2001). The PHQ-9. *J Gen Intern Med* 16(9).
+- Van Calster, B. et al. (2019). Calibration: the Achilles heel of predictive analytics. *BMC Medicine* 17, 230. Efron, B. & Tibshirani, R. J. (1993). *An Introduction to the Bootstrap*.

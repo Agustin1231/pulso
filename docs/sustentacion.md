@@ -11,11 +11,14 @@ Pulso registra métricas cardiovasculares diarias (frecuencia cardíaca en repos
 modelos de regresión y suavizado exponencial— y elige el mejor por validación cruzada temporal contra su
 propio historial. Con eso pronostica cada métrica a 30 días con intervalos de predicción, detecta
 cambios sostenidos con cartas de control estadístico, y calcula un índice de riesgo con coeficientes
-tomados de meta-análisis publicados. Además entrenamos y validamos, sobre 297 pacientes reales del
-dataset UCI Heart Disease, una **regresión logística implementada desde cero** que alcanza **AUC 0.90**
-en validación cruzada, verificada contra una implementación independiente. El modelo de lenguaje
-(Claude) no calcula nada: recibe el informe del motor y redacta sobre él. Todo el motor es TypeScript
-propio, sin librerías de ML, con 63 tests y una evaluación reproducible.
+tomados de meta-análisis publicados. Ese índice lo **validamos sobre 5.043 adultos reales de NHANES
+2021-2023**, que miden las mismas variables que la app: sin entrenar, ordena igual que una regresión
+logística entrenada con esos datos (AUC 0.799 vs 0.805, diferencia no significativa), y le gana a la
+heurística anterior (0.611 vs 0.564 con las variables de estilo de vida). La **regresión logística, el
+gradient boosting y el k-NN están implementados desde cero**, validados con validación cruzada 5×10 y
+verificados contra numpy (10⁻¹⁵). El modelo de lenguaje (Claude) no calcula nada: recibe el informe del
+motor y redacta sobre él. Todo el motor es TypeScript propio, sin librerías de ML, con 70 tests y una
+evaluación reproducible.
 
 ## 2. Qué es "inteligencia artificial clásica" acá, y dónde está cada cosa
 
@@ -25,10 +28,12 @@ propio, sin librerías de ML, con 63 tests y una evaluación reproducible.
 | **Regresión robusta (Theil-Sen)** | `modelos/robusta.ts` | Pendiente = mediana de las pendientes de todos los pares | Test: un outlier de +50 no la mueve (a OLS sí) | `tests/ml/lineal.test.ts` |
 | **Suavizado exponencial (Holt amortiguado, Holt-Winters)** | `modelos/holt.ts`, `modelos/holt-winters.ts` | α, β*, φ, γ por **optimización de la suma de errores al cuadrado** (búsqueda en grilla) | Backtesting; recuperación de la amplitud semanal | Fig. 1, Fig. 2 |
 | **Selección automática de modelo** | `evaluacion/seleccion.ts` | Cuál de los 8 modelos pronostica mejor a *este* usuario en *esta* métrica | Validación cruzada temporal (rolling-origin), MASE | 23/28 series con MASE < 1 |
-| **Regresión logística (IRLS / Newton-Raphson)** | `supervisado/logistica.ts` | 18 coeficientes de enfermedad coronaria a partir de 297 pacientes reales | Validación cruzada estratificada 5×10, ROC, calibración; verificación con numpy a 10⁻¹⁴ | Fig. 4, 5, 6; `docs/entrenamiento-uci.txt` |
+| **Regresión logística (IRLS / Newton-Raphson)** | `supervisado/logistica.ts` | Antecedente cardiovascular a partir de las variables de la app en 5.043 adultos de NHANES; enfermedad coronaria en 297 pacientes de UCI | Validación cruzada estratificada 5×10, ROC, calibración, bootstrap de ΔAUC; verificación con numpy a 10⁻¹⁵ / 10⁻¹⁴ | Fig. 8–11 (NHANES), 4–6 (UCI); `docs/entrenamiento-nhanes.txt` |
+| **Gradient boosting (Friedman 2001)** | `supervisado/boosting.ts` | 100 árboles de profundidad 3 sobre el gradiente de la log-loss | Misma validación cruzada; test: aprende un XOR que la logística no puede | AUC 0.794 vs 0.805 de la logística en NHANES |
+| **Lector SAS XPORT** | `supervisado/xpt.ts` | Decodifica los archivos del CDC (coma flotante IBM) | Tests con valores conocidos; la muestra reproduce exactamente la del v4 del documento | `data/nhanes-2021-2023/flujo.json` |
 | **k vecinos más cercanos** | `supervisado/knn.ts` | Comparador no paramétrico | Misma validación cruzada | AUC 0.88 vs 0.90 de la logística |
 | **Cartas de control (CUSUM, EWMA) con línea base auto-iniciada** | `anomalias/` | μ y σ del usuario se actualizan en línea hasta la primera alarma (Hawkins 1987) | Retraso de detección y falsas alarmas en series con cambio conocido | Fig. 3; 4/4 detectados, 4.5 días de retraso medio |
-| **Índice de riesgo log-lineal** | `riesgo/` | No se entrena: coeficientes de meta-análisis (y se explica por qué, §5 P8) | Propiedades exactas testeadas (atribución aditiva) | `tests/ml/riesgo.test.ts` |
+| **Índice de riesgo log-lineal** | `riesgo/` | No se entrena: coeficientes de meta-análisis (y se explica por qué, §5 P8) | Validación externa en NHANES (AUC 0.611; 0.799 con contexto) y recalibración de sus pesos; propiedades exactas testeadas | Fig. 8, 11; `tests/ml/riesgo.test.ts` |
 | **Cohorte sintética con verdad conocida** | `sintetico.ts` | Series con tendencia, estacionalidad, ruido, faltantes y saltos conocidos | Permite medir si los modelos recuperan la verdad | `npm run evaluar` |
 
 Nada de esto llama a una API. El único uso de un LLM es redactar texto a partir del informe ya calculado.
@@ -71,13 +76,35 @@ Validación cruzada estratificada de 5 particiones repetida 10 veces (50 ajustes
 | **Regresión logística** | **completo (13 variables)** | **0.904 ± 0.032** | **0.836** | **0.815** | **0.407** |
 | k-NN (k = 7) | completo | 0.880 ± 0.042 | 0.809 | 0.789 | 0.962 |
 
-- AUC 0.90 es el valor de referencia publicado para este dataset con modelos lineales: la implementación está a la altura de la literatura.
 - Los coeficientes de la implementación TypeScript coinciden con una reimplementación independiente en numpy con diferencia máxima de **2·10⁻¹⁴** (`python3 scripts/verificar-logistica.py`).
 - La ablación es un hallazgo en sí: con solo lo que Pulso captura el AUC cae de 0.90 a 0.79. Cuantifica por qué el índice de la app no pretende ser un clasificador clínico.
-- Coeficientes aprendidos (modelo «clínico básico», Fig. 6): sexo masculino OR 6.0 [3.1–11.7], PA sistólica OR 1.25 por +10 mm Hg, colesterol OR 1.07 por +10 mg/dl, FC máxima OR 0.63 por +10 bpm (protectora), edad OR 1.17 por década **no significativa** (p = 0.32) y glucemia no significativa.
+- Coeficientes aprendidos (modelo «clínico básico», Fig. 6): sexo masculino OR 6.0 [3.1–11.7], PA sistólica OR 1.25 por +10 mm Hg, colesterol OR 1.07 por +10 mg/dl, FC máxima OR 0.63 por +10 bpm (protectora), edad OR 1.17 por década **no significativa** (p = 0.38) y glucemia no significativa.
 - Figuras: `figuras/fig4-roc-uci.png`, `fig5-calibracion-uci.png`, `fig6-odds-ratios-uci.png`.
 
-### 3.4 La app en funcionamiento
+### 3.4 Entrenamiento y validación con las variables de la app (NHANES 2021-2023, n = 5.043)
+
+La muestra se construye con el lector XPORT propio a partir de 7 archivos del CDC (597 casos, 11.8 %) y
+coincide exactamente con la del v4 del documento. Mismas 50 particiones para todos los modelos:
+
+| Modelo | Variables | AUC |
+|---|---|---|
+| Prevalencia (benchmark) | — | 0.500 |
+| Heurística v1 de la app | FC, sueño, estrés | 0.564 ± 0.026 |
+| **Índice del motor, sin entrenar** | FC, sueño, estrés (≈ PHQ-9), IMC, tabaco | **0.611 ± 0.025** |
+| Regresión logística | las mismas 5 | 0.608 ± 0.025 |
+| Gradient boosting | las mismas 5 | 0.605 ± 0.025 |
+| Regresión logística (benchmark) | solo edad y sexo | 0.769 ± 0.013 |
+| **Índice + contexto, sin entrenar** | índice + edad y sexo | **0.799 ± 0.015** |
+| **Regresión logística** | 5 + edad y sexo | **0.805 ± 0.014** |
+| Gradient boosting | 5 + edad y sexo | 0.794 ± 0.016 |
+| k-NN (k = 65) | 5 + edad y sexo | 0.775 ± 0.017 |
+
+- **Índice vs heurística:** ΔAUC +0.046 [0.016; 0.075]. **Logística vs índice (mismas variables):** −0.001 [−0.022; 0.019]. **Logística vs índice + contexto:** +0.007 [−0.001; 0.015], no significativa. **Variables de la app sobre edad y sexo:** +0.037 [0.025; 0.049]. **Boosting vs logística:** −0.010 [−0.018; −0.001]. (Bootstrap pareado de 2.000 remuestreos.)
+- Calibración de la logística: pendiente 0.99, intercepto −0.02, Brier 0.091 vs 0.104 de la prevalencia. Umbral de Youden 0.11: sensibilidad 0.82, especificidad 0.66, VPN 0.965.
+- Recalibración: los pesos aprendidos para FC (1.97 [0.68–3.26]), sueño (1.00) e IMC (1.16) son compatibles con la literatura; estrés ≈ PHQ-9 (5.3), edad (1.28) y sexo (1.58) pesan más, tabaquismo menos (0.70). Reajustarlos lleva el AUC de 0.799 a 0.801.
+- Figuras: `figuras/fig8-auc-nhanes.png`, `fig9-roc-nhanes.png`, `fig10-calibracion-nhanes.png`, `fig11-pesos-indice-nhanes.png`.
+
+### 3.5 La app en funcionamiento
 
 `docs/capturas/`: dashboard con pronóstico y bandas, tabla de backtesting, score con índice, alertas, desglose con fuentes y proyección. Todo sale del motor; la etiqueta "no estimado por la IA" está en pantalla.
 
@@ -102,16 +129,22 @@ Por el tamaño de los datos y el objetivo. Un usuario tiene como mucho 90 puntos
 El stack de la app es TypeScript y el motor corre en el servidor de la app sin infraestructura extra. Implementar los algoritmos desde cero hace que cada fórmula sea auditable línea por línea, y verificamos la regresión logística contra una implementación independiente en numpy: coeficientes idénticos a 10⁻¹⁴.
 
 **P5. ¿Cómo saben que funciona?**
-Con validación fuera de muestra en dos frentes. Pronóstico: backtesting rolling-origin contra benchmarks canónicos, con MASE (< 1 significa mejor que repetir el último valor): 23 de 28 series. Clasificación: validación cruzada estratificada 5×10 en datos reales, AUC 0.904 ± 0.032, coincidente con la literatura para ese dataset. Y las coberturas empíricas de los intervalos (≈ 80 % para el IC 80 %) muestran que la incertidumbre está bien calibrada.
+Con validación fuera de muestra en dos frentes. Pronóstico: backtesting rolling-origin contra benchmarks canónicos, con MASE (< 1 significa mejor que repetir el último valor): 23 de 28 series. Riesgo: validación cruzada estratificada 5×10 sobre 5.043 adultos reales de NHANES con las variables de la app (AUC 0.805 para la logística, 0.799 para el índice sin entrenar) y sobre UCI (AUC 0.904 ± 0.032 con las 13 variables clínicas). Y las coberturas empíricas de los intervalos (≈ 80 % para el IC 80 %) muestran que la incertidumbre está bien calibrada.
 
 **P6. ¿Por qué datos sintéticos?**
-Porque no existe historial real de usuarios y, aunque existiera, no tendría "verdad" contra la cual medir. La cohorte sintética tiene tendencia, estacionalidad, ruido, faltantes y saltos **conocidos**, así que podemos medir si el modelo recupera la pendiente real (Fig. 7) y cuántos días tarda en detectar un cambio (Fig. 3). Lo complementamos con un dataset real público para el experimento supervisado.
+Porque no existe historial real de usuarios y, aunque existiera, no tendría "verdad" contra la cual medir. La cohorte sintética tiene tendencia, estacionalidad, ruido, faltantes y saltos **conocidos**, así que podemos medir si el modelo recupera la pendiente real (Fig. 7) y cuántos días tarda en detectar un cambio (Fig. 3). Lo complementamos con dos datasets reales públicos para el estimador de riesgo: NHANES (las mismas variables que la app) y UCI (validación de la implementación).
 
 **P7. ¿El score de riesgo es válido clínicamente?**
-No, y la aplicación lo dice en pantalla. Es un índice de bienestar: pondera factores modificables con riesgos relativos tomados de meta-análisis publicados. Las escalas clínicas (Framingham, SCORE) necesitan presión arterial y colesterol, que Pulso no captura por decisión de producto. La ablación del experimento supervisado lo cuantifica: con solo edad, sexo y frecuencia cardíaca el AUC es 0.79; con las variables clínicas completas, 0.90.
+No como escala clínica, y la aplicación lo dice en pantalla: no estima probabilidad absoluta de eventos. Sí está validado externamente como ordenamiento: sobre 5.043 adultos de NHANES, sin haber visto esos datos, discrimina el antecedente cardiovascular con AUC 0.611 con los factores modificables y 0.799 con el contexto de edad y sexo, igual que una logística entrenada ahí (0.805). Las escalas clínicas (Framingham, SCORE) necesitan presión arterial y colesterol, que Pulso no captura por decisión de producto.
 
 **P8. Si tenían datos reales, ¿por qué no entrenaron el índice con ellos?**
-Porque el dataset UCI es una cohorte de pacientes derivados a cardiología, no una muestra poblacional: 46 % tiene la enfermedad, la edad no resulta significativa (OR 1.17 por década, p = 0.32) y el sexo masculino tiene OR 6. Esos coeficientes describen a quién llega a un servicio de cardiología, no el riesgo de la población general. Usar meta-análisis poblacionales es la decisión correcta, y la Fig. 6 es la evidencia de por qué.
+Lo probamos, y la respuesta es un resultado. Con NHANES entrenamos una logística con las mismas variables (0.608 vs 0.611 del índice) y otra que aprende un peso para cada componente del índice (0.801 vs 0.799): entrenar no mejora el orden. Además los pesos que difieren de la literatura son justo los que un diseño transversal distorsiona: el tabaquismo pesa menos (quien tuvo un infarto suele dejar de fumar) y el PHQ-9 pesa más (hay más síntomas depresivos después de un evento). Reemplazar coeficientes de cohortes prospectivas por estos sería empeorar el modelo. Con UCI tampoco: es una cohorte de derivación cardiológica (46 % con la enfermedad, edad no significativa con p = 0.38, sexo masculino OR 6), que describe a quién llega a cardiología y no el riesgo poblacional (Fig. 6).
+
+**P8b. ¿Por qué NHANES y qué no se puede afirmar con él?**
+Es el único dataset público que mide lo mismo que la app (pulso en reposo medido, peso e IMC medidos, horas de sueño, PHQ-9, tabaquismo, edad, sexo) con un desenlace cardiovascular. No permite afirmar predicción prospectiva (es transversal: antecedente, no incidencia), el desenlace es autorreportado, el PHQ-9 mide síntomas depresivos y no estrés, no aplicamos los ponderadores muestrales y describe a Estados Unidos. Lo decimos en la sección de limitaciones del documento.
+
+**P8c. ¿Las cifras de NHANES del avance anterior eran reales?**
+Las reprodujimos con nuestro propio código: la muestra coincide exactamente (5.043 y 597) y las medias de validación cruzada también (0.603 y 0.803 frente a 0.600 y 0.802 reportadas; la heurística da 0.5645 frente a 0.565). Las cifras de partición única difieren dentro de su variabilidad, por eso ahora reportamos validación cruzada repetida.
 
 **P9. ¿Cómo garantizan que el modelo de lenguaje no invente números?**
 Por arquitectura: no recibe los datos crudos sino el informe del motor como texto, con cada número y su procedencia (modelo, MASE, intervalo), y el prompt le prohíbe citar cifras que no estén ahí. Además la interfaz muestra los números calculados independientemente de la IA, con la etiqueta "no estimado por la IA".
@@ -138,10 +171,10 @@ Con CUSUM y EWMA, cartas de control clásicas (Page 1954, Roberts 1959). Aprendi
 Depende del ruido de la métrica. En frecuencia cardíaca sintética con σ = 3 bpm el MAE a 7 días ronda 2.5 bpm: cerca del piso irreducible, porque el ruido diario no se puede predecir, solo el nivel y la tendencia. Por eso reportamos intervalos y no un número seco.
 
 **P17. ¿Cuál es el aporte original?**
-La integración: selección automática de modelo por usuario y por métrica contra benchmarks, índice con atribución exacta por factor y fuentes, cartas de control auto-iniciadas, y una arquitectura donde el LLM consume el motor. Todo implementado desde cero, con 63 tests y una evaluación reproducible con verdad conocida.
+La integración: selección automática de modelo por usuario y por métrica contra benchmarks, índice con atribución exacta por factor y fuentes, cartas de control auto-iniciadas, y una arquitectura donde el LLM consume el motor. Y la validación externa del índice sobre datos poblacionales reales, que muestra que un índice de literatura bien construido rinde como un modelo entrenado. Todo implementado desde cero, con 70 tests y una evaluación reproducible.
 
 **P18. ¿Sobreajuste?**
-Todas las métricas reportadas son fuera de muestra. En la logística la relación observaciones/parámetros es 297/19 ≈ 16, hay una penalización ridge pequeña, y k-NN sirve de contraste. En el pronóstico, la selección por backtesting penaliza a los modelos que sobreajustan: Holt-Winters, el más flexible, es el que peor MASE medio tiene.
+Todas las métricas reportadas son fuera de muestra. En NHANES hay 5.043 observaciones para 8 parámetros; en UCI la relación observaciones/parámetros es 297/19 ≈ 16, hay una penalización ridge pequeña, y k-NN sirve de contraste. En el pronóstico, la selección por backtesting penaliza a los modelos que sobreajustan: Holt-Winters, el más flexible, es el que peor MASE medio tiene.
 
 **P19. ¿Por qué el k-NN tiene log-loss tan alto (0.96) si su AUC es 0.88?**
 Porque con k = 7 sus "probabilidades" son fracciones gruesas (0, 1/7, …, 1) y cuando se equivoca lo hace con confianza total, lo que log-loss castiga. La logística está calibrada (Fig. 5): sus probabilidades se pueden interpretar como tales.
@@ -153,33 +186,37 @@ Identidad anónima (UUID en el dispositivo), perfil opcional, disclaimer médico
 Sección 7. Semillas fijas: la misma corrida da el mismo resultado.
 
 **P22. ¿Qué harían con más tiempo?**
-Un dataset real de wearables para la segunda fuente de evaluación; reincorporar presión arterial para poder implementar Framingham no-lab; modelos jerárquicos que compartan información entre usuarios (partial pooling) para los que tienen pocos datos; calibrar el índice contra desenlaces; caché del informe.
+Un dataset real de wearables para evaluar el pronóstico; validación externa y recalibración en población colombiana; un diseño longitudinal para predicción prospectiva; aplicar los ponderadores muestrales de NHANES; reincorporar presión arterial para poder implementar Framingham no-lab; modelos jerárquicos que compartan información entre usuarios (partial pooling); caché del informe.
 
 ## 6. Guion de la demo en vivo (≈ 8 minutos)
 
-1. **Tests (30 s).** `npm run test:ml` → 63 tests verdes. "Cada fórmula tiene un test con respuesta conocida."
+1. **Tests (30 s).** `npm run test:ml` → 70 tests verdes. "Cada fórmula tiene un test con respuesta conocida."
 2. **Evaluación de pronóstico (1 min).** `npm run evaluar` → tabla por modelo; señalar MASE < 1 y la columna de cobertura IC 80 %.
-3. **Entrenamiento supervisado (1 min).** `npm run entrenar` → validación cruzada y coeficientes en 0.3 s; luego `python3 scripts/verificar-logistica.py` → "coinciden con numpy".
+3. **Entrenamiento supervisado (1 min).** `npm run entrenar:nhanes` (≈ 50 s: once modelos × 50 particiones, bootstrap y coeficientes) o `npm run entrenar` (UCI, 0.3 s); luego `python3 scripts/verificar-logistica.py docs/entrenamiento-nhanes.json` → "coinciden con numpy".
 4. **La app (4 min).** Con el usuario demo (`npm run seed:demo -- --uid <pulso_uid> --limpiar`):
    - `/dashboard`: gráfica con pronóstico y bandas; abrir la tabla de backtesting ("el modelo se eligió por esto"); tendencia; alerta en la tarjeta de estrés.
    - `/score`: índice, riesgo relativo, contexto, proyección "no estimada por la IA", cambios detectados, desglose con fuentes (abrir una), "Cómo se calcula".
    - Botón de análisis IA: mostrar que redacta sobre esos números (o, sin key, que falla de forma controlada y los números siguen).
-5. **Figuras (1 min).** ROC (Fig. 4) y odds ratios (Fig. 6) para cerrar con el experimento real.
+5. **Figuras (1 min).** AUC de todos los modelos (Fig. 8) y pesos del índice (Fig. 11) para cerrar con el experimento real.
 
 ## 7. Cómo reproducir cada afirmación
 
 ```bash
-npm run test:ml                     # 63 tests: motor + supervisado
+npm run test:ml                     # 70 tests: motor + supervisado + NHANES
 npm run evaluar                     # cohorte sintética → docs/evaluacion-sintetica.txt
+npm run nhanes:descargar            # 7 archivos .xpt del CDC (no se versionan)
+npm run nhanes:muestra              # → data/nhanes-2021-2023/muestra-analitica.csv (versionado)
+npm run entrenar:nhanes -- --json docs/entrenamiento-nhanes.json   # NHANES → 11 modelos, bootstrap, calibración
 npm run entrenar -- --json docs/entrenamiento-uci.json   # UCI → validación cruzada + coeficientes
-python3 scripts/verificar-logistica.py                   # numpy vs TypeScript
-npm run figuras                     # docs/figuras/fig1…fig7 (png + svg)
+python3 scripts/verificar-logistica.py docs/entrenamiento-nhanes.json   # numpy vs TypeScript (o el JSON de UCI)
+npm run figuras                     # docs/figuras/fig1…fig11 (png + svg)
 npm run seed:demo -- --uid <pulso_uid> --limpiar          # usuario demo en la base
 ```
 
 ## 8. Limitaciones que conviene decir antes de que las pregunten
 
 - El índice no es una escala clínica ni estima probabilidad absoluta de eventos.
+- NHANES es transversal (antecedente, no incidencia), con desenlace autorreportado, PHQ-9 como aproximación al estrés, sin ponderadores muestrales y de población estadounidense.
 - La evaluación de pronóstico es sintética; falta un dataset real de series diarias.
 - El dataset UCI tiene 297 pacientes: los intervalos de confianza de los coeficientes son anchos y la cohorte tiene sesgo de derivación.
 - `thalach` (FC máxima en esfuerzo) no es la FC en reposo que registra Pulso; la ablación "solo lo que Pulso captura" es una aproximación.
