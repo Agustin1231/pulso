@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { media, mediana, sd, cuantil, mad, cuantilNormal, cuantilT, crearPRNG } from "../../src/lib/ml/estadistica";
+import { media, mediana, sd, cuantil, mad, cuantilNormal, cuantilT, cdfNormal, crearPRNG } from "../../src/lib/ml/estadistica";
 
 const cerca = (a: number, b: number, tol: number, msg?: string) =>
   assert.ok(Math.abs(a - b) < tol, msg ?? `${a} no está a ${tol} de ${b}`);
@@ -21,6 +21,14 @@ test("cuantilNormal (Acklam) contra tablas", () => {
   cerca(cuantilNormal(0.5), 0, 1e-9);
   cerca(cuantilNormal(0.01), -2.326348, 1e-5);
   cerca(cuantilNormal(0.999), 3.090232, 1e-4);
+});
+
+test("cdfNormal contra tablas y como inversa de cuantilNormal", () => {
+  cerca(cdfNormal(0), 0.5, 1e-7);
+  cerca(cdfNormal(1.959964), 0.975, 1e-6);
+  cerca(cdfNormal(-1), 0.158655, 1e-6);
+  cerca(cdfNormal(2.575829), 0.995, 1e-6);
+  for (const p of [0.01, 0.1, 0.3, 0.7, 0.95]) cerca(cdfNormal(cuantilNormal(p)), p, 1e-6);
 });
 
 test("cuantilT (Cornish-Fisher) contra tablas de la t", () => {

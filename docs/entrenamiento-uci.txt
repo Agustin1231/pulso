@@ -11,11 +11,11 @@ k-NN (k=7)              Completo (13 variables)                   0.880 ± 0.042
 
 ━━ Coeficientes de la logística "clínico básico" ajustada a los 297 pacientes (IRLS, 6 iteraciones, convergió)
 Variable    β (escala original)   OR        IC 95 %             por                     p
-age         0.0155 ± 0.0179       1.17      0.82 – 1.66         +10 años                0.3196
+age         0.0155 ± 0.0179       1.17      0.82 – 1.66         +10 años                0.3849
 sex         1.7916 ± 0.3399       6.00      3.08 – 11.68        hombre vs. mujer        0.0000
-trestbps    0.0220 ± 0.0085       1.25      1.06 – 1.47         +10 mm Hg               0.0070
-chol        0.0068 ± 0.0028       1.07      1.01 – 1.13         +10 mg/dl               0.0108
-fbs         -0.3017 ± 0.3885      0.74      0.35 – 1.58         glucemia > 120 vs. no   0.3679
+trestbps    0.0220 ± 0.0085       1.25      1.06 – 1.47         +10 mm Hg               0.0094
+chol        0.0068 ± 0.0028       1.07      1.01 – 1.13         +10 mg/dl               0.0145
+fbs         -0.3017 ± 0.3885      0.74      0.35 – 1.58         glucemia > 120 vs. no   0.4374
 thalach     -0.0464 ± 0.0078      0.63      0.54 – 0.73         +10 bpm (FC máx.)       0.0000
 intercepto 0.168 · log-verosimilitud -155.57
 Referencias del índice de Pulso: edad ×2 por década (ln2/10 por año), sexo masculino ×1.5. Cohorte de derivación cardiológica: los OR describen ese grupo, no riesgo poblacional.

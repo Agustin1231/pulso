@@ -21,6 +21,7 @@ import { metricas, curvaROC, calibracion } from "../src/lib/ml/supervisado/metri
 import type { MetricasClasificacion } from "../src/lib/ml/supervisado/metricas";
 import { kFoldEstratificado, complemento, mediaSd } from "../src/lib/ml/supervisado/validacion";
 import type { Matriz } from "../src/lib/ml/supervisado/algebra";
+import { cdfNormal } from "../src/lib/ml/estadistica";
 
 function arg(nombre: string): string | undefined {
   const i = process.argv.indexOf(`--${nombre}`);
@@ -136,7 +137,7 @@ const coeficientes = nb.map((nombre, j) => {
   const esc = ESCALA[nombre];
   const z = 1.959964;
   return {
-    variable: nombre, beta: b, errorEstandar: se, p: 2 * (1 - normalCdf(Math.abs(b / se))),
+    variable: nombre, beta: b, errorEstandar: se, p: 2 * (1 - cdfNormal(Math.abs(b / se))),
     orPor: esc.por, or: Math.exp(b * esc.factor),
     ic95: [Math.exp((b - z * se) * esc.factor), Math.exp((b + z * se) * esc.factor)] as [number, number],
   };
@@ -149,12 +150,6 @@ for (const c of coeficientes) {
 console.log(`intercepto ${f(orig.beta[0], 3)} · log-verosimilitud ${f(modeloB.logVerosimilitud, 2)}`);
 console.log("Referencias del índice de Pulso: edad ×2 por década (ln2/10 por año), sexo masculino ×1.5. Cohorte de derivación cardiológica: los OR describen ese grupo, no riesgo poblacional.");
 
-function normalCdf(x: number): number {
-  // Abramowitz & Stegun 7.1.26
-  const t = 1 / (1 + 0.3275911 * Math.abs(x));
-  const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x / 2);
-  return x >= 0 ? 0.5 + y / 2 : 0.5 - y / 2;
-}
 
 // ─── salida ──────────────────────────────────────────────────────────────────
 

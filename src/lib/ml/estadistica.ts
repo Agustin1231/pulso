@@ -53,6 +53,17 @@ export function redondear(x: number, decimales = 2): number {
 }
 
 /**
+ * Función de distribución de la normal estándar: Φ(x) = ½·(1 + erf(x/√2)), con
+ * erf por Abramowitz & Stegun 7.1.26 (error absoluto < 1.5e-7).
+ */
+export function cdfNormal(x: number): number {
+  const z = Math.abs(x) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * z);
+  const erf = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-z * z);
+  return x >= 0 ? 0.5 + erf / 2 : 0.5 - erf / 2;
+}
+
+/**
  * Inversa de la normal estándar. Algoritmo de Acklam (2003), error relativo
  * máximo 1.15e-9 en todo (0, 1). Suficiente para intervalos de predicción.
  */
