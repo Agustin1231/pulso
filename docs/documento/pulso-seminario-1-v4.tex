@@ -1,0 +1,701 @@
+\documentclass[12pt,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{titlesec}
+
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black,
+            breaklinks=true}
+\usepackage{url}
+\Urlmuskip=0mu plus 1mu\relax
+\makeatletter
+\g@addto@macro{\UrlBreaks}{\UrlOrds}
+\makeatother
+\urlstyle{same}
+\makeatletter
+\makeatother
+
+\onehalfspacing
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Pulso - Predice, nutre, entrena y protege tu corazón}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.6em}{\MakeUppercase}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.6em}{}
+
+\setlist[itemize]{itemsep=4pt, topsep=6pt}
+\setlist[enumerate]{itemsep=6pt, topsep=6pt}
+
+\begin{document}
+
+%======================= PORTADA =======================
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+
+{\LARGE\bfseries Pulso - Predice, nutre, entrena y protege tu corazón\par}
+
+\vspace{1.5cm}
+
+{\large Plataforma PWA con IA para la Prevención Cardiovascular Global:\par}
+\vspace{0.4cm}
+{\large Predicción de Riesgo, Alimentación, Ejercicio y Seguimiento\par}
+\vspace{0.4cm}
+{\large Personalizado\par}
+
+\vspace{2.5cm}
+
+{\large Natalia Moncaleano Montero\par}
+\vspace{0.4cm}
+{\large Agustín Peralta Guarín\par}
+\vspace{0.4cm}
+{\large Diego Fernando Fandiño Olarte\par}
+
+\vspace{2.5cm}
+
+{\large Universidad de San Buenaventura\par}
+\vspace{0.4cm}
+{\large Facultad de Ingeniería (Bogotá)\par}
+\vspace{0.4cm}
+{\large Ingeniería de Sistemas\par}
+\vspace{0.4cm}
+{\large Bogotá D.C., Colombia\par}
+\vspace{0.4cm}
+{\large 2026\par}
+
+\vfill
+\end{titlepage}
+
+\setcounter{page}{1}
+
+%======================= DEDICATORIA =======================
+\section*{DEDICATORIA}
+\addcontentsline{toc}{section}{Dedicatoria}
+
+Dedicamos este trabajo a nuestras familias, por su amor incondicional, comprensión
+y apoyo constante durante todo el proceso de formación profesional. A nuestros
+padres, quienes con su esfuerzo, valores y ejemplo nos impulsaron a superar cada
+reto y alcanzar nuestras metas.
+
+También dedicamos este logro a nuestros docentes, por compartir su conocimiento y
+guiarnos con paciencia y compromiso, y a todas las personas que creyeron en
+nosotros y nos motivaron a culminar con éxito este proyecto. Este trabajo es
+reflejo del esfuerzo conjunto, la perseverancia y la pasión que compartimos como
+grupo.
+
+\newpage
+
+%======================= INDICE =======================
+\renewcommand{\contentsname}{ÍNDICE}
+\tableofcontents
+
+\newpage
+
+%======================= RESUMEN =======================
+\section*{RESUMEN}
+\addcontentsline{toc}{section}{Resumen}
+
+Las enfermedades cardiovasculares (ECV) constituyen la principal causa de muerte
+en el mundo. De acuerdo con la Organización Mundial de la Salud (2026a), cada año
+fallecen cerca de 20,5 millones de personas por esta causa, lo que equivale a una
+de cada tres muertes registradas globalmente. La carga es desigual: los países de
+ingresos medios y bajos concentran la mayor mortalidad evitable, en buena parte
+porque sus poblaciones no acceden a herramientas de tamizaje y orientación
+preventiva.
+
+En ese contexto, este proyecto desarrolla \textbf{Pulso}, una Aplicación Web
+Progresiva (PWA) basada en inteligencia artificial que articula cinco funciones
+complementarias: estimación individual del riesgo cardiovascular a partir de
+indicadores de estilo de vida; recomendaciones alimenticias personalizadas con
+ingredientes, cantidades y preparaciones; planes de vida saludable que integran
+manejo del estrés, calidad del sueño e hidratación; rutinas de ejercicio
+progresivas según nivel de riesgo y condición física; y un sistema de seguimiento
+con dashboard y reportes periódicos.
+
+La arquitectura PWA permite que Pulso sea instalable en cualquier dispositivo,
+funcione offline mediante Service Workers y envíe notificaciones push para
+alertas preventivas. La estimación de riesgo se sustenta en un modelo supervisado
+entrenado sobre la Encuesta Nacional de Examen de Salud y Nutrición de los
+Estados Unidos, ciclo agosto 2021 a agosto 2023 (Centers for Disease Control and
+Prevention [CDC], 2024), con una muestra analítica de 5.043 adultos y una
+prevalencia de eventos cardiovasculares del 11,8\,\%. El modelo alcanza un área
+bajo la curva ROC de 0,812 al incorporar edad y sexo, frente a 0,605 utilizando
+únicamente los indicadores de estilo de vida que la aplicación captura hoy
+(frecuencia cardíaca en reposo, peso, horas de sueño y nivel de estrés). Los
+conjuntos UCI Heart Disease (Janosi et al., 1988), Framingham Heart Study (Dawber
+et al., 1951) y el Global Health Observatory de la OMS (2026b) operan como
+fundamento bibliográfico y epidemiológico, según se precisa en el apartado de
+limitaciones. La interpretación del resultado en lenguaje natural se delega a un
+modelo de lenguaje.
+
+\vspace{0.4cm}
+\noindent\textbf{Palabras clave:} enfermedades cardiovasculares, inteligencia
+artificial, PWA, estimación de riesgo, salud digital, recomendaciones
+alimenticias, vida saludable, sistemas de apoyo a la decisión.
+
+\newpage
+
+%======================= ABSTRACT =======================
+\section*{ABSTRACT}
+\addcontentsline{toc}{section}{Abstract}
+
+\selectlanguage{english}
+
+Cardiovascular diseases (CVDs) are the leading cause of death worldwide.
+According to the World Health Organization (2026a), approximately 20.5 million
+people die from CVDs every year, accounting for nearly one in every three
+recorded deaths. The burden is unequally distributed: low- and middle-income
+countries concentrate most of the preventable mortality, largely because their
+populations lack access to digital screening tools and preventive guidance.
+
+This work presents \textbf{Pulso}, an AI-driven Progressive Web Application (PWA)
+that combines five complementary functions: individual cardiovascular risk
+estimation from lifestyle indicators; personalized dietary recommendations
+including ingredients, quantities and cooking methods; comprehensive
+healthy-lifestyle plans covering stress management, sleep quality and hydration;
+exercise routines that adapt progressively to risk level and fitness; and a
+continuous tracking layer with dashboard and configurable periodic reports.
+
+The PWA architecture allows Pulso to be installable on any device, to work
+offline through Service Workers and to deliver push notifications for preventive
+alerts. Risk estimation is grounded in a supervised model trained on the United
+States National Health and Nutrition Examination Survey, August 2021 to August
+2023 cycle (Centers for Disease Control and Prevention [CDC], 2024), with an
+analytic sample of 5,043 adults and an 11.8\,\% prevalence of cardiovascular
+events. The model reaches an area under the ROC curve of 0.812 when age and sex
+are included, compared to 0.605 using only the lifestyle indicators the
+application currently captures (resting heart rate, weight, sleep hours and
+stress level). The UCI Heart Disease (Janosi et al., 1988), Framingham Heart
+Study (Dawber et al., 1951) and WHO Global Health Observatory (2026b) datasets
+serve as bibliographic and epidemiological grounding, as detailed in the
+limitations section. Natural-language interpretation of the resulting score is
+delegated to a language model.
+
+\vspace{0.4cm}
+\noindent\textbf{Keywords:} cardiovascular diseases, artificial intelligence,
+PWA, risk estimation, digital health, dietary recommendations, healthy lifestyle,
+decision support systems.
+
+\selectlanguage{spanish}
+
+\newpage
+
+%======================= 1. INTRODUCCION =======================
+\section{Introducción}
+
+Las enfermedades cardiovasculares (ECV) son hoy uno de los problemas de salud
+pública más serios a nivel global. La Organización Mundial de la Salud (2026a)
+estima en 20,5 millones las muertes anuales por esta causa, cifra que equivale al
+33\,\% de toda la mortalidad mundial y que viene en aumento sostenido año tras
+año. En Colombia, el Ministerio de Salud y Protección Social (2022) reporta que
+las enfermedades del sistema circulatorio son la primera causa de mortalidad
+general, con una tasa ajustada superior a 130 muertes por cada 100.000
+habitantes.
+
+El panorama se complica por hábitos cada vez más extendidos: sedentarismo,
+alimentación con exceso de sodio y grasas saturadas, tabaquismo, obesidad y altos
+niveles de estrés. Estos factores no son exclusivos de países desarrollados ni de
+economías emergentes: aparecen, con matices, en ambas. A esto se suma que muchas
+personas ignoran su nivel de riesgo cardiovascular hasta que ocurre un evento
+agudo, típicamente un infarto o un accidente cerebrovascular, lo que reduce
+drásticamente las posibilidades de intervención preventiva.
+
+Desde la ingeniería de sistemas existe una oportunidad concreta. Es posible
+diseñar aplicaciones web progresivas (PWA) inteligentes que recojan datos de
+estilo de vida del usuario, estimen su riesgo cardiovascular y devuelvan
+recomendaciones accionables en tiempo real. La arquitectura PWA fue elegida
+precisamente porque ofrece la experiencia de una app nativa en cualquier
+navegador, sin pasar por tiendas de aplicaciones, con soporte offline y
+notificaciones push para alertas de salud.
+
+La literatura científica ha venido respaldando este enfoque. Weng et al. (2017)
+demostraron que los modelos de aprendizaje automático pueden superar a los
+algoritmos clínicos clásicos en la predicción de eventos cardiovasculares;
+Krittanawong et al. (2020), en su meta-análisis sobre aprendizaje automático en
+medicina cardiovascular, concluyen que las redes neuronales profundas y los
+algoritmos de ensemble learning alcanzan exactitudes superiores al 85\,\% en la
+predicción de eventos cardíacos a partir de datos clínicos estructurados. Es
+importante señalar que esos desempeños se obtienen sobre variables clínicas de
+laboratorio, condición que delimita el alcance del presente prototipo y que se
+cuantifica en la Sección 4.3. Pulso integra esa evidencia en una PWA
+que no solo estima riesgo: también recomienda alimentación con ingredientes
+específicos, planes de vida saludable y rutinas de ejercicio, apoyándose en datos
+epidemiológicos mundiales.
+
+El presente trabajo revisa las limitaciones de las soluciones actuales y propone
+un enfoque viable para construir una PWA inteligente de alcance global, con
+recomendaciones contextualizadas por región, cultura alimentaria y disponibilidad
+local de ingredientes.
+
+\newpage
+
+%======================= 2. PLANTEAMIENTO =======================
+\section{Planteamiento del Problema}
+
+Las enfermedades cardiovasculares son hoy el principal desafío de salud pública
+tanto a escala global como en Colombia. Según la OMS (2026a), causan cerca de
+20,5 millones de muertes al año; las manifestaciones más frecuentes son
+hipertensión arterial, cardiopatía isquémica y accidente cerebrovascular, todas
+con tendencia ascendente en la última década.
+
+Los factores de riesgo más prevalentes, sedentarismo, dietas con alto sodio y
+grasas saturadas, tabaquismo, obesidad y estrés crónico, atraviesan economías de
+todo nivel de ingreso. El problema operativo es que una gran parte de la
+población no conoce su riesgo cardiovascular hasta que aparece un evento clínico,
+porque no existen herramientas digitales gratuitas, accesibles y de alcance
+masivo que permitan una evaluación preventiva personalizada (Weng et al., 2017).
+
+Desde la ingeniería de sistemas se identifica una brecha tecnológica clara: las
+plataformas existentes suelen estar diseñadas para entornos hospitalarios, no
+funcionan offline, no se instalan como aplicación nativa y no ofrecen
+funcionalidades complementarias como recomendaciones alimenticias con
+ingredientes y cantidades, planes integrales de vida saludable, rutinas de
+ejercicio adaptadas al riesgo, o reportes periódicos accesibles desde cualquier
+dispositivo y sin conexión.
+
+\subsection*{Pregunta de Investigación}
+
+A partir de lo anterior, la pregunta que orienta este trabajo es:
+
+\begin{quote}
+¿De qué manera una Aplicación Web Progresiva impulsada por inteligencia
+artificial puede contribuir a la predicción, prevención y reducción del riesgo
+cardiovascular a nivel mundial mediante recomendaciones personalizadas de
+alimentación, ejercicio y vida saludable?
+\end{quote}
+
+\subsection*{Antecedentes}
+
+La aplicación de inteligencia artificial al área cardiovascular cuenta con
+evidencia sólida. Weng et al. (2017) desarrollaron modelos de machine learning
+que predicen eventos cardiovasculares con mayor precisión que SCORE o el
+Framingham Risk Score. Krittanawong et al. (2020) confirman que las redes
+neuronales profundas y los métodos de ensemble superan el 85\,\% de exactitud
+sobre datos clínicos estructurados.
+
+En prescripción de ejercicio, Liao et al. (2020) reportan que los sistemas de
+recomendación basados en aprendizaje automático mejoran significativamente la
+adherencia del paciente frente a planes genéricos. En nutrición computacional,
+Zeevi et al. (2015) demostraron que modelos de IA pueden estimar respuestas
+metabólicas individuales y proponer dietas ajustadas con resultados clínicamente
+significativos.
+
+En cuanto a la arquitectura, Biduski et al. (2020) muestran que las PWA presentan
+ventajas medibles sobre las apps nativas en contextos de salud pública: mejor
+accesibilidad sin pasar por una store, funcionamiento offline para zonas con
+conectividad intermitente, actualizaciones transparentes y un consumo de
+almacenamiento marcadamente menor.
+
+En el caso colombiano, Pinzón et al. (2020) y los informes del Observatorio
+Nacional de Salud (2021) han documentado barreras estructurales como la falta de
+tamizaje digital para población general, desigualdades regionales y baja adopción
+tecnológica en atención primaria. El conjunto de estos antecedentes refuerza la
+pertinencia de combinar IA con interfaces web progresivas en prevención
+cardiovascular.
+
+\newpage
+
+%======================= 3. JUSTIFICACION =======================
+\section{Justificación}
+
+\subsection{Relevancia Social}
+
+Las enfermedades cardiovasculares son también, y sobre todo, un indicador de
+desigualdad. Millones de personas en todo el mundo no cuentan con servicios de
+salud preventivos, y eso eleva la mortalidad por eventos que podrían haberse
+evitado. Pulso, como PWA gratuita y de alcance global, ayuda a reducir esa
+brecha: pone al alcance de cualquiera, con o sin conexión estable, una estimación
+orientativa de su riesgo y una guía nutricional con ingredientes adaptados a su
+contexto.
+
+La elección de la arquitectura PWA es estratégica para países de ingresos medios
+y bajos, donde la conectividad es intermitente: los usuarios pueden consultar
+recomendaciones, rutinas y niveles de riesgo aun en zonas rurales o con señal
+limitada, gracias al funcionamiento offline.
+
+\subsection{Relevancia Teórica}
+
+El proyecto se apoya en una literatura ya establecida sobre IA aplicada a
+estratificación del riesgo y personalización de intervenciones preventivas (Weng
+et al., 2017; Krittanawong et al., 2020). Desde la ingeniería de sistemas, este
+trabajo aporta a la base teórica del uso de PWA inteligentes integradas con
+sistemas de información en salud, contribuyendo a campos como la salud digital,
+la nutrición computacional y la medicina preventiva de precisión.
+
+Adicionalmente, el trabajo documenta una discusión metodológica poco frecuente en
+la literatura de prototipos de salud digital: cuánta capacidad predictiva puede
+alcanzarse con las variables que un usuario no clínico aporta sin supervisión
+médica. La cuantificación presentada en la Sección 4.3 muestra que los
+indicadores de estilo de vida por sí solos discriminan de forma limitada, y que
+la ganancia decisiva proviene de dos variables demográficas de bajo costo de
+recolección. Ese resultado es transferible a cualquier herramienta preventiva de
+acceso abierto y constituye un aporte metodológico del proyecto.
+
+\subsection{Relevancia Práctica}
+
+Pulso permitirá a usuarios de cualquier país ingresar sus indicadores de estilo
+de vida para obtener:
+
+\begin{itemize}
+  \item Estimación orientativa de su nivel de riesgo cardiovascular, con
+    umbrales sustentados en literatura clínica y datos epidemiológicos
+    mundiales.
+  \item Recomendaciones alimenticias detalladas con ingredientes, cantidades,
+    métodos de preparación y alternativas regionales según cultura alimentaria.
+  \item Planes de vida saludable que integran manejo del estrés, calidad del
+    sueño, hidratación y hábitos cotidianos.
+  \item Rutinas de ejercicio adaptadas a su condición física, nivel de riesgo y
+    objetivos personales.
+  \item Alertas preventivas automáticas mediante notificaciones push.
+  \item Reportes periódicos configurables (mensuales o quincenales), accesibles
+    incluso sin conexión, que muestren la evolución de sus indicadores.
+\end{itemize}
+
+\newpage
+
+%======================= 4. ALCANCE Y LIMITACIONES =======================
+\section{Alcance y Limitaciones}
+
+\subsection{Alcance}
+
+El proyecto contempla el desarrollo de Pulso como una PWA de alcance global,
+basada en inteligencia artificial, orientada a la estimación del riesgo
+cardiovascular, la generación de recomendaciones alimenticias con ingredientes
+específicos, planes de vida saludable, rutinas de ejercicio personalizadas y el
+seguimiento continuo del estado de salud del usuario.
+
+La plataforma estará disponible para cualquier persona con acceso a internet y
+navegador compatible, será instalable en móvil, tablet o desktop, funcionará
+offline mediante Service Workers y enviará notificaciones push para alertas
+preventivas. El sistema integra seis módulos funcionales:
+
+\begin{enumerate}
+  \item Ingreso de indicadores de estilo de vida asociado a un identificador
+    anónimo generado en el propio dispositivo, sin registro de usuario ni
+    recolección de datos personales identificables.
+
+  \item Estimación del riesgo cardiovascular a partir de frecuencia cardíaca en
+    reposo, peso, horas de sueño y nivel de estrés percibido. El prototipo
+    implementa actualmente un modelo heurístico ponderado, cuyos umbrales se
+    sustentan en la literatura clínica, y el trabajo incorpora el entrenamiento y
+    la evaluación de un modelo supervisado sobre datos poblacionales reales
+    (Sección 4.3) que constituye la base del estimador definitivo. La
+    explicabilidad es directa por construcción: tanto el modelo heurístico como
+    la regresión logística informan la contribución de cada indicador sobre el
+    puntaje final, sin requerir métodos de atribución post hoc.
+
+  \item Recomendaciones alimenticias personalizadas con ingredientes, cantidades,
+    métodos de preparación, alternativas regionales y planes semanales con lista
+    de compras automatizada.
+
+  \item Recomendaciones de vida saludable que abarcan manejo del estrés, calidad
+    del sueño, hidratación y hábitos cotidianos.
+
+  \item Rutinas de ejercicio adaptadas al nivel de riesgo con progresividad
+    automática y alertas de seguridad.
+
+  \item Sistema de seguimiento con dashboard interactivo, alertas preventivas y
+    reportes periódicos exportables en PDF.
+\end{enumerate}
+
+\subsection{Limitaciones}
+
+El proyecto presenta varias limitaciones que conviene declarar de entrada. El
+desarrollo se limita a un prototipo funcional en fase experimental, sin
+implementación directa en instituciones médicas, y la validación se centra en
+métricas computacionales de desempeño y en pruebas de usabilidad.
+
+Las recomendaciones generadas son de carácter orientativo y no sustituyen el
+criterio del profesional de salud. La disponibilidad de ingredientes puede variar
+según la región del usuario; las funcionalidades offline dependen del soporte del
+navegador para Service Workers; y la exactitud de la estimación está condicionada
+por la calidad y veracidad de los datos que ingrese el usuario, dado que el
+sistema no cuenta con verificación clínica directa.
+
+Sobre los conjuntos de datos conviene precisar el alcance real de su uso. La
+fuente de entrenamiento es NHANES 2021-2023 (CDC, 2024), seleccionada porque es
+el único conjunto de acceso público que mide las mismas variables que la
+aplicación captura. Los tres conjuntos citados inicialmente en la propuesta
+fueron verificados y descartados como corpus de entrenamiento por razones
+distintas, que se documentan a continuación.
+
+El UCI Heart Disease (Janosi et al., 1988) es de acceso abierto y fue verificado:
+su subconjunto usable, \texttt{processed.cleveland.data}, contiene 303 registros
+y 14 variables, de los cuales 6 presentan valores faltantes. Sus predictores
+exigen exámenes de laboratorio y prueba de esfuerzo (colesterol sérico, glucemia
+en ayunas, electrocardiograma en reposo y frecuencia cardíaca máxima bajo
+esfuerzo) que Pulso no solicita por decisión de diseño. La intersección entre sus
+variables y las que captura la aplicación es nula, de modo que se conserva como
+antecedente metodológico y no como fuente de datos.
+
+El Framingham Heart Study (Dawber et al., 1951) no es de descarga libre. Su
+acceso se tramita ante el repositorio BioLINCC del National Heart, Lung, and
+Blood Institute y exige aprobación de un comité de ética institucional, completa
+o expedita, además de un acuerdo formal de uso de datos, plazos incompatibles con
+el cronograma del presente trabajo. Por su parte, el Global Health Observatory de
+la OMS (2026b) publica indicadores agregados por país y no registros
+individuales, por lo que sustenta las cifras epidemiológicas de contexto pero no
+permite entrenar un estimador individual.
+
+El uso de NHANES impone cuatro restricciones que condicionan la interpretación de
+los resultados de la Sección 4.3 y que se declaran de manera explícita. Primera:
+el diseño de la encuesta es transversal, de modo que el modelo estima la
+asociación entre el estado actual del participante y el antecedente de un evento
+cardiovascular, y no la incidencia futura de dicho evento; el prototipo no
+realiza, por tanto, predicción prospectiva. Segunda: la variable de estrés se
+aproximó mediante el cuestionario PHQ-9, instrumento validado que mide síntomas
+depresivos y no estrés percibido, dado que el ciclo no incorpora una escala de
+estrés; se trata de una equivalencia aproximada. Tercera: el desenlace es
+autorreportado por el participante y no verificado contra historia clínica.
+Cuarta: se omitieron los ponderadores de muestreo complejo, admisible para un
+clasificador demostrativo pero incompatible con la generación de estimaciones
+poblacionales.
+
+Finalmente, la validación externa del estimador en población colombiana queda
+planteada como línea de trabajo posterior, dado que NHANES describe a la
+población de los Estados Unidos y la transferencia de un modelo de riesgo entre
+poblaciones requiere recalibración.
+
+\subsection{Resultados Preliminares del Estimador}
+
+Con el fin de sustentar empíricamente el modelo de estimación, se construyó una
+muestra analítica a partir de siete archivos del ciclo NHANES 2021-2023 (CDC,
+2024), cruzados por identificador de participante. Se retuvieron los adultos de
+18 años o más con las cuatro variables de Pulso completas y desenlace
+cardiovascular conocido, obteniendo \textbf{5.043 participantes} con
+\textbf{597 casos positivos (11,8\,\%)}. La edad media es de 53,6 años, la
+frecuencia cardíaca media de 70,8 lpm, el índice de masa corporal medio de 29,7 y
+la duración media del sueño de 7,7 horas.
+
+La correspondencia entre las variables de la aplicación y las de la encuesta es
+directa: la frecuencia cardíaca en reposo se toma de \texttt{BPXOPLS1}, medida
+por oscilometría tras cinco minutos de reposo en posición sentada; el peso de
+\texttt{BMXWT}, medido en el centro de examen y no autorreportado; las horas de
+sueño de \texttt{SLD012}; y el estrés se aproxima mediante el puntaje total del
+PHQ-9. El desenlace agrupa infarto, angina, enfermedad coronaria, falla cardíaca
+y accidente cerebrovascular (\texttt{MCQ160B} a \texttt{MCQ160F}).
+
+Se evaluaron cuatro modelos supervisados mediante partición estratificada 70/30 y
+validación cruzada de cinco pliegues, contrastados contra la heurística ponderada
+que implementa el prototipo. La Tabla 1 resume el desempeño.
+
+\vspace{0.3cm}
+\noindent\textbf{Tabla 1.} \textit{Desempeño discriminativo de los modelos
+evaluados sobre NHANES 2021-2023.}
+
+\vspace{0.2cm}
+\noindent\begin{tabular}{p{5.1cm}p{3.6cm}cc}
+\hline
+\textbf{Modelo} & \textbf{Variables} & \textbf{AUC} & \textbf{AUC VC} \\
+\hline
+Heurística ponderada actual & FC, sueño, estrés & 0,565 & -- \\
+Regresión logística & Las 4 de la app & 0,605 & 0,600 \\
+Gradient boosting & Las 4 de la app & 0,572 & 0,590 \\
+Regresión logística & Las 4 + edad y sexo & \textbf{0,812} & 0,802 \\
+Gradient boosting & Las 4 + edad y sexo & 0,787 & 0,787 \\
+\hline
+\end{tabular}
+
+\vspace{0.2cm}
+\noindent\footnotesize AUC: área bajo la curva ROC sobre la partición de prueba
+(n = 1.513). AUC VC: media de validación cruzada de cinco pliegues. La heurística
+se evaluó invirtiendo el puntaje, dado que en la aplicación un valor alto indica
+mejor estado.\normalsize
+
+\vspace{0.4cm}
+
+El resultado principal es que los cuatro indicadores de estilo de vida que la
+aplicación captura poseen, por sí solos, una capacidad discriminativa limitada:
+un AUC de 0,605 se sitúa apenas por encima del azar, y la heurística vigente
+alcanza 0,565. La incorporación de edad y sexo eleva el AUC a 0,812, con una
+sensibilidad de 0,793 y una especificidad de 0,702 en el punto de Youden.
+
+Los odds ratio estandarizados explican el fenómeno: la edad presenta un OR de
+4,16 por desviación estándar y el sexo de 0,64, magnitudes que dominan sobre el
+índice de masa corporal (1,73), el PHQ-9 (1,52) y la frecuencia cardíaca (1,15).
+Este hallazgo tiene una consecuencia directa de diseño, y es que el factor
+limitante del estimador no es la ausencia de variables de laboratorio, como se
+presumía en la formulación inicial del proyecto, sino la ausencia de dos campos
+demográficos que el usuario puede aportar sin intervención clínica. En
+consecuencia, se incorpora al alcance la solicitud de edad y sexo en el registro
+inicial de la aplicación.
+
+Dos precisiones sobre los coeficientes. El peso y el índice de masa corporal son
+colineales, por lo que el modelo reparte el efecto entre ambos y el peso aparece
+con un OR inferior a la unidad, situación que no debe leerse como un efecto
+protector. De igual forma, la duración del sueño presenta un OR de 1,12, atribuible
+a confusión por edad y morbilidad previa y no a una relación causal.
+
+\newpage
+
+%======================= 5. OBJETIVOS =======================
+\section{Objetivos}
+
+\subsection{Objetivo General}
+
+Desarrollar Pulso, una Aplicación Web Progresiva (PWA) basada en inteligencia
+artificial para la estimación del riesgo cardiovascular, la generación de
+recomendaciones alimenticias con ingredientes específicos, planes de vida
+saludable, rutinas de ejercicio personalizadas y seguimiento continuo, orientada
+a la prevención cardiovascular a nivel mundial.
+
+\subsection{Objetivos Específicos}
+
+\begin{itemize}
+  \item Diseñar la arquitectura de Pulso como PWA, definiendo y justificando la
+    selección tecnológica de sus componentes, la integración de Service Workers,
+    persistencia local y notificaciones push, junto con el modelo de estimación
+    del riesgo cardiovascular y el sustento bibliográfico de sus umbrales y
+    ponderaciones.
+
+  \item Desarrollar los módulos funcionales de Pulso: estimación de riesgo
+    cardiovascular, recomendaciones alimenticias con ingredientes específicos,
+    planes de vida saludable, rutinas de ejercicio con progresividad automática y
+    sistema de seguimiento con dashboard y reportes en PDF.
+
+  \item Validar el prototipo mediante la evaluación del estimador de riesgo sobre
+    datos poblacionales reales, empleando métricas de discriminación y
+    calibración con partición estratificada y validación cruzada, complementada
+    con pruebas de usabilidad con usuarios representativos, la revisión de un
+    profesional de salud y la verificación del funcionamiento en distintos
+    dispositivos y condiciones de conectividad.
+\end{itemize}
+
+\newpage
+
+%======================= 6. CONCLUSIONES =======================
+\section{Conclusiones}
+
+Las enfermedades cardiovasculares constituyen, simultáneamente, un desafío
+médico, tecnológico y social. La detección tardía del riesgo, la fragmentación de
+los datos clínicos, las barreras de acceso a servicios preventivos y la baja
+alfabetización en salud configuran un escenario complejo que demanda soluciones
+integrales y no fragmentadas.
+
+Desde la ingeniería de sistemas, la combinación de estimación algorítmica del
+riesgo, arquitecturas web progresivas y diseño centrado en el usuario ofrece una
+vía concreta para acercar la prevención cardiovascular a poblaciones que hoy no
+tienen acceso a herramientas digitales de tamizaje. Una PWA como Pulso permite
+que la evaluación de riesgo, las recomendaciones alimenticias y los planes de
+ejercicio estén disponibles offline, sean instalables sin pasar por una tienda de
+aplicaciones y se actualicen de forma transparente.
+
+La revisión de antecedentes confirma que los modelos de IA pueden superar a los
+algoritmos clásicos en la estratificación del riesgo (Weng et al., 2017;
+Krittanawong et al., 2020), y que las arquitecturas PWA son una vía viable para
+llegar a contextos con conectividad limitada (Biduski et al., 2020). Pulso
+integra estos elementos en una propuesta que va más allá de la estimación:
+incorpora recomendaciones nutricionales con ingredientes específicos, planes de
+vida saludable y rutinas de ejercicio adaptadas al nivel de riesgo del usuario.
+
+El trabajo también aporta evidencia empírica sobre una pregunta de diseño que la
+literatura de prototipos de salud digital suele dejar implícita: cuánto riesgo
+cardiovascular puede estimarse sin datos de laboratorio. La evaluación sobre
+5.043 adultos de NHANES 2021-2023 muestra que los indicadores de estilo de vida
+autorreportados alcanzan un AUC de 0,605, mientras que agregar edad y sexo lo
+eleva a 0,812. El factor limitante no era, entonces, la ausencia de exámenes
+clínicos, sino la de dos campos demográficos elementales. Reconocer y cuantificar
+esa restricción, en lugar de sortearla, permite delimitar con honestidad el
+alcance del prototipo y orienta su rediseño.
+
+Como trabajo de grado, este proyecto aporta tanto al campo de la salud digital
+como a la ingeniería de sistemas aplicada al sector salud, y se alinea con los
+Objetivos de Desarrollo Sostenible vinculados a salud y bienestar, reducción de
+desigualdades e innovación tecnológica. Las próximas fases del trabajo abordarán
+el diseño metodológico detallado, los instrumentos de recolección y la validación
+con usuarios representativos y revisión de un profesional de la salud.
+
+\newpage
+
+%======================= REFERENCIAS =======================
+\section*{REFERENCIAS}
+\addcontentsline{toc}{section}{Referencias}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=2.2em]
+
+\item Biduski, D., Bellei, E. A., Rodriguez, J. P. M., Zaina, L. A. M., \& De
+Marchi, A. C. B. (2020). Assessing long-term user experience on a mobile health
+application through an in-app embedded conversation-based questionnaire.
+\textit{Computers in Human Behavior, 104}, 106169.
+\url{https://doi.org/10.1016/j.chb.2019.106169}
+
+\item Centers for Disease Control and Prevention, National Center for Health
+Statistics. (2024). \textit{National Health and Nutrition Examination Survey:
+August 2021 -- August 2023 data files} [Conjunto de datos]. U.S. Department of
+Health and Human Services.
+\url{https://wwwn.cdc.gov/nchs/nhanes/continuousnhanes/default.aspx?Cycle=2021-2023}
+
+\item Dawber, T. R., Meadors, G. F., \& Moore, F. E. (1951). Epidemiological
+approaches to heart disease: The Framingham Study. \textit{American Journal of
+Public Health, 41}(3), 279--281. \url{https://doi.org/10.2105/AJPH.41.3.279}
+
+\item Detrano, R., Janosi, A., Steinbrunn, W., Pfisterer, M., Schmid, J.,
+Sandhu, S., Guppy, K., Lee, S., \& Froelicher, V. (1989). International
+application of a new probability algorithm for the diagnosis of coronary artery
+disease. \textit{American Journal of Cardiology, 64}(5), 304--310.
+\url{https://doi.org/10.1016/0002-9149(89)90524-9}
+
+\item Janosi, A., Steinbrunn, W., Pfisterer, M., \& Detrano, R. (1988).
+\textit{Heart Disease} [Conjunto de datos]. UCI Machine Learning Repository.
+\url{https://doi.org/10.24432/C52P4X}
+
+\item Krittanawong, C., Virk, H. U. H., Bangalore, S., Wang, Z., Johnson, K. W.,
+Pinotti, R., Zhang, H., Kaplin, S., Narasimhan, B., Kitai, T., Baber, U.,
+Halperin, J. L., \& Tang, W. H. W. (2020). Machine learning prediction in
+cardiovascular diseases: A meta-analysis. \textit{Scientific Reports, 10}(1),
+16057. \url{https://doi.org/10.1038/s41598-020-72685-1}
+
+\item Liao, P., Greenewald, K., Klasnja, P., \& Murphy, S. (2020). Personalized
+HeartSteps: A reinforcement learning algorithm for optimizing physical activity.
+\textit{Proceedings of the ACM on Interactive, Mobile, Wearable and Ubiquitous
+Technologies, 4}(1), 1--22. \url{https://doi.org/10.1145/3381007}
+
+\item Ministerio de Salud y Protección Social de Colombia. (2022).
+\textit{Análisis de Situación de Salud (ASIS) Colombia}. Bogotá D.C.
+\url{https://www.minsalud.gov.co}
+
+\item National Heart, Lung, and Blood Institute. (2026). \textit{Framingham
+Heart Study: Three generations of dedication} [Sitio web]. Recuperado el 15 de
+agosto de 2026, de \url{https://www.framinghamheartstudy.org}
+
+\item Observatorio Nacional de Salud. (2021). \textit{Informe sobre enfermedades
+cardiovasculares en Colombia}. Instituto Nacional de Salud.
+\url{https://www.ins.gov.co}
+
+\item Organización Mundial de la Salud. (2026a). \textit{Cardiovascular diseases
+(CVDs): Key facts}. OMS.
+\url{https://www.who.int/news-room/fact-sheets/detail/cardiovascular-diseases-cvds}
+
+\item Organización Mundial de la Salud. (2026b). \textit{Global Health
+Observatory} [Repositorio de datos]. Recuperado el 15 de agosto de 2026, de
+\url{https://www.who.int/data/gho}
+
+\item Pinzón, A., Aristizábal, J. C., Cubillos-Garzón, L. A., González, C., \&
+Lara-Díaz, M. F. (2020). Factores de riesgo cardiovascular en población adulta
+colombiana: brechas en tamizaje y prevención. \textit{Revista Colombiana de
+Cardiología, 27}(4), 263--272.
+
+\item Weng, S. F., Reps, J., Kai, J., Garibaldi, J. M., \& Qureshi, N. (2017).
+Can machine-learning improve cardiovascular risk prediction using routine
+clinical data? \textit{PLoS ONE, 12}(4), e0174944.
+\url{https://doi.org/10.1371/journal.pone.0174944}
+
+\item Zeevi, D., Korem, T., Zmora, N., Israeli, D., Rothschild, D., Weinberger,
+A., Ben-Yacov, O., Lador, D., Avnit-Sagi, T., Lotan-Pompan, M., Suez, J., Mahdi,
+J. A., Matot, E., Malka, G., Kosower, N., Rein, M., Zilberman-Schapira, G.,
+Dohnalová, L., Pevsner-Fischer, M., \ldots{} Segal, E. (2015). Personalized
+nutrition by prediction of glycemic responses. \textit{Cell, 163}(5),
+1079--1094. \url{https://doi.org/10.1016/j.cell.2015.11.001}
+
+\end{enumerate}
+
+\end{document}
