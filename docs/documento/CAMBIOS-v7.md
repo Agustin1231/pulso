@@ -1,7 +1,8 @@
 # Versión corta v7: correcciones a la revisión del docente
 
 Fecha: 28 de septiembre de 2026. Base: `Pulso_version_corta_1.docx`, la versión entregada al docente.
-Archivos: `Pulso-version-corta-v7-USB.docx` y `Pulso-version-corta-v7-USB.pdf` (36 páginas).
+Archivos: `Pulso-version-corta-v7-USB.docx` y `.pdf` (plantilla institucional IEEE de la USB, 36 páginas), y
+`Pulso-version-corta-v7-IEEE.tex` y `.pdf` (formato de artículo IEEE a dos columnas, IEEEtran, 13 páginas).
 
 ## Observaciones del docente y cómo se resolvieron
 
