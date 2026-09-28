@@ -4,11 +4,18 @@
 \usepackage[spanish,es-noshorthands,es-nodecimaldot]{babel}
 \usepackage{graphicx,array,amsmath,xurl}
 \usepackage[hidelinks]{hyperref}
+\usepackage{xcolor,fancyhdr}
+\definecolor{usbnaranja}{HTML}{ED7D31}
+\fancypagestyle{usb}{\fancyhf{}\fancyhead[L]{\footnotesize PLATAFORMA PWA CON IA PARA LA PREVENCIÓN CARDIOVASCULAR}%
+  \fancyhead[R]{\footnotesize\thepage}%
+  \renewcommand{\headrule}{{\color{usbnaranja}\hrule height 0.8pt}}}
 \addto\captionsspanish{\renewcommand{\tablename}{TABLA}}
 \begin{document}
 \title{Plataforma PWA con IA para la Prevención Cardiovascular: Predicción de Riesgo, Alimentación, Ejercicio y Seguimiento Personalizado}
-\author{\IEEEauthorblockN{Agustín Peralta Guarín}\IEEEauthorblockA{\textit{Facultad de Ingeniería, Ingeniería de Sistemas}\\\textit{Universidad de San Buenaventura}\\Bogotá, Colombia} \and \IEEEauthorblockN{Natalia Moncaleano Montero}\IEEEauthorblockA{\textit{Facultad de Ingeniería, Ingeniería de Sistemas}\\\textit{Universidad de San Buenaventura}\\Bogotá, Colombia}}
+\author{\IEEEauthorblockN{Agustín Peralta Guarín\\Natalia Moncaleano Montero}\IEEEauthorblockA{\textit{Facultad de Ingeniería, Ingeniería de Sistemas}\\\textit{Universidad de San Buenaventura}\\Bogotá, Colombia}}
 \maketitle
+\thispagestyle{usb}
+\pagestyle{usb}
 \begin{abstract}
 Las enfermedades del sistema circulatorio constituyen la primera causa de mortalidad general en Colombia, con tasas ajustadas superiores a 130 muertes por cada 100.000 habitantes. Más de tres cuartas partes de esa carga se asocia a factores de riesgo modificables, de modo que existe una ventana de intervención preventiva que hoy no se aprovecha, principalmente porque el tamizaje cardiovascular depende de que la persona asista a consulta. Este proyecto desarrolla Pulso, una Aplicación Web Progresiva (PWA) con inteligencia artificial dirigida a personas adultas de 40 a 69 años residentes en Colombia, sin diagnóstico previo de enfermedad cardiovascular. El sistema estima el riesgo cardiovascular, genera recomendaciones alimenticias con ingredientes, cantidades y preparaciones ajustadas a la región, planes de vida saludable y rutinas de ejercicio, y hace seguimiento con reportes periódicos. La estimación del riesgo se realiza con una regresión logística entrenada sobre 5.043 adultos de la encuesta NHANES 2021-2023, seleccionada frente a gradient boosting y k vecinos más cercanos mediante validación cruzada estratificada 5 $\times$ 10. Con las variables de estilo de vida, la edad y el sexo alcanza un área bajo la curva ROC de 0{,}805 con pendiente de calibración de 0{,}99, y la contribución de cada variable a cada predicción se calcula de forma exacta, dado que en un modelo lineal el valor SHAP tiene forma cerrada. La inferencia se ejecuta en el servidor. Sin conexión, la aplicación conserva la última evaluación con su explicación, el plan alimentario, las rutinas y el histórico, mientras que una evaluación nueva se calcula al recuperar la conectividad. La validación prevista comprende métricas de discriminación y calibración, pruebas de usabilidad con la escala SUS en distintos dispositivos y condiciones de conectividad, y la revisión de un profesional de salud.
 \end{abstract}
