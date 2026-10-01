@@ -99,7 +99,7 @@ phishing no la puede pedir.
 ## TLS hacia la base (fila 10)
 
 La base tiene SSL activado en Coolify, con un certificado firmado por la CA
-del servidor a nombre del contenedor (`hxanb5yycw0dy9couvgt4bem`). La app
+del servidor a nombre del contenedor de la base. La app
 conecta con `PGSSL=verify-full` y `PGSSL_CA`: cifra **y** verifica el
 certificado y el nombre, así que no alcanza con estar en la red para hacerse
 pasar por la base. Coolify renueva el certificado 14 días antes de que venza,
@@ -157,20 +157,20 @@ Lo que queda abierto, a propósito o por alcance:
 - **Dependencias con fix mayor pendiente**: `postcss` dentro de Next (solo build, procesa nuestro propio CSS) pide Next 16; `jsondiffpatch` y `@ai-sdk/*` piden AI SDK 7; `uuid` dentro de `gaxios` (dependencia de Google) no usa la función afectada. Ninguna se ejecuta con entrada del usuario.
 - **Reclamo de UUID viejos**: durante 90 días, quien conozca un UUID viejo **todavía no reclamado** puede reclamarlo antes que su dueño. El dueño lo reclama solo al abrir la app por primera vez después del deploy.
 - **El dueño de la base** sigue teniendo acceso total. Queda auditado lo que hace la app, no lo que haga un operador con el superusuario.
-- **El proxy de Claude del servidor** (`10.0.1.1:7779`) sigue alcanzable por cualquier contenedor, con su token como único límite. Ya no es un riesgo de Pulso, que no lo usa ni guarda su token, pero sí del servidor.
+- **El proxy de Claude del servidor** (un servicio del host, en la red interna) sigue alcanzable por cualquier contenedor, con su token como único límite. Ya no es un riesgo de Pulso, que no lo usa ni guarda su token, pero sí del servidor.
 - **Las claves que estuvieron escritas en la imagen** nunca salieron del servidor (no hay registry), y las imágenes se borraron. Igual conviene rotarlas en Anthropic y Google, si alguna vez se exportó una imagen.
 - **Traefik** está en las dos redes (`coolify` y `pulso`): es el único otro participante de la red de Pulso, porque tiene que rutear las peticiones a la app.
 
 ## Segregación de red
 
-Desde el 2026-10-01, la app y `pulso-db` viven en el destino Coolify `pulso-aislado` (red Docker `pulso`), separados de la red `coolify` que comparten los otros ~30 contenedores del servidor.
+Desde el 2026-10-01, la app y su base viven en un destino de Coolify propio, con una red Docker dedicada, separados de la red que comparten los demás servicios del servidor.
 
 | Desde | Hacia | Resultado |
 |---|---|---|
-| Un contenedor en la red `coolify` | `pulso-db:5432` | **Bloqueado** (aislamiento entre redes de Docker) |
-| La app (red `pulso`) | `pulso-db:5432` | Permitido |
-| La app | proxy de Claude (`10.0.1.1:7779`, host) | Permitido: es una IP local del host, no otra red |
+| Un contenedor de la red compartida | la base de Pulso | **Bloqueado** (aislamiento entre redes de Docker) |
+| La app (red dedicada) | la base de Pulso | Permitido, con TLS verificado |
+| La app | proxy de Claude del servidor | Alcanzable, pero Pulso ya no lo usa: va por la API de Anthropic con HTTPS |
 | La app | internet (Anthropic, Gemini, push) | Permitido |
 | Traefik | la app | Permitido: Coolify conecta el proxy a la red del destino |
 
-Se movieron con las mismas piezas que usa Coolify (`MigrateResourceToDestination::applyDestination`, `RestartDatabase`, un deploy normal y `ConnectProxyToNetworksJob`). Los datos no se tocaron: están en volúmenes con nombre. Para volver atrás, se aplica el destino original (`coolify`, id 0) a los dos recursos, se reinicia la base y se redespliega la app.
+Se movieron con las mismas piezas que usa Coolify (`MigrateResourceToDestination::applyDestination`, `RestartDatabase`, un deploy normal y `ConnectProxyToNetworksJob`). Los datos no se tocaron: están en volúmenes con nombre. Para volver atrás, se aplica el destino original a los dos recursos, se reinicia la base y se redespliega la app.

@@ -167,12 +167,12 @@ Identidad del usuario & UUID en \cod{localStorage}, legible por cualquier script
 Server actions explotables & 27 de 27 (21 aceptaban el \cod{uid} del cliente, 6 operaban solo por \cod{id}) & 0: ninguna recibe el \cod{uid}; editar y borrar exigen \cod{id} y dueño \\
 Rutas de API con autenticación & 0 de 11 & 11 de 11, más 8 rutas nuevas de sesión, supresión y bloqueo \\
 Aislamiento en la base & Solo un filtro en el código (y ausente al editar o borrar) & RLS forzado en 11 tablas; sin sesión no se ve ninguna fila \\
-Usuario de la app en Postgres & \cod{pulso}, superusuario & \cod{pulso\_app}: sin DDL, sujeto a RLS \\
+Usuario de la app en Postgres & El superusuario de la base & \cod{pulso\_app}: sin DDL, sujeto a RLS \\
 Auditoría & Ninguna & Tabla append-only; ni el dueño de la base la puede modificar \\
 Límites de tasa & Ninguno & Por sesión y por IP en Postgres \\
 Consentimiento (Ley 1581) & No se pedía & Explícito, versionado y revocable \\
 Bloqueo del teléfono & No existía & Passkey opcional (huella, Face ID o PIN), aplicada en el servidor \\
-Red Docker de la base & Compartida con 31 contenedores & Red propia (\cod{pulso}); los vecinos no la alcanzan \\
+Red Docker de la base & Compartida con los demás servicios del servidor & Red dedicada; los vecinos no la alcanzan \\
 Tráfico app $\rightarrow$ base & Sin cifrar & TLS 1.3 con certificado verificado (\cod{verify-full}) \\
 Tráfico app $\rightarrow$ Claude & Proxy interno en HTTP plano & API de Anthropic por HTTPS \\
 Claves escritas en la imagen Docker & 3 (Anthropic, Gemini y token del proxy) & 0 \\
@@ -221,9 +221,9 @@ Pruebas de seguridad & 0 & 36 automatizadas (20 de base de datos, 16 HTTP) \\
   \node[mala] (nav) {Navegador\\UUID en \cod{localStorage}\\(lo lee cualquier script)};
   \node[neutra, right=of nav] (cf) {Cloudflare\\+ Traefik};
   \node[mala, right=1.3cm of cf] (app) {App Next.js\\acepta el \cod{uid}\\que le manden};
-  \node[mala, right=2.1cm of app] (proxy) {Proxy de Claude\\HTTP plano\\\cod{10.0.1.1:7779}};
+  \node[mala, right=2.1cm of app] (proxy) {Proxy de Claude\\HTTP plano\\(en el host)};
   \node[mala, below=1.4cm of app] (db) {\cod{pulso-db}\\superusuario\\sin RLS, sin TLS};
-  \node[mala, below=1.4cm of proxy, xshift=0.9cm] (vec) {30 contenedores\\vecinos (n8n,\\openclaw, \ldots)};
+  \node[mala, below=1.4cm of proxy, xshift=0.9cm] (vec) {Contenedores\\vecinos (otros\\servicios)};
   \draw[flecha] (nav) -- (cf);
   \draw[flecha] (cf) -- (app);
   \draw[flecha] (app) -- node[left, font=\scriptsize]{sin cifrar} (db);
@@ -231,7 +231,7 @@ Pruebas de seguridad & 0 & 36 automatizadas (20 de base de datos, 16 HTTP) \\
   \draw[ataque] (vec) -- node[above, font=\scriptsize, text=antes]{alcanzan} (db);
   \draw[ataque] (vec) -- node[right, font=\scriptsize, text=antes]{alcanzan} (proxy);
   \begin{scope}[on background layer]
-    \node[zona, draw=antes, fit=(app)(db)(proxy)(vec), label={[font=\scriptsize, text=antes]below:red Docker \cod{coolify} compartida (31 contenedores)}] {};
+    \node[zona, draw=antes, fit=(app)(db)(proxy)(vec), label={[font=\scriptsize, text=antes]below:red Docker compartida con los demás servicios}] {};
   \end{scope}
 \end{tikzpicture}
 \end{center}
@@ -246,7 +246,7 @@ Pruebas de seguridad & 0 & 36 automatizadas (20 de base de datos, 16 HTTP) \\
   \node[buena, right=1.3cm of cf] (app) {App Next.js\\sesión, validación,\\límites, auditoría};
   \node[buena, right=2.1cm of app] (api) {API de\\Anthropic\\(internet)};
   \node[buena, below=1.4cm of app] (db) {\cod{pulso-db}\\\cod{pulso\_app} + RLS\\auditoría append-only};
-  \node[neutra, below=1.4cm of api, xshift=1.2cm] (vec) {30 contenedores\\vecinos\\(red \cod{coolify})};
+  \node[neutra, below=1.4cm of api, xshift=1.2cm] (vec) {Contenedores\\vecinos\\(red compartida)};
   \draw[flecha] (nav) -- (cf);
   \draw[flecha] (cf) -- (app);
   \draw[flecha] (app) -- node[left, font=\scriptsize, align=right]{TLS 1.3\\verificado} (db);
@@ -254,12 +254,12 @@ Pruebas de seguridad & 0 & 36 automatizadas (20 de base de datos, 16 HTTP) \\
   \draw[ataque] (vec) -- node[above, font=\scriptsize, text=antes]{bloqueado} (db);
   \node[font=\Large\bfseries, text=antes] at ($(vec.west)!0.5!(db.east)$) {$\times$};
   \begin{scope}[on background layer]
-    \node[zona, draw=despues, fit=(app)(db), label={[font=\scriptsize, text=despues]below:red Docker propia \cod{pulso}}] {};
+    \node[zona, draw=despues, fit=(app)(db), label={[font=\scriptsize, text=despues]below:red Docker dedicada}] {};
   \end{scope}
 \end{tikzpicture}
 \end{center}
 \end{minipage}\par\vspace{6pt}
-\notaAPA{Traefik está conectado a las dos redes porque tiene que rutear las peticiones hacia la app. Los vecinos siguen en la red \cod{coolify}, que ya no incluye a la base ni a la app.}
+\notaAPA{Traefik está conectado a las dos redes porque tiene que rutear las peticiones hacia la app. Los vecinos siguen en la red compartida, que ya no incluye a la base ni a la app.}
 
 %======================= 4. FILA POR FILA =======================
 \section{La matriz, fila por fila}
@@ -284,7 +284,7 @@ el control implementado (\textit{después}) y la prueba que lo demuestra.
 
 \fila{4}{Calendario de hábitos y notificaciones}{M8 — Configuración de seguridad incompleta}{8.9 Gestión de la configuración}
 {\cod{/api/notificaciones/enviar} no exigía autenticación y aceptaba título, cuerpo y URL de destino arbitrarios: cualquiera podía mandarle a cualquier usuario una notificación con un enlace externo (phishing por push). Además, uno se podía suscribir a las notificaciones de otro.}
-{Solo te podés enviar a tus propios dispositivos; título y cuerpo acotados; la URL tiene que ser una ruta interna, validada en el servidor y otra vez en el \textit{service worker}; límite de 20 envíos por hora; suscripción atada a la sesión (máximo 5 por usuario).}
+{Solo te podés enviar a tus propios dispositivos; título y cuerpo acotados; la URL tiene que ser una ruta interna, validada en el servidor y otra vez en el \textit{service worker}; límite de envíos por hora; suscripción atada a la sesión, con un tope por usuario.}
 {prueba HTTP ``push: URL externa, texto largo o campos de más se rechazan'' (\url{https://phishing.example}, \url{//phishing.example} y \cod{javascript:} dan 400) y ``el límite por hora corta con 429''.}
 
 \fila{5}{Score de riesgo cardiovascular}{M8 — Configuración de seguridad incompleta}{8.15 Registro de eventos}
@@ -294,7 +294,7 @@ el control implementado (\textit{después}) y la prueba que lo demuestra.
 
 \fila{6}{Centro de tips y claves de IA}{M1 — Uso indebido de credenciales}{8.6 Gestión de capacidades}
 {Ninguno de los 7 endpoints de IA exigía autenticación ni aplicaba límite de tasa por usuario o por IP: se podía agotar la cuota y disparar el costo del proyecto (denegación de servicio económica).}
-{Sesión obligatoria en todas las rutas; límites en PostgreSQL por sesión \textbf{y} por IP (texto: 40/h por sesión y 120/h por IP; imágenes: 8/h y 24/h; creación de sesiones: 30/h por IP). La IP real se toma de Cloudflare solo si el par es de verdad un borde de Cloudflare, para que no se pueda falsificar.}
+{Sesión obligatoria en todas las rutas; límites en PostgreSQL por sesión \textbf{y} por IP, más estrictos para las imágenes (lo más caro) y para la creación de sesiones. La IP real se toma de Cloudflare solo si el par es de verdad un borde de Cloudflare, para que no se pueda falsificar.}
 {prueba de base ``límite de tasa: corta al pasar el máximo''; prueba HTTP ``el límite por hora corta con 429''.}
 
 \fila{7}{Identidad y sesión}{M9 — Almacenamiento inseguro de datos}{5.17 Información de autenticación}
@@ -304,8 +304,8 @@ el control implementado (\textit{después}) y la prueba que lo demuestra.
 
 \fila{8}{Infraestructura: VPS, Coolify y base}{M2 — Seguridad inadecuada de la cadena de suministro}{8.22 Segregación de redes}
 {Los secretos vivían en variables de entorno, el proxy de IA era alcanzable por cualquier contenedor de la misma red Docker, y un contenedor vecino comprometido llegaba a la base (movimiento lateral). La app se conectaba como superusuario.}
-{App y base en una red Docker propia: los 30 contenedores vecinos ya no llegan a la base. Rol \cod{pulso\_app} sin privilegios. Pulso dejó de usar el proxy de Claude del servidor. Las claves dejaron de ser variables de \textit{build} (estaban escritas en la imagen) y se borraron las imágenes viejas. Se quitaron dos dependencias sin uso y se actualizó Next.js.}
-{desde un contenedor en la red \cod{coolify}, la base responde ``AISLADA''; la imagen nueva\linebreak[0] tiene 0 claves en su configuración y 0 capas que las mencionen; \cod{npm audit} bajó de 24 vulnerabilidades a 10, sin críticas; prueba de base ``la app no es superusuario ni puede hacer DDL''.}
+{App y base en una red Docker dedicada: los contenedores vecinos ya no llegan a la base. Rol \cod{pulso\_app} sin privilegios. Pulso dejó de usar el proxy de Claude del servidor. Las claves dejaron de ser variables de \textit{build} (estaban escritas en la imagen) y se borraron las imágenes viejas. Se quitaron dos dependencias sin uso y se actualizó Next.js.}
+{desde un contenedor de la red compartida, la base responde ``AISLADA''; la imagen nueva\linebreak[0] tiene 0 claves en su configuración y 0 capas que las mencionen; \cod{npm audit} bajó de 24 vulnerabilidades a 10, sin críticas; prueba de base ``la app no es superusuario ni puede hacer DDL''.}
 
 \fila{9}{Cliente PWA en el dispositivo}{M9 — Almacenamiento inseguro de datos}{7.9 Seguridad de los activos fuera de las instalaciones}
 {La app no pedía ningún bloqueo ni segundo factor: quien abriera el navegador del teléfono entraba directo al historial de salud (STRIDE: \textit{Information Disclosure}).}
@@ -465,8 +465,8 @@ Pruebas previas del motor & 70 de 70 & Los cambios no rompieron el motor de pred
 \vspace{4pt}
 \noindent Además, en producción se comprobó directamente:
 \begin{itemize}
-  \item la app se conecta como \cod{pulso\_app} (no superusuario), con TLS 1.3, desde la red \cod{pulso};
-  \item desde la red \cod{coolify}, la base no responde, y los demás sitios del servidor siguieron funcionando igual;
+  \item la app se conecta como \cod{pulso\_app} (no superusuario), con TLS 1.3, desde la red dedicada;
+  \item desde la red compartida, la base no responde, y los demás sitios del servidor siguieron funcionando igual;
   \item la imagen de la app no contiene ninguna clave y no quedan imágenes anteriores;
   \item la IP registrada en la auditoría es la del cliente, recortada, y no la de Cloudflare;
   \item en el navegador: \cod{document.cookie} vacío, ningún script sin nonce, ninguna violación de CSP, y la pantalla de bloqueo sin datos en la página.
@@ -493,7 +493,7 @@ Pruebas previas del motor & 70 de 70 & Los cambios no rompieron el motor de pred
 \begin{itemize}
   \item \textbf{Repositorio:} \url{https://github.com/Agustin1231/pulso}. Commits: \cod{0e8f62a} (sesión del servidor, RLS y controles), \cod{494c6d1} y \cod{6c307db} (documentación y red dedicada), \cod{9c147d6} (rotación, bloqueo con passkey y TLS).
   \item \textbf{Documentación técnica:} \cod{docs/seguridad.md}; migraciones \cod{db/schema.sql} y \cod{db/seguridad.sql}.
-  \item \textbf{Respaldos de la base} previos a cada cambio, en el servidor: \path{/root/backups/pulso-db-20261001T153953Z.dump}, \path{...T163408Z.dump} y \path{...T173519Z.dump}.
+  \item \textbf{Respaldos de la base:} uno completo antes de cada cambio en producción, guardados en el servidor con acceso solo para el administrador.
   \item \textbf{Base normativa:} OWASP Mobile Top 10 (2024); ISO/IEC 27002:2022; Ley 1581 de 2012 (protección de datos personales, art.~5 datos sensibles, art.~6 autorización, art.~8 derechos del titular).
 \end{itemize}
 

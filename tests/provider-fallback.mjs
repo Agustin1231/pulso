@@ -2,7 +2,7 @@
 // Intercepta globalThis.fetch para no salir a la red.
 import { fetchConFallback, proxyAceptable } from "../.tmp-test/provider.js";
 
-const PROXY = "http://10.0.1.1:7779/v1/messages";
+const PROXY = "http://proxy.interno:8080/v1/messages";
 let fallos = 0;
 
 function chequear(nombre, cond, extra = "") {
@@ -65,7 +65,7 @@ const initBase = () => ({
 {
   console.log("\n3) proxy rechaza la conexión");
   process.env.ANTHROPIC_API_KEY = "sk-ant-test";
-  const err = Object.assign(new Error("connect ECONNREFUSED 10.0.1.1:7779"), { code: "ECONNREFUSED" });
+  const err = Object.assign(new Error("connect ECONNREFUSED proxy.interno:8080"), { code: "ECONNREFUSED" });
   const llamadas = stub(err);
   const res = await fetchConFallback()(PROXY, initBase());
   chequear("dos llamadas", llamadas.length === 2, `hubo ${llamadas.length}`);
@@ -103,7 +103,7 @@ for (const status of [401, 403, 429, 400]) {
   console.log("\n6) preserva path y query en el fallback");
   process.env.ANTHROPIC_API_KEY = "sk-ant-test";
   const llamadas = stub(502);
-  await fetchConFallback()("http://10.0.1.1:7779/v1/messages?beta=true", initBase());
+  await fetchConFallback()("http://proxy.interno:8080/v1/messages?beta=true", initBase());
   chequear(
     "path + query intactos",
     llamadas[1]?.url === "https://api.anthropic.com/v1/messages?beta=true",
@@ -115,9 +115,9 @@ for (const status of [401, 403, 429, 400]) {
 {
   console.log("\n7) el proxy tiene que cifrar el tráfico");
   chequear("https se acepta", proxyAceptable("https://proxy.interno:8443") === true);
-  chequear("http a la red interna se rechaza", proxyAceptable("http://10.0.1.1:7779") === false);
-  chequear("http a localhost se acepta (desarrollo)", proxyAceptable("http://localhost:7779") === true);
-  chequear("http a 127.0.0.1 se acepta (desarrollo)", proxyAceptable("http://127.0.0.1:7779") === true);
+  chequear("http a otro host de la red se rechaza", proxyAceptable("http://proxy.interno:8080") === false);
+  chequear("http a localhost se acepta (desarrollo)", proxyAceptable("http://localhost:8080") === true);
+  chequear("http a 127.0.0.1 se acepta (desarrollo)", proxyAceptable("http://127.0.0.1:8080") === true);
   chequear("vacío o inválido se rechaza", proxyAceptable("") === false && proxyAceptable("no es url") === false);
 }
 
