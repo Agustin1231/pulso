@@ -328,7 +328,7 @@ Las imágenes se guardan en `MEDIA_DIR` y se sirven por `src/app/api/img/[...pat
    ```
 3. En la app, setear las variables de entorno — `DATABASE_URL` con el usuario **`pulso_app`**, nunca el dueño, y `NEXT_PUBLIC_VAPID_PUBLIC_KEY` marcada como **build time**
 4. Agregar un **volumen persistente** montado en `/data` (el valor de `MEDIA_DIR`). Sin esto, las imágenes de recetas se borran en cada deploy.
-5. Push a `main` → auto-deploy
+5. Push a `main` y **Deploy** en Coolify. Ojo: la app está conectada como *Public GitHub* (sin GitHub App), así que no hay webhook y el push solo **no** despliega, aunque el auto-deploy figure activado. Para que despliegue solo, instalar la GitHub App de Coolify o configurar el webhook manual del repo.
 
 ---
 
