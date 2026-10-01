@@ -1,0 +1,500 @@
+\documentclass[11pt,letterpaper]{article}
+
+% Tectonic compila con XeTeX: fontspec + Latin Modern da todos los glifos Unicode.
+\usepackage{fontspec}
+\usepackage[spanish,es-tabla,es-nodecimaldot]{babel}
+\usepackage[margin=0.9in]{geometry}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,shapes.misc,calc}
+\usepackage{titlesec}
+\usepackage{hyperref}
+
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=black, citecolor=black, breaklinks=true}
+
+% ─── Colores: antes (riesgo) / después (control) ─────────────────────────────
+\definecolor{antes}{HTML}{B03A2E}
+\definecolor{antesbg}{HTML}{FBEAE8}
+\definecolor{despues}{HTML}{1E7B45}
+\definecolor{despuesbg}{HTML}{E7F5EC}
+\definecolor{gris}{HTML}{5F6B76}
+\definecolor{grisbg}{HTML}{F3F5F7}
+\definecolor{tinta}{HTML}{1F2933}
+
+\setstretch{1.15}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{gris}Pulso — Informe de seguridad: antes y después}
+\fancyhead[R]{\small\color{gris}\thepage}
+\renewcommand{\headrulewidth}{0pt}
+
+\titleformat{\section}{\normalfont\large\bfseries\color{tinta}}{\thesection.}{0.6em}{\MakeUppercase}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries\color{tinta}}{\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+
+\setlist[itemize]{itemsep=2pt, topsep=4pt, leftmargin=1.4em, label=\textbullet}
+\setlist[enumerate]{itemsep=3pt, topsep=4pt, leftmargin=1.6em}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\newcommand{\cod}[1]{\texttt{#1}}
+\newcommand{\si}{\textcolor{despues}{\checkmark}}
+\newcommand{\no}{\textcolor{antes}{$\times$}}
+
+% Tablas con el formato APA del documento del seminario.
+\newcounter{tablaapa}
+\newcounter{figuraapa}
+\newcommand{\tablaAPA}[2]{\refstepcounter{tablaapa}\label{#1}%
+  \noindent\textbf{Tabla \thetablaapa.} \textit{#2}\par\vspace{0.15cm}}
+\newcommand{\figuraAPA}[2]{\refstepcounter{figuraapa}\label{#1}%
+  \noindent\textbf{Figura \thefiguraapa.} \textit{#2}\par\vspace{0.15cm}}
+\newcommand{\notaAPA}[1]{\par\vspace{0.1cm}\noindent\parbox{\linewidth}{\footnotesize\textit{Nota.} #1}\par}
+
+% ─── Bloque "antes / después" de cada fila de la matriz ──────────────────────
+% #1 número  #2 activo  #3 OWASP  #4 ISO  #5 antes  #6 después  #7 verificación
+\newcommand{\fila}[7]{%
+  \par\vspace{8pt}\noindent
+  \begin{minipage}{\linewidth}% indivisible: el bloque no se parte entre páginas
+  {\large\bfseries\color{tinta}Fila #1 · #2}\par\vspace{2pt}
+  {\small\color{gris}OWASP Mobile Top 10: \textbf{#3}\par
+   ISO/IEC 27002:2022: \textbf{#4}\par}\vspace{4pt}
+  \renewcommand{\arraystretch}{1.25}%
+  \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash\small}X@{\hspace{6pt}}>{\raggedright\arraybackslash\small}X@{}}
+    \cellcolor{antesbg}\textbf{\color{antes}ANTES} & \cellcolor{despuesbg}\textbf{\color{despues}DESPUÉS} \\
+    \cellcolor{antesbg}#5 & \cellcolor{despuesbg}#6 \\
+  \end{tabularx}\par\vspace{3pt}
+  {\small\textbf{Cómo se verificó.} #7}\par
+  \end{minipage}\par\vspace{4pt}
+}
+
+% ─── Código ──────────────────────────────────────────────────────────────────
+\lstdefinestyle{base}{
+  basicstyle=\ttfamily\footnotesize,
+  columns=fullflexible,
+  keepspaces=true,
+  breaklines=true,
+  showstringspaces=false,
+  frame=single,
+  framerule=0pt,
+  xleftmargin=6pt, xrightmargin=6pt,
+  aboveskip=4pt, belowskip=4pt,
+  commentstyle=\color{gris}\itshape,
+  keywordstyle=\bfseries,
+  morekeywords={export,async,function,await,const,let,return,if,try,catch,select,from,where,create,policy,using,with,check,delete,update,insert,into,values,grant,on,to},
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 {·}{{$\cdot$}}1,
+}
+\lstdefinestyle{antes}{style=base, backgroundcolor=\color{antesbg}}
+\lstdefinestyle{despues}{style=base, backgroundcolor=\color{despuesbg}}
+
+\begin{document}
+
+%======================= PORTADA =======================
+\begin{titlepage}
+\centering
+\vspace*{1.2cm}
+{\LARGE\bfseries Pulso — Predice, nutre, entrena y protege tu corazón\par}
+\vspace{1.0cm}
+{\Large Informe de seguridad: antes y después\par}
+\vspace{0.4cm}
+{\large Implementación de los controles de la matriz de activos\\ del Proyecto Integrador\par}
+
+\vspace{2.0cm}
+{\large Agustín Peralta Guarín\par}
+\vspace{0.3cm}
+{\large Natalia Moncaleano Montero\par}
+
+\vspace{1.6cm}
+{\large Detección de Intrusos y Técnicas de Ataque\par}
+\vspace{0.3cm}
+{\large Docente: José Eduardo Patiño Santafé\par}
+
+\vspace{1.6cm}
+{\large Universidad de San Buenaventura\par}
+\vspace{0.3cm}
+{\large Facultad de Ingeniería (Bogotá) — Ingeniería de Sistemas\par}
+\vspace{0.3cm}
+{\large Bogotá D.C., 1 de octubre de 2026\par}
+\vfill
+{\small\color{gris} Aplicación en producción: \url{https://pulso.agustinynatalia.site}\par}
+\end{titlepage}
+
+\setcounter{page}{1}
+
+%======================= 1. RESUMEN =======================
+\section{Resumen}
+
+Pulso es una PWA de salud cardiovascular (Next.js y PostgreSQL) desplegada con
+Coolify. La matriz de activos del Proyecto Integrador
+(\cod{Plantilla\_PI\_Pulso.xlsx}) identificó diez activos con su vulnerabilidad,
+su amenaza, el riesgo de OWASP Mobile Top 10 y el control de ISO/IEC
+27002:2022 que corresponde. Este informe documenta cómo estaba cada activo
+\textbf{antes}, qué se implementó y cómo quedó \textbf{después}, con la prueba que
+lo respalda.
+
+El problema de fondo era la identidad: cada usuario era un UUID generado en el
+navegador y guardado en \cod{localStorage}, que el servidor aceptaba sin
+verificar. Conocer el UUID de alguien equivalía a ser esa persona; y para editar
+o borrar ni siquiera hacía falta, porque bastaba el identificador de la fila. Hoy
+la sesión la emite el servidor y es la base de datos la que impide que un usuario
+vea los datos de otro.
+
+\vspace{4pt}
+\tablaAPA{tab:resumen}{Indicadores antes y después}
+\vspace{-0.35cm}
+{\renewcommand{\arraystretch}{1.2}\small
+\begin{longtable}{@{}P{4.0cm}P{5.6cm}P{6.3cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{\color{antes}Antes} & \textbf{\color{despues}Después} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Aspecto} & \textbf{\color{antes}Antes} & \textbf{\color{despues}Después} \\
+\midrule
+\endhead
+Identidad del usuario & UUID en \cod{localStorage}, legible por cualquier script, permanente & Cookie \cod{\_\_Host-} httpOnly, Secure, SameSite=Strict; la base guarda solo su hash; rota cada día \\
+Server actions explotables & 27 de 27 (21 aceptaban el \cod{uid} del cliente, 6 operaban solo por \cod{id}) & 0: ninguna recibe el \cod{uid}; editar y borrar exigen \cod{id} y dueño \\
+Rutas de API con autenticación & 0 de 11 & 11 de 11, más 8 rutas nuevas de sesión, supresión y bloqueo \\
+Aislamiento en la base & Solo un filtro en el código (y ausente al editar o borrar) & RLS forzado en 11 tablas; sin sesión no se ve ninguna fila \\
+Usuario de la app en Postgres & \cod{pulso}, superusuario & \cod{pulso\_app}: sin DDL, sujeto a RLS \\
+Auditoría & Ninguna & Tabla append-only; ni el dueño de la base la puede modificar \\
+Límites de tasa & Ninguno & Por sesión y por IP en Postgres \\
+Consentimiento (Ley 1581) & No se pedía & Explícito, versionado y revocable \\
+Bloqueo del teléfono & No existía & Passkey opcional (huella, Face ID o PIN), aplicada en el servidor \\
+Red Docker de la base & Compartida con 31 contenedores & Red propia (\cod{pulso}); los vecinos no la alcanzan \\
+Tráfico app $\rightarrow$ base & Sin cifrar & TLS 1.3 con certificado verificado (\cod{verify-full}) \\
+Tráfico app $\rightarrow$ Claude & Proxy interno en HTTP plano & API de Anthropic por HTTPS \\
+Claves escritas en la imagen Docker & 3 (Anthropic, Gemini y token del proxy) & 0 \\
+Headers de seguridad & Ninguno & CSP con nonce, HSTS, \cod{frame-ancestors}, nosniff y otros \\
+Vulnerabilidades en dependencias & 24 (1 crítica, 14 altas) & 10 (0 críticas, 2 altas) \\
+Pruebas de seguridad & 0 & 36 automatizadas (20 de base de datos, 16 HTTP) \\
+\bottomrule
+\end{longtable}}
+\notaAPA{Las cifras del ``antes'' salen del código del commit \cod{93388a5} y del estado de producción medido antes del primer cambio; las del ``después'', de producción al cierre de este informe.}
+
+%======================= 2. ALCANCE =======================
+\section{Alcance y método}
+
+\begin{itemize}
+  \item \textbf{Base:} las diez filas de la matriz de activos, más todo hallazgo
+        nuevo que apareció al revisar el código, la base de datos y la
+        infraestructura (sección~\ref{sec:extra}).
+  \item \textbf{Revisión:} lectura completa del código de datos, de las 11 rutas
+        de API y de los componentes cliente; inspección de la base y de la
+        configuración del servidor (Coolify, Traefik, red Docker, imagen de la app).
+  \item \textbf{Cambios:} en ramas separadas, probados primero contra una base
+        PostgreSQL 17 descartable y un build de producción local, y recién
+        después aplicados en producción, siempre con un respaldo previo de la base.
+  \item \textbf{Verificación:} pruebas automatizadas que atacan cada control
+        (sección~\ref{sec:verif}), recorridos en el navegador y comprobaciones
+        directas en el servidor.
+\end{itemize}
+
+%======================= 3. ARQUITECTURA =======================
+\section{Arquitectura antes y después}
+
+\tikzset{
+  caja/.style={draw, rounded corners=3pt, align=center, font=\footnotesize, inner sep=5pt, minimum height=1cm},
+  mala/.style={caja, fill=antesbg, draw=antes},
+  buena/.style={caja, fill=despuesbg, draw=despues},
+  neutra/.style={caja, fill=grisbg, draw=gris},
+  flecha/.style={-{Stealth[length=2mm]}, thick},
+  ataque/.style={-{Stealth[length=2mm]}, thick, dashed, draw=antes},
+  zona/.style={draw, dashed, rounded corners=6pt, inner sep=8pt},
+}
+
+\par\noindent\begin{minipage}{\linewidth}
+\figuraAPA{fig:antes}{Antes: identidad en el navegador y red compartida}
+\begin{center}
+\begin{tikzpicture}[node distance=0.6cm and 0.8cm]
+  \node[mala] (nav) {Navegador\\UUID en \cod{localStorage}\\(lo lee cualquier script)};
+  \node[neutra, right=of nav] (cf) {Cloudflare\\+ Traefik};
+  \node[mala, right=1.3cm of cf] (app) {App Next.js\\acepta el \cod{uid}\\que le manden};
+  \node[mala, right=2.1cm of app] (proxy) {Proxy de Claude\\HTTP plano\\\cod{10.0.1.1:7779}};
+  \node[mala, below=1.4cm of app] (db) {\cod{pulso-db}\\superusuario\\sin RLS, sin TLS};
+  \node[mala, below=1.4cm of proxy, xshift=0.9cm] (vec) {30 contenedores\\vecinos (n8n,\\openclaw, \ldots)};
+  \draw[flecha] (nav) -- (cf);
+  \draw[flecha] (cf) -- (app);
+  \draw[flecha] (app) -- node[left, font=\scriptsize]{sin cifrar} (db);
+  \draw[flecha] (app) -- node[above, font=\scriptsize]{HTTP plano} (proxy);
+  \draw[ataque] (vec) -- node[above, font=\scriptsize, text=antes]{alcanzan} (db);
+  \draw[ataque] (vec) -- node[right, font=\scriptsize, text=antes]{alcanzan} (proxy);
+  \begin{scope}[on background layer]
+    \node[zona, draw=antes, fit=(app)(db)(proxy)(vec), label={[font=\scriptsize, text=antes]below:red Docker \cod{coolify} compartida (31 contenedores)}] {};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+
+\par\noindent\begin{minipage}{\linewidth}
+\figuraAPA{fig:despues}{Después: sesión emitida por el servidor, red propia y tráfico cifrado}
+\begin{center}
+\begin{tikzpicture}[node distance=0.6cm and 0.8cm]
+  \node[buena] (nav) {Navegador\\cookie httpOnly\\+ passkey opcional};
+  \node[neutra, right=of nav] (cf) {Cloudflare\\+ Traefik};
+  \node[buena, right=1.3cm of cf] (app) {App Next.js\\sesión, validación,\\límites, auditoría};
+  \node[buena, right=2.1cm of app] (api) {API de\\Anthropic\\(internet)};
+  \node[buena, below=1.4cm of app] (db) {\cod{pulso-db}\\\cod{pulso\_app} + RLS\\auditoría append-only};
+  \node[neutra, below=1.4cm of api, xshift=1.2cm] (vec) {30 contenedores\\vecinos\\(red \cod{coolify})};
+  \draw[flecha] (nav) -- (cf);
+  \draw[flecha] (cf) -- (app);
+  \draw[flecha] (app) -- node[left, font=\scriptsize, align=right]{TLS 1.3\\verificado} (db);
+  \draw[flecha] (app) -- node[above, font=\scriptsize]{HTTPS} (api);
+  \draw[ataque] (vec) -- node[above, font=\scriptsize, text=antes]{bloqueado} (db);
+  \node[font=\Large\bfseries, text=antes] at ($(vec.west)!0.5!(db.east)$) {$\times$};
+  \begin{scope}[on background layer]
+    \node[zona, draw=despues, fit=(app)(db), label={[font=\scriptsize, text=despues]below:red Docker propia \cod{pulso}}] {};
+  \end{scope}
+\end{tikzpicture}
+\end{center}
+\end{minipage}\par\vspace{6pt}
+\notaAPA{Traefik está conectado a las dos redes porque tiene que rutear las peticiones hacia la app. Los vecinos siguen en la red \cod{coolify}, que ya no incluye a la base ni a la app.}
+
+%======================= 4. FILA POR FILA =======================
+\section{La matriz, fila por fila}
+
+Cada bloque reproduce la vulnerabilidad registrada en la matriz (\textit{antes}),
+el control implementado (\textit{después}) y la prueba que lo demuestra.
+
+\fila{1}{Métricas de salud (Dashboard)}{M3 — Autenticación/autorización insegura}{8.3 Restricción del acceso a la información}
+{El server action recibía el \cod{uid} desde el cliente y no verificaba la propiedad: quien obtuviera un UUID leía y modificaba las métricas de esa persona (STRIDE: \textit{Information Disclosure}, \textit{Tampering}).}
+{Ninguna acción recibe el \cod{uid}: lo saca de la cookie de sesión. Cada operación corre en una transacción con \cod{app.uid} fijado y la base aplica RLS: aunque el código olvidara el filtro, no devolvería filas ajenas.}
+{prueba de base ``RLS: cada usuario ve y toca solo lo suyo'' (un usuario intenta leer, editar, borrar e insertar a nombre de otro: 0 filas o error de política); prueba HTTP ``sin sesión, todas las rutas protegidas dan 401''.}
+
+\fila{2}{Asistente de recetas y mercado}{M4 — Validación insuficiente de entradas/salidas}{8.28 Codificación segura}
+{Los ingredientes iban al prompt sin sanitizar, \cod{/api/recetas} no exigía autenticación ni validaba la longitud, y el historial del chat aceptaba cualquier rol (incluido \cod{system}), lo que permitía reescribir las reglas del asistente (\textit{prompt injection}).}
+{Sesión obligatoria; validación con \cod{zod} de tipo y largo de todo lo que entra; el historial solo admite \cod{user} y \cod{assistant} (máximo 12 turnos); el texto del usuario va envuelto en \cod{<datos\_usuario>} y el prompt de sistema aclara que es dato, no instrucción. En rutinas, las respuestas son valores cerrados del cuestionario.}
+{prueba HTTP ``rutina: solo acepta las opciones del cuestionario'' (un texto de inyección en vez de una opción se rechaza con 400).}
+
+\fila{3}{Generador de rutinas (contexto de salud)}{M6 — Controles de privacidad inadecuados}{5.34 Privacidad y protección de datos personales}
+{El sueño, el estrés y el avance del usuario se enviaban a un proveedor externo de IA sin minimizar los datos ni informarlo (Ley 1581 de 2012: los datos de salud son sensibles).}
+{Consentimiento explícito y versionado antes del primer envío de datos de salud, en el momento de uso, explicando qué se envía, a quién y para qué; revocable desde \cod{/privacidad}. El servidor lee de la base solo lo que la rutina usa, en vez de confiar en lo que manda el cliente. Página de privacidad con derecho de supresión.}
+{prueba HTTP ``las rutas con datos de salud exigen consentimiento'' (403 hasta autorizar); recorrido en el navegador del diálogo de consentimiento (rechazar no envía nada; autorizar registra el evento en la auditoría).}
+
+\fila{4}{Calendario de hábitos y notificaciones}{M8 — Configuración de seguridad incompleta}{8.9 Gestión de la configuración}
+{\cod{/api/notificaciones/enviar} no exigía autenticación y aceptaba título, cuerpo y URL de destino arbitrarios: cualquiera podía mandarle a cualquier usuario una notificación con un enlace externo (phishing por push). Además, uno se podía suscribir a las notificaciones de otro.}
+{Solo te podés enviar a tus propios dispositivos; título y cuerpo acotados; la URL tiene que ser una ruta interna, validada en el servidor y otra vez en el \textit{service worker}; límite de 20 envíos por hora; suscripción atada a la sesión (máximo 5 por usuario).}
+{prueba HTTP ``push: URL externa, texto largo o campos de más se rechazan'' (\url{https://phishing.example}, \url{//phishing.example} y \cod{javascript:} dan 400) y ``el límite por hora corta con 429''.}
+
+\fila{5}{Score de riesgo cardiovascular}{M8 — Configuración de seguridad incompleta}{8.15 Registro de eventos}
+{La app no registraba ningún evento: imposible investigar un incidente o rebatir un reclamo por una recomendación errónea (STRIDE: \textit{Repudiation}).}
+{Tabla \cod{auditoria} append-only: la app inserta pero no lee ni modifica, y un trigger impide actualizar, borrar o truncar incluso al dueño de la base. Se registra cada escritura, cada llamada a la IA (con el hash del informe que vio el modelo), la sesión y todo acceso denegado. La IP se guarda recortada (/24 o /48).}
+{prueba de base ``auditoría: la app inserta pero no lee; nadie modifica''; prueba HTTP ``los rechazos quedan en la auditoría''. En producción se verificó que la IP auditada es la del cliente y no la del borde de Cloudflare.}
+
+\fila{6}{Centro de tips y claves de IA}{M1 — Uso indebido de credenciales}{8.6 Gestión de capacidades}
+{Ninguno de los 7 endpoints de IA exigía autenticación ni aplicaba límite de tasa por usuario o por IP: se podía agotar la cuota y disparar el costo del proyecto (denegación de servicio económica).}
+{Sesión obligatoria en todas las rutas; límites en PostgreSQL por sesión \textbf{y} por IP (texto: 40/h por sesión y 120/h por IP; imágenes: 8/h y 24/h; creación de sesiones: 30/h por IP). La IP real se toma de Cloudflare solo si el par es de verdad un borde de Cloudflare, para que no se pueda falsificar.}
+{prueba de base ``límite de tasa: corta al pasar el máximo''; prueba HTTP ``el límite por hora corta con 429''.}
+
+\fila{7}{Identidad y sesión}{M9 — Almacenamiento inseguro de datos}{5.17 Información de autenticación}
+{El identificador era permanente, sin rotación ni expiración, y se guardaba en \cod{localStorage}, accesible por JavaScript: un XSS o un script de terceros robaba la cuenta. El UUID además aparecía en las URLs de las fotos (STRIDE: \textit{Spoofing}).}
+{Token aleatorio de 256 bits en cookie \cod{\_\_Host-} httpOnly, Secure, SameSite=Strict; la base guarda solo su SHA-256. \textbf{Rotación diaria}: el token viejo queda dos minutos de gracia y después no sirve ni se puede refrescar. Vence a los 180 días sin uso. Las fotos van en una carpeta derivada del uid y solo las ve su dueño. Los usuarios anteriores reclaman su historial una sola vez.}
+{pruebas de base de rotación, revocación y vencimiento; prueba HTTP ``rotación: un token de más de un día se reemplaza y el viejo vence'' y ``uid legado: se reclama una vez''; en el navegador, \cod{document.cookie} queda vacío.}
+
+\fila{8}{Infraestructura: VPS, Coolify y base}{M2 — Seguridad inadecuada de la cadena de suministro}{8.22 Segregación de redes}
+{Los secretos vivían en variables de entorno, el proxy de IA era alcanzable por cualquier contenedor de la misma red Docker, y un contenedor vecino comprometido llegaba a la base (movimiento lateral). La app se conectaba como superusuario.}
+{App y base en una red Docker propia: los 30 contenedores vecinos ya no llegan a la base. Rol \cod{pulso\_app} sin privilegios. Pulso dejó de usar el proxy de Claude del servidor. Las claves dejaron de ser variables de \textit{build} (estaban escritas en la imagen) y se borraron las imágenes viejas. Se quitaron dos dependencias sin uso y se actualizó Next.js.}
+{desde un contenedor en la red \cod{coolify}, la base responde ``AISLADA''; la imagen nueva\linebreak[0] tiene 0 claves en su configuración y 0 capas que las mencionen; \cod{npm audit} bajó de 24 vulnerabilidades a 10, sin críticas; prueba de base ``la app no es superusuario ni puede hacer DDL''.}
+
+\fila{9}{Cliente PWA en el dispositivo}{M9 — Almacenamiento inseguro de datos}{7.9 Seguridad de los activos fuera de las instalaciones}
+{La app no pedía ningún bloqueo ni segundo factor: quien abriera el navegador del teléfono entraba directo al historial de salud (STRIDE: \textit{Information Disclosure}).}
+{Bloqueo opcional con passkey (WebAuthn: huella, Face ID o PIN del equipo), aplicado en el servidor: sin desbloquear, la sesión no resuelve a ningún usuario y todas las rutas responden 423. Se bloquea solo a los 15 minutos sin uso y la app desmonta los datos de la pantalla. Bloqueada no se puede borrar los datos ni desactivar el bloqueo. Además, ``Borrar mis datos'' limpia base, fotos, cookie, almacenamiento local, caché y suscripción push.}
+{prueba HTTP con un autenticador WebAuthn de software y firmas reales: sin verificación de usuario se rechaza, una firma corrupta y una passkey ajena se rechazan, un desafío no se puede reusar y, bloqueada, todo da 423. Corrió también en producción. En el navegador, la pantalla de bloqueo no deja ningún dato en la página.}
+
+\fila{10}{Comunicación entre capas}{M5 — Comunicación insegura}{8.20 Seguridad de redes}
+{En modo \textit{oauth} los prompts con datos de salud viajaban a un proxy interno sin TLS; el tráfico entre la app y la base iba sin cifrar; no había headers de seguridad (STRIDE: \textit{Information Disclosure}).}
+{Claude solo por HTTPS: con un proxy en HTTP plano, la app lo ignora y usa la API de Anthropic. TLS hacia PostgreSQL con verificación del certificado y del nombre del servidor contra la CA de Coolify. Headers: CSP con nonce por petición, HSTS, \cod{frame-ancestors 'none'}, nosniff, Referrer-Policy, Permissions-Policy y COOP; \cod{no-store} en la API.}
+{en producción, 1 de 1 conexiones de la app a la base con TLS 1.3; en local, con una CA ajena la app se niega a conectar; prueba de \cod{provider} ``el proxy tiene que cifrar el tráfico''; prueba HTTP ``headers de seguridad'' y ``la página trae el nonce en sus scripts''.}
+
+%======================= 5. HALLAZGOS EXTRA =======================
+\clearpage
+\section{Hallazgos fuera de la matriz}\label{sec:extra}
+
+Al revisar el código y el servidor aparecieron problemas que la matriz no
+registraba. Todos quedaron corregidos.
+
+\vspace{4pt}
+\par\noindent\begin{minipage}{\linewidth}
+\tablaAPA{tab:extra}{Hallazgos adicionales}
+\noindent
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}P{3.6cm}>{\raggedright\arraybackslash\small}X>{\raggedright\arraybackslash\small}X@{}}
+\toprule
+\textbf{Hallazgo} & \textbf{\color{antes}Antes} & \textbf{\color{despues}Después} \\
+\midrule
+Borrado y edición por \cod{id} (IDOR) & Seis acciones operaban con el \cod{id} de la fila solo: alcanzaba con ese identificador, sin conocer el UUID & Exigen \cod{id} y dueño; el intento sobre una fila ajena queda auditado como denegado \\
+Subida arbitraria de archivos & \cod{uploadRecetaImagen} escribía en disco cualquier \textit{data URL} que mandara el cliente & Se eliminó; la imagen la guarda el servidor, verificando los bytes del formato (PNG, JPEG o WebP) \\
+Fuga de detalles internos & Los mensajes de error de PostgreSQL llegaban al cliente, y \cod{/api/recetas/imagen} devolvía el \textit{stack} completo & El cliente recibe un mensaje genérico; el detalle va solo al log \\
+Caché pública de fotos & Las fotos se servían con \cod{Cache-Control: public} & \cod{private}, y solo al dueño \\
+Claves dentro de la imagen Docker & Tres claves marcadas como variables de \textit{build} quedaban escritas en la imagen & Solo de \textit{runtime}; imagen reconstruida e imágenes viejas borradas \\
+Next.js con vulnerabilidad crítica & 15.5.15, con una evasión de \textit{middleware} entre sus fallas & 15.5.27; además, la autenticación no depende del \textit{middleware} \\
+\bottomrule
+\end{tabularx}
+\end{minipage}\par\vspace{6pt}
+
+%======================= 6. RBAC =======================
+\section{Control de acceso basado en roles en la base}
+
+\par\noindent\begin{minipage}{\linewidth}
+\tablaAPA{tab:rbac}{Roles de PostgreSQL}
+\noindent
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}P{3.2cm}>{\raggedright\arraybackslash\small}X>{\raggedright\arraybackslash\small}X@{}}
+\toprule
+\textbf{Rol} & \textbf{Puede} & \textbf{No puede} \\
+\midrule
+Dueño (superusuario) & DDL, migraciones y respaldos & — (no lo usa la app) \\
+\cod{pulso\_app} & Leer y escribir datos, \textbf{solo de las filas de su \cod{app.uid}}; insertar en la auditoría; ejecutar las funciones \cod{pulso\_*} & Crear o borrar tablas; leer sesiones, identidades o límites; leer o modificar la auditoría \\
+\cod{pulso\_auditor} & Leer la auditoría & Todo lo demás \\
+\bottomrule
+\end{tabularx}
+\notaAPA{Las tablas de sesión no tienen permisos para la app: solo se tocan a través de funciones \textit{security definer}. Así la app no puede leer sesiones ajenas ni crear una sesión para un usuario que elija: el identificador nuevo lo genera la base. RLS ``cierra por defecto'': sin \cod{app.uid}, la comparación da falso y no se ve ninguna fila.}
+\end{minipage}\par\vspace{6pt}
+
+%======================= 7. CÓDIGO =======================
+\clearpage
+\section{El cambio en el código}
+
+\subsection*{Identidad}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{antes}Antes} — el identificador lo generaba y guardaba el navegador:
+\begin{lstlisting}[style=antes]
+export function getAnonymousId(): string {
+  let uid = localStorage.getItem(STORAGE_KEY);
+  if (!uid) { uid = uuidv4(); localStorage.setItem(STORAGE_KEY, uid); }
+  return uid;
+}
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{despues}Después} — lo emite el servidor; la base guarda solo el hash:
+\begin{lstlisting}[style=despues]
+const token = randomBytes(32).toString("base64url");     // 256 bits
+await pool.query("select pulso_crear_sesion($1, $2) as uid",
+                 [hashToken(token), DIAS_SESION]);          // solo el hash
+(await cookies()).set("__Host-pulso_sesion", token,
+  { httpOnly: true, secure: true, sameSite: "strict", path: "/" });
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+
+\subsection*{Borrar una receta}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{antes}Antes} — cualquier receta, de cualquier usuario, con su \cod{id}:
+\begin{lstlisting}[style=antes]
+export async function eliminarReceta(id: string) {
+  await pool.query(`delete from recetas_guardadas where id = $1`, [id]);
+}
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{despues}Después} — sesión, validación, dueño, RLS y auditoría:
+\begin{lstlisting}[style=despues]
+export async function eliminarReceta(id: string) {
+  return escritura("receta.eliminar", idSchema, id,
+    async ({ db, uid, auditar }, id) => {
+      const r = await db.query(
+        `delete from recetas_guardadas where id = $1 and uid = $2`, [id, uid]);
+      if (r.rowCount === 0) {
+        await auditar({ accion: "receta.eliminar", recursoId: id,
+                        resultado: "denegado" });
+        return ERROR_NO_ENCONTRADO;
+      }
+      ...
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+
+\subsection*{La base como última barrera}
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[style=despues]
+create policy propietario on recetas_guardadas to pulso_app
+  using (uid = current_setting('app.uid', true))
+  with check (uid = current_setting('app.uid', true));
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+
+\subsection*{Notificaciones push}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{antes}Antes} — destinatario, texto y enlace los elegía quien llamara:
+\begin{lstlisting}[style=antes]
+const { uid, title, body, url } = await req.json();
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+\noindent\begin{minipage}{\linewidth}
+\noindent\textbf{\color{despues}Después} — solo a uno mismo, con texto acotado y URL interna:
+\begin{lstlisting}[style=despues]
+export const POST = rutaProtegida(
+  { nombre: "push.enviar", cuerpo: cuerpoPushSchema,
+    limites: (uid) => [limite("push", uid)] },
+  async ({ uid, cuerpo }) => {
+    // uid: el de la sesion. cuerpo.url: validada como ruta interna.
+  });
+\end{lstlisting}
+\end{minipage}\par\vspace{4pt}
+
+%======================= 8. VERIFICACIÓN =======================
+\section{Verificación}\label{sec:verif}
+
+\par\noindent\begin{minipage}{\linewidth}
+\tablaAPA{tab:pruebas}{Pruebas automatizadas}
+\noindent
+\renewcommand{\arraystretch}{1.2}
+\begin{tabularx}{\linewidth}{@{}P{3.6cm}P{1.6cm}>{\raggedright\arraybackslash\small}X@{}}
+\toprule
+\textbf{Suite} & \textbf{Resultado} & \textbf{Qué demuestra} \\
+\midrule
+\cod{base.test.mjs} & 20 de 20 & La app no es superusuario ni hace DDL; RLS aísla y cierra por defecto; un uid legado se reclama una vez; sesiones revocadas, vencidas o rotadas no sirven; auditoría inmutable; límite de tasa; supresión solo de lo propio; bloqueada no hay usuario ni borrado; desafíos de un solo uso \\
+\cod{http.test.mjs} & 16 de 16 & 401 en las 11 rutas sin sesión; cookie inventada rechazada; Origin ajeno rechazado; consentimiento exigido; push malicioso rechazado; 429 al pasar el límite; IDOR de fotos da 404; rotación sin pisar la cookie; bloqueo con firmas WebAuthn reales \\
+\cod{provider-\allowbreak fallback.mjs} & pasa & El proxy de Claude se acepta solo con TLS \\
+Pruebas previas del motor & 70 de 70 & Los cambios no rompieron el motor de predicción \\
+\bottomrule
+\end{tabularx}
+\notaAPA{Las suites de base y HTTP corren completas contra una base PostgreSQL 17 descartable con usuarios ``legado'' sembrados. Contra producción corren las pruebas que no necesitan preparar datos (10 de 16, todas en verde); la de bloqueo crea una identidad de prueba y la borra al terminar.}
+\end{minipage}\par\vspace{6pt}
+
+\vspace{4pt}
+\noindent Además, en producción se comprobó directamente:
+\begin{itemize}
+  \item la app se conecta como \cod{pulso\_app} (no superusuario), con TLS 1.3, desde la red \cod{pulso};
+  \item desde la red \cod{coolify}, la base no responde, y los demás sitios del servidor siguieron funcionando igual;
+  \item la imagen de la app no contiene ninguna clave y no quedan imágenes anteriores;
+  \item la IP registrada en la auditoría es la del cliente, recortada, y no la de Cloudflare;
+  \item en el navegador: \cod{document.cookie} vacío, ningún script sin nonce, ninguna violación de CSP, y la pantalla de bloqueo sin datos en la página.
+\end{itemize}
+
+%======================= 9. PENDIENTES =======================
+\section{Riesgos residuales y pendientes}
+
+\begin{itemize}
+  \item \textbf{Crédito de los proveedores de IA.} La clave de Anthropic es válida pero la cuenta no tiene saldo, y la de Gemini tiene la cuota agotada: hasta cargar crédito, las funciones de IA muestran ``el servicio de IA no respondió''. No es un problema de seguridad: el resto de la app funciona.
+  \item \textbf{Inyección de prompt.} Se acota (roles filtrados, datos etiquetados, valores cerrados), pero ningún control la elimina del todo en un modelo de lenguaje. El impacto queda limitado al propio usuario: el modelo no tiene herramientas ni acceso a datos de otros.
+  \item \textbf{El bloqueo es opcional.} Protege a quien lo activa; hacerlo obligatorio exigiría que todo usuario tenga un teléfono con passkeys.
+  \item \textbf{El proxy de Claude del servidor} sigue alcanzable por cualquier contenedor, con su token como único límite. Ya no afecta a Pulso, que no lo usa, pero sí al servidor.
+  \item \textbf{Dependencias con arreglo mayor pendiente}: \cod{postcss} dentro de Next.js (solo en el build) y \cod{jsondiffpatch} en el SDK de IA requieren Next.js 16 y AI SDK 7. Ninguna se ejecuta con entrada del usuario.
+  \item \textbf{Rotación de claves}: las que estuvieron escritas en la imagen nunca salieron del servidor (no hay registro de imágenes), pero conviene rotarlas en Anthropic y Google.
+  \item \textbf{El dueño de la base} conserva acceso total; se audita lo que hace la app, no lo que haga un operador con el superusuario.
+\end{itemize}
+
+%======================= ANEXO =======================
+\section*{Anexo: trazabilidad}
+\addcontentsline{toc}{section}{Anexo}
+
+\small
+\begin{itemize}
+  \item \textbf{Repositorio:} \url{https://github.com/Agustin1231/pulso}. Commits: \cod{0e8f62a} (sesión del servidor, RLS y controles), \cod{494c6d1} y \cod{6c307db} (documentación y red dedicada), \cod{9c147d6} (rotación, bloqueo con passkey y TLS).
+  \item \textbf{Documentación técnica:} \cod{docs/seguridad.md}; migraciones \cod{db/schema.sql} y \cod{db/seguridad.sql}.
+  \item \textbf{Respaldos de la base} previos a cada cambio, en el servidor: \path{/root/backups/pulso-db-20261001T153953Z.dump}, \path{...T163408Z.dump} y \path{...T173519Z.dump}.
+  \item \textbf{Base normativa:} OWASP Mobile Top 10 (2024); ISO/IEC 27002:2022; Ley 1581 de 2012 (protección de datos personales, art.~5 datos sensibles, art.~6 autorización, art.~8 derechos del titular).
+\end{itemize}
+
+\end{document}
