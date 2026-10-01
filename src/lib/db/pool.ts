@@ -19,6 +19,31 @@ declare global {
 }
 
 /**
+ * TLS hacia Postgres (plantilla, fila 10: el tráfico app ↔ base lleva datos de
+ * salud entre contenedores).
+ *
+ *   PGSSL=verify-full  cifra Y verifica el certificado del servidor y su
+ *                      nombre contra PGSSL_CA (la CA en PEM; los saltos de
+ *                      línea pueden venir como "\n"). Es lo que usa producción:
+ *                      Coolify firma el certificado de la base con su CA, a
+ *                      nombre del contenedor.
+ *   PGSSL=require      cifra sin verificar (Postgres gestionado, Neon, RDS).
+ *   vacío              sin TLS (desarrollo con una base local).
+ */
+export function opcionesSsl(): pg.ConnectionConfig["ssl"] {
+  const modo = process.env.PGSSL ?? "";
+  if (modo === "verify-full") {
+    const ca = process.env.PGSSL_CA?.replace(/\\n/g, "\n");
+    if (!ca?.includes("BEGIN CERTIFICATE")) {
+      throw new Error("PGSSL=verify-full necesita PGSSL_CA con el certificado de la CA en PEM.");
+    }
+    return { ca, rejectUnauthorized: true };
+  }
+  if (modo === "require") return { rejectUnauthorized: false };
+  return undefined;
+}
+
+/**
  * El pool se crea en la primera query, no al importar el módulo.
  *
  * Importa que sea perezoso: `next build` evalúa los módulos "use server" para
@@ -43,9 +68,7 @@ function obtenerPool(): pg.Pool {
     max: Number(process.env.PGPOOL_MAX ?? 10),
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
-    // Postgres gestionado (Neon, RDS) exige TLS; el de Coolify va por la red
-    // interna de Docker y no lo necesita.
-    ssl: process.env.PGSSL === "require" ? { rejectUnauthorized: false } : undefined,
+    ssl: opcionesSsl(),
   });
 
   // Un error en una conexión idle no debe tumbar el proceso.

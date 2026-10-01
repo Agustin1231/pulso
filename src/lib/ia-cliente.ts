@@ -1,6 +1,6 @@
 "use client";
 
-import { asegurarSesion } from "@/hooks/use-sesion";
+import { asegurarSesion, marcarBloqueada } from "@/hooks/use-sesion";
 import { otorgarConsentimientoIA } from "@/lib/db/consentimiento";
 
 /**
@@ -37,6 +37,13 @@ export class ConsentimientoRechazado extends Error {
   }
 }
 
+export class SesionBloqueada extends Error {
+  constructor() {
+    super("sesion_bloqueada");
+    this.name = "SesionBloqueada";
+  }
+}
+
 export class LimiteAlcanzado extends Error {
   constructor() {
     super("demasiadas_peticiones");
@@ -69,6 +76,11 @@ export async function fetchIA(url: string, cuerpo: unknown = {}): Promise<Respon
   }
 
   if (res.status === 429) throw new LimiteAlcanzado();
+  if (res.status === 423) {
+    // La ventana de desbloqueo venció: la guardia muestra la pantalla de bloqueo.
+    marcarBloqueada();
+    throw new SesionBloqueada();
+  }
   return res;
 }
 
@@ -76,6 +88,9 @@ export async function fetchIA(url: string, cuerpo: unknown = {}): Promise<Respon
 export function mensajeErrorIA(err: unknown, porDefecto: string): string {
   if (err instanceof ConsentimientoRechazado) {
     return "Esta función necesita tu autorización para enviar tus datos de salud al servicio de IA. Podés darla cuando quieras desde Privacidad.";
+  }
+  if (err instanceof SesionBloqueada) {
+    return "Pulso se bloqueó. Desbloquealo para continuar.";
   }
   if (err instanceof LimiteAlcanzado) {
     return "Llegaste al límite de consultas a la IA por esta hora. Probá de nuevo más tarde.";

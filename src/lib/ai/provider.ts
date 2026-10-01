@@ -13,6 +13,13 @@ const API_ANTHROPIC = "https://api.anthropic.com";
  *
  * En modo `oauth`, si el proxy no responde la peticion se reintenta contra la
  * API de Anthropic con ANTHROPIC_API_KEY. Ver `fetchConFallback`.
+ *
+ * Seguridad (plantilla, filas 8 y 10): las peticiones llevan datos de salud.
+ * El modo `oauth` solo se acepta si el proxy es HTTPS (o localhost en
+ * desarrollo). Con un proxy en HTTP plano —como el que escucha en la red
+ * interna del servidor, alcanzable por cualquier contenedor— el texto viajaria
+ * sin cifrar: en ese caso se ignora el proxy y se usa la API de Anthropic, que
+ * siempre va por HTTPS. Ver `proxyAceptable`.
  */
 
 type FetchLike = (
@@ -117,10 +124,36 @@ function proveedorOAuth() {
   });
 }
 
+/**
+ * true si el proxy cifra el trafico: HTTPS, o HTTP solo contra la propia
+ * maquina (desarrollo). Exportada para `tests/provider-fallback.mjs`.
+ */
+export function proxyAceptable(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const u = new URL(url);
+    if (u.protocol === "https:") return true;
+    return u.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
 let cache: ReturnType<typeof createAnthropic> | null = null;
+let avisado = false;
 
 export function modeloClaude() {
   if (process.env.CLAUDE_AUTH_MODE !== "oauth") {
+    return anthropic(MODELO);
+  }
+  if (!proxyAceptable(process.env.CLAUDE_PROXY_URL)) {
+    if (!avisado) {
+      avisado = true;
+      console.warn(
+        "[ai] CLAUDE_AUTH_MODE=oauth con un proxy sin TLS: se ignora el proxy y " +
+          "se usa la API de Anthropic por HTTPS (los prompts llevan datos de salud)."
+      );
+    }
     return anthropic(MODELO);
   }
   // El proveedor se memoiza, asi que cambiar CLAUDE_AUTH_MODE necesita

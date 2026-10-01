@@ -1,7 +1,7 @@
 import "server-only";
 import type { z } from "zod";
 import { conUsuario, mensajeError, type Db } from "@/lib/db/pool";
-import { requerirUid, uidDeSesion, SinSesion } from "@/lib/sesion";
+import { requerirUid, uidDeSesion, SesionBloqueada, SinSesion } from "@/lib/sesion";
 import { auditar, auditarEn, type Evento } from "./auditoria";
 import { ipCliente } from "./red";
 
@@ -22,6 +22,7 @@ export const ERROR_GENERICO = "No se pudo completar la operación. Intentá de n
 export const ERROR_SESION   = "Tu sesión no es válida. Recargá la página.";
 export const ERROR_DATOS    = "Los datos enviados no son válidos.";
 export const ERROR_NO_ENCONTRADO = "No se encontró el elemento.";
+export const ERROR_BLOQUEADA = "Pulso está bloqueado. Desbloquealo para continuar.";
 
 export interface Ctx {
   db:  Db;
@@ -91,6 +92,10 @@ export async function escritura<T>(
     return { error: await ejecutar(nombre, schema, entrada, fn) };
   } catch (err) {
     if (err instanceof DatosInvalidos) return { error: ERROR_DATOS };
+    if (err instanceof SesionBloqueada) {
+      await auditar({ accion: nombre, resultado: "denegado", ip: await ipCliente(), detalle: { motivo: "sesion_bloqueada" } });
+      return { error: ERROR_BLOQUEADA };
+    }
     if (err instanceof SinSesion) {
       await auditar({ accion: nombre, resultado: "denegado", ip: await ipCliente(), detalle: { motivo: "sin_sesion" } });
       return { error: ERROR_SESION };
@@ -112,7 +117,7 @@ export async function lectura<T, R>(
   try {
     return await ejecutar(nombre, schema, entrada, fn);
   } catch (err) {
-    if (!(err instanceof DatosInvalidos) && !(err instanceof SinSesion)) {
+    if (!(err instanceof DatosInvalidos) && !(err instanceof SinSesion) && !(err instanceof SesionBloqueada)) {
       console.error(`[accion] ${nombre}:`, mensajeError(err));
     }
     return vacio;

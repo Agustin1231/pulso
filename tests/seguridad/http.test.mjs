@@ -10,6 +10,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import pg from "pg";
+import { AutenticadorSoftware } from "./autenticador.mjs";
 
 const BASE = process.env.BASE_URL;
 const ADMIN = process.env.DATABASE_ADMIN_URL;
@@ -230,4 +231,107 @@ test("los rechazos quedan en la auditoría", { skip: sinAdmin }, async () => {
   for (const m of ["sesion_requerida", "consentimiento_requerido", "datos_invalidos", "demasiadas_peticiones", "origen_no_permitido", "carpeta_ajena"]) {
     assert.ok(motivos.has(m), `falta un rechazo con motivo ${m}`);
   }
+});
+
+// ─── Fila 7: rotación ────────────────────────────────────────────────────────
+
+test("rotación: un token de más de un día se reemplaza y el viejo vence", { skip: sinAdmin }, async () => {
+  const { cookie: viejo } = await nuevaSesion();
+  const uid = await uidDeCookie(viejo);
+  const { createHash } = await import("node:crypto");
+  const hashDe = (c) => createHash("sha256").update(c.split("=")[1]).digest("hex");
+  await admin.query("update sesiones set created_at = now() - interval '2 days' where token_hash = $1", [hashDe(viejo)]);
+
+  const res = await post("/api/sesion", {}, viejo);
+  assert.equal((await res.json()).origen, "rotada");
+  const nuevo = cookieDe(res);
+  assert.ok(nuevo && nuevo !== viejo, "llega una cookie nueva");
+  assert.equal(await uidDeCookie(nuevo), uid, "misma identidad");
+
+  // una petición en vuelo con el viejo, dentro de la gracia: misma persona, sin identidad nueva
+  const enVuelo = await post("/api/sesion", {}, viejo);
+  assert.equal((await enVuelo.json()).origen, "existente");
+  assert.equal(cookieDe(enVuelo), null, "no pisa la cookie nueva");
+
+  // vencida la gracia, el viejo no sirve
+  await admin.query("update sesiones set expira_at = now() - interval '1 second' where token_hash = $1", [hashDe(viejo)]);
+  assert.equal((await post("/api/notificaciones/enviar", {}, viejo)).status, 401);
+  assert.notEqual((await post("/api/notificaciones/enviar", {}, nuevo)).status, 401);
+});
+
+// ─── Fila 9: bloqueo con passkey ─────────────────────────────────────────────
+// No necesita base de admin: crea una identidad de prueba y la borra al final,
+// así que también corre contra producción.
+
+test("bloqueo: passkey real, sin desbloquear no hay datos, y se desbloquea firmando", { skip: saltear }, async () => {
+  const { cookie } = await nuevaSesion();
+  const base = new URL(BASE);
+  const auth = new AutenticadorSoftware({ origen: base.origin, rpID: base.hostname });
+  const pedirJson = async (ruta, cuerpo) => {
+    const r = await post(ruta, cuerpo, cookie);
+    return { status: r.status, body: await r.json().catch(() => null) };
+  };
+  const borrar = (ruta) => fetch(`${BASE}${ruta}`, { method: "DELETE", headers: { Cookie: cookie } });
+
+  // activar
+  const opReg = await pedirJson("/api/bloqueo/registro/opciones");
+  assert.equal(opReg.status, 200);
+  assert.equal(opReg.body.authenticatorSelection.userVerification, "required");
+  const sinUV = await pedirJson("/api/bloqueo/registro", auth.registrar(opReg.body, { verificarUsuario: false }));
+  assert.equal(sinUV.status, 400, "sin verificación de usuario (huella/PIN) se rechaza");
+  const opReg2 = await pedirJson("/api/bloqueo/registro/opciones");
+  const reg = await pedirJson("/api/bloqueo/registro", auth.registrar(opReg2.body));
+  assert.equal(reg.status, 200, JSON.stringify(reg.body));
+
+  const est = await (await fetch(`${BASE}/api/sesion`, { headers: { Cookie: cookie } })).json();
+  assert.deepEqual(est, { estado: "activa", bloqueo: { activo: true, bloqueada: false } });
+
+  // bloquear: el servidor no entrega nada
+  assert.equal((await pedirJson("/api/bloqueo/bloquear")).status, 200);
+  assert.equal((await post("/api/tips", {}, cookie)).status, 423);
+  assert.equal((await post("/api/notificaciones/enviar", {}, cookie)).status, 423);
+  assert.equal((await borrar("/api/mis-datos")).status, 423, "bloqueada no se pueden borrar los datos");
+  assert.equal((await borrar("/api/bloqueo")).status, 423, "bloqueada no se puede desactivar el bloqueo");
+  const bloq = await (await fetch(`${BASE}/api/sesion`, { headers: { Cookie: cookie } })).json();
+  assert.equal(bloq.estado, "bloqueada");
+
+  // firma inválida: rechazada
+  const op1 = await pedirJson("/api/bloqueo/desbloqueo/opciones");
+  assert.equal(op1.status, 200);
+  assert.equal((await pedirJson("/api/bloqueo/desbloqueo", auth.firmar(op1.body, { firmaInvalida: true }))).status, 401);
+
+  // otra passkey (no registrada): rechazada
+  const op2 = await pedirJson("/api/bloqueo/desbloqueo/opciones");
+  const intrusa = new AutenticadorSoftware({ origen: base.origin, rpID: base.hostname });
+  assert.equal((await pedirJson("/api/bloqueo/desbloqueo", intrusa.firmar(op2.body))).status, 401);
+
+  // un desafío ya usado no sirve (anti-replay)
+  const op3 = await pedirJson("/api/bloqueo/desbloqueo/opciones");
+  const firmada = auth.firmar(op3.body);
+  assert.equal((await pedirJson("/api/bloqueo/desbloqueo", firmada)).status, 200, "la firma correcta desbloquea");
+  assert.equal((await post("/api/tips", {}, cookie)).status, 403, "desbloqueada: pasa el bloqueo (y pide consentimiento)");
+  await pedirJson("/api/bloqueo/bloquear");
+  assert.equal((await pedirJson("/api/bloqueo/desbloqueo", firmada)).status, 400, "replay del mismo desafío");
+  assert.equal((await post("/api/tips", {}, cookie)).status, 423);
+
+  // limpieza: desbloquear, desactivar y borrar la identidad de prueba
+  const op4 = await pedirJson("/api/bloqueo/desbloqueo/opciones");
+  assert.equal((await pedirJson("/api/bloqueo/desbloqueo", auth.firmar(op4.body))).status, 200);
+  assert.equal((await borrar("/api/bloqueo")).status, 200);
+  assert.equal((await borrar("/api/mis-datos")).status, 200);
+});
+
+// Deja una identidad bloqueada e inaccesible (es lo que prueba): solo en la base descartable.
+test("cerrar sesión en este equipo funciona aunque esté bloqueada", { skip: sinAdmin }, async () => {
+  const { cookie } = await nuevaSesion();
+  const base = new URL(BASE);
+  const auth = new AutenticadorSoftware({ origen: base.origin, rpID: base.hostname });
+  const op = await (await post("/api/bloqueo/registro/opciones", {}, cookie)).json();
+  assert.equal((await post("/api/bloqueo/registro", auth.registrar(op), cookie)).status, 200);
+  await post("/api/bloqueo/bloquear", {}, cookie);
+
+  const res = await fetch(`${BASE}/api/sesion`, { method: "DELETE", headers: { Cookie: cookie } });
+  assert.equal(res.status, 200);
+  const est = await (await fetch(`${BASE}/api/sesion`, { headers: { Cookie: cookie } })).json();
+  assert.equal(est.estado, "sin_sesion", "el token quedó revocado");
 });

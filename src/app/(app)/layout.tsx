@@ -4,9 +4,13 @@ import { Sidebar }   from "@/components/layout/sidebar";
 import { Header }    from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { DialogoConsentimiento } from "@/components/privacidad/dialogo-consentimiento";
+import { GuardiaBloqueo } from "@/components/privacidad/guardia-bloqueo";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
+    // Con el bloqueo activo y sin desbloquear, la guardia muestra la pantalla
+    // de bloqueo en lugar de la app (ver guardia-bloqueo.tsx).
+    <GuardiaBloqueo>
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar — solo desktop */}
       <Sidebar />
@@ -25,5 +29,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Lo abre fetchIA cuando una función necesita mandar datos de salud a la IA */}
       <DialogoConsentimiento />
     </div>
+    </GuardiaBloqueo>
   );
 }

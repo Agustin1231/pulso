@@ -1,6 +1,6 @@
 // Test del fallback proxy → API de Anthropic.
 // Intercepta globalThis.fetch para no salir a la red.
-import { fetchConFallback } from "../.tmp-test/provider.js";
+import { fetchConFallback, proxyAceptable } from "../.tmp-test/provider.js";
 
 const PROXY = "http://10.0.1.1:7779/v1/messages";
 let fallos = 0;
@@ -109,6 +109,16 @@ for (const status of [401, 403, 429, 400]) {
     llamadas[1]?.url === "https://api.anthropic.com/v1/messages?beta=true",
     llamadas[1]?.url
   );
+}
+
+// ── 8. Solo se acepta un proxy con TLS (los prompts llevan datos de salud) ──
+{
+  console.log("\n7) el proxy tiene que cifrar el tráfico");
+  chequear("https se acepta", proxyAceptable("https://proxy.interno:8443") === true);
+  chequear("http a la red interna se rechaza", proxyAceptable("http://10.0.1.1:7779") === false);
+  chequear("http a localhost se acepta (desarrollo)", proxyAceptable("http://localhost:7779") === true);
+  chequear("http a 127.0.0.1 se acepta (desarrollo)", proxyAceptable("http://127.0.0.1:7779") === true);
+  chequear("vacío o inválido se rechaza", proxyAceptable("") === false && proxyAceptable("no es url") === false);
 }
 
 console.log(fallos === 0 ? "\n✅ Todo pasa" : `\n❌ ${fallos} fallos`);

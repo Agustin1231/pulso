@@ -64,10 +64,21 @@ const sqls = await Promise.all(
   ARCHIVOS.map((a) => readFile(path.join(raiz, "db", a), "utf8"))
 );
 
-const client = new pg.Client({
-  connectionString,
-  ssl: process.env.PGSSL === "require" ? { rejectUnauthorized: false } : undefined,
-});
+// Mismos modos que src/lib/db/pool.ts (opcionesSsl).
+function opcionesSsl() {
+  const modo = process.env.PGSSL ?? "";
+  if (modo === "verify-full") {
+    const ca = process.env.PGSSL_CA?.replace(/\\n/g, "\n");
+    if (!ca?.includes("BEGIN CERTIFICATE")) {
+      throw new Error("PGSSL=verify-full necesita PGSSL_CA con el certificado de la CA en PEM.");
+    }
+    return { ca, rejectUnauthorized: true };
+  }
+  if (modo === "require") return { rejectUnauthorized: false };
+  return undefined;
+}
+
+const client = new pg.Client({ connectionString, ssl: opcionesSsl() });
 
 try {
   await client.connect();

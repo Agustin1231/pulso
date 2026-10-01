@@ -1,7 +1,7 @@
 import "server-only";
 import type { z } from "zod";
 import { conUsuario, mensajeError } from "@/lib/db/pool";
-import { uidDeSesion } from "@/lib/sesion";
+import { estadoSesion, uidDeSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
 import { auditar } from "./auditoria";
 import { tieneConsentimientoIA } from "./consentimiento";
 import { ipCliente, origenValido } from "./red";
@@ -13,7 +13,8 @@ import { consumir, type Limite } from "./tasa";
  * Antes ninguna ruta pedía autenticación: las 7 de IA se podían llamar sin
  * límite y las de push aceptaban cualquier uid. En orden, este envoltorio:
  *   1. rechaza peticiones con Origin de otro sitio;
- *   2. exige sesión (401);
+ *   2. exige sesión (401) y, si el usuario activó el bloqueo, que esté
+ *      desbloqueada (423: el cliente muestra la pantalla de bloqueo);
  *   3. si la ruta manda datos de salud a la IA, exige consentimiento (403);
  *   4. consume los límites de tasa por sesión e IP (429);
  *   5. valida el cuerpo con zod (400);
@@ -38,6 +39,11 @@ interface Opciones<T> {
   limites?: (uid: string, ip: string) => Limite[];
   /** Exige el consentimiento `ia_datos_salud` vigente. */
   consentimiento?: boolean;
+  /**
+   * Acepta una sesión BLOQUEADA. Solo para las rutas de desbloqueo: son las
+   * que permiten salir del bloqueo, así que no pueden exigirlo.
+   */
+  permitirBloqueada?: boolean;
 }
 
 export function json(cuerpo: unknown, status = 200, headers?: Record<string, string>): Response {
@@ -59,12 +65,15 @@ export function rutaProtegida<T, X = unknown>(
 
     let uid: string | null;
     try {
-      uid = await uidDeSesion();
+      uid = op.permitirBloqueada ? await uidIgnorandoBloqueo() : await uidDeSesion();
     } catch (err) {
       console.error(`[api] ${op.nombre}: no se pudo resolver la sesión:`, mensajeError(err));
       return json({ error: "error_interno" }, 500);
     }
-    if (!uid) return denegar(401, "sesion_requerida");
+    if (!uid) {
+      const { estado } = await estadoSesion().catch(() => ({ estado: "sin_sesion" as const }));
+      return estado === "bloqueada" ? denegar(423, "sesion_bloqueada") : denegar(401, "sesion_requerida");
+    }
 
     try {
       if (op.consentimiento) {

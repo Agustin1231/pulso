@@ -26,10 +26,10 @@ entre usuarios, sin depender solo del código de la app.
 | 4 | Hábitos y push | `/api/notificaciones/enviar` sin auth, con título, cuerpo y URL libres | Solo a tus propios dispositivos; texto acotado; URL interna (validada en el servidor y en el service worker); límite por hora | M8 | 8.9 |
 | 5 | Score de riesgo | Ningún registro: imposible investigar un incidente o rebatir un reclamo | Tabla `auditoria` append-only (trigger); cada llamada a la IA guarda el hash del informe que la generó | M8 | 8.15 |
 | 6 | Claves de IA | Los 7 endpoints de IA sin auth ni límite (DoS económico) | Sesión obligatoria; límites por sesión **y** por IP en Postgres; las imágenes con límite propio | M1 | 8.6 |
-| 7 | UUID en localStorage | Permanente, legible por cualquier script, filtrado en las URLs de las imágenes | Cookie `__Host-` httpOnly, Secure, SameSite=Strict; token de 256 bits; la base guarda solo su hash; vencimiento por inactividad; imágenes en carpeta derivada y servidas solo al dueño | M9 | 5.17 |
-| 8 | VPS, Coolify y base | Secretos y base alcanzables desde la red Docker compartida; dependencias vulnerables | App y base en una red Docker propia (`pulso`, destino Coolify `pulso-aislado`): ningún otro contenedor del servidor llega a la base. La app se conecta con un rol sin privilegios (`pulso_app`); la base no está publicada; `next-pwa` y `uuid` (sin uso) eliminados; Next actualizado | M2 | 8.22 |
-| 9 | Teléfono con la PWA | Quien tenga el equipo entra directo; datos en caché | La sesión vence; "Borrar mis datos" limpia la base, las imágenes, la cookie, el storage, la caché del SW y la suscripción push | M9 | 7.9 |
-| 10 | Comunicación entre capas | Sin headers de seguridad | CSP con nonce por petición, HSTS, `frame-ancestors 'none'`, nosniff, Referrer-Policy, Permissions-Policy, COOP; `X-Powered-By` apagado; `no-store` en la API | M5 | 8.20 |
+| 7 | UUID en localStorage | Permanente, sin rotación ni expiración, legible por cualquier script, filtrado en las URLs de las imágenes | Cookie `__Host-` httpOnly, Secure, SameSite=Strict; token de 256 bits; la base guarda solo su hash; **rotación diaria** (el token viejo vence a los 2 minutos); vencimiento por inactividad; imágenes en carpeta derivada y servidas solo al dueño | M9 | 5.17 |
+| 8 | VPS, Coolify y base | Secretos en el entorno; el proxy de IA y la base alcanzables desde la red Docker compartida; dependencias vulnerables | App y base en una red Docker propia (`pulso`): ningún otro contenedor llega a la base. **Pulso ya no usa el proxy de Claude** (solo acepta proxies HTTPS). **Las claves dejaron de ser variables de build** (estaban escritas en la imagen Docker) y se borraron las imágenes que las tenían; las del proxy se quitaron. Rol sin privilegios (`pulso_app`); `next-pwa` y `uuid` eliminados; Next actualizado | M2 | 8.22 |
+| 9 | Teléfono con la PWA | Quien tenga el equipo entra directo; datos en caché | **Bloqueo opcional con passkey** (huella, Face ID o PIN del equipo), aplicado en el servidor: sin desbloquear, la sesión no resuelve a ningún usuario; se bloquea solo a los 15 minutos sin uso y la app desmonta los datos de pantalla. Además, la sesión vence y "Borrar mis datos" limpia base, imágenes, cookie, storage, caché del SW y push | M9 | 7.9 |
+| 10 | Comunicación entre capas | Prompts con datos de salud a un proxy interno sin TLS; tráfico app ↔ base sin cifrar; sin headers de seguridad | **Claude solo por HTTPS** (con un proxy HTTP plano, la app usa la API directa); **TLS verificado hacia Postgres** (`verify-full` contra la CA de Coolify); CSP con nonce, HSTS, `frame-ancestors 'none'`, nosniff, Referrer-Policy, Permissions-Policy, COOP; `no-store` en la API | M5 | 8.20 |
 
 ### Además de la plantilla
 
@@ -69,6 +69,41 @@ genera la base.
    reclamado, conocerlo ya no sirve para nada.
 4. Un lock entre pestañas (`navigator.locks`) evita que dos pestañas
    abiertas juntas se pisen la cookie durante el reclamo.
+5. **Rotación** (fila 7): si el token tiene más de un día, se emite uno nuevo
+   para la misma identidad y el viejo queda 2 minutos de gracia (para las
+   peticiones que ya estaban en vuelo) y después deja de servir. Un token
+   rotado no se vuelve a renovar ni a rotar: un token robado sirve, como
+   mucho, hasta que el dueño vuelve a abrir la app.
+
+## Bloqueo con passkey (fila 9)
+
+Opcional, desde `/privacidad`, sin crear cuenta. La passkey vive en el
+teléfono (huella, Face ID o PIN del equipo); el servidor guarda solo su clave
+pública, y la passkey queda atada al dominio de Pulso, así que una página de
+phishing no la puede pedir.
+
+- **Se aplica en el servidor, no solo en la pantalla.** Con el bloqueo
+  activo, `pulso_resolver_sesion` devuelve un uid solo si la sesión está
+  desbloqueada. Bloqueada, las rutas responden **423** y las server actions no
+  entregan datos, aunque la cookie sea válida.
+- **Ventana de uso de 15 minutos** que se corre mientras se usa la app.
+  Vencida, el cliente lo detecta (al volver a la pestaña y cada minuto) y
+  desmonta la app: los datos salen del DOM, no solo quedan tapados.
+- **Verificación de usuario obligatoria** (no alcanza con tocar una llave), un
+  **desafío de un solo uso** por intento (anti-replay) y el **contador** de la
+  passkey (detecta una passkey clonada).
+- Bloqueada no se puede borrar los datos ni desactivar el bloqueo: quien
+  agarre el teléfono no puede apagarlo. Lo único que se puede hacer sin
+  desbloquear es **cerrar la sesión en ese equipo**, y los datos no se borran.
+
+## TLS hacia la base (fila 10)
+
+La base tiene SSL activado en Coolify, con un certificado firmado por la CA
+del servidor a nombre del contenedor (`hxanb5yycw0dy9couvgt4bem`). La app
+conecta con `PGSSL=verify-full` y `PGSSL_CA`: cifra **y** verifica el
+certificado y el nombre, así que no alcanza con estar en la red para hacerse
+pasar por la base. Coolify renueva el certificado 14 días antes de que venza,
+firmado con la misma CA, así que la verificación no se rompe.
 
 ## Consentimiento (Ley 1581 de 2012)
 
@@ -109,19 +144,21 @@ preparan datos, así que también sirve contra producción
 
 | Prueba | Qué demuestra |
 |---|---|
-| `base.test.mjs` (13) | La app no es superusuario ni puede hacer DDL; RLS aísla usuarios y cierra por defecto; un uid legado se reclama una vez; sesiones revocadas o vencidas no sirven; la auditoría es inmutable incluso para el dueño; el límite de tasa corta; la supresión borra solo lo propio |
-| `http.test.mjs` (13) | Headers y CSP con nonce en cada script; cookie httpOnly/SameSite; 401 sin sesión en las 11 rutas; cookie inventada rechazada; Origin ajeno rechazado; consentimiento exigido; push con URL externa rechazado; 429 al pasar el límite; respuestas del cuestionario cerradas; IDOR de imágenes da 404; la supresión deja la sesión inválida; todos los rechazos auditados |
+| `base.test.mjs` (20) | La app no es superusuario ni puede hacer DDL; RLS aísla usuarios y cierra por defecto; un uid legado se reclama una vez; sesiones revocadas o vencidas no sirven; la auditoría es inmutable incluso para el dueño; el límite de tasa corta; la supresión borra solo lo propio; la rotación reemplaza el token y el viejo no se puede refrescar; bloqueada no hay uid ni borrado; la ventana se desliza y vence; las passkeys de otro no se ven; los desafíos son de un solo uso |
+| `http.test.mjs` (16) | Headers y CSP con nonce en cada script; cookie httpOnly/SameSite; 401 sin sesión en las 11 rutas; cookie inventada rechazada; Origin ajeno rechazado; consentimiento exigido; push con URL externa rechazado; 429 al pasar el límite; respuestas del cuestionario cerradas; IDOR de imágenes da 404; la supresión deja la sesión inválida; todos los rechazos auditados; rotación sin pisar la cookie de peticiones en vuelo; **bloqueo con firmas WebAuthn reales** (autenticador de software): sin verificación de usuario se rechaza, firma corrupta y passkey ajena rechazadas, replay rechazado, bloqueada todo da 423 |
+| `provider-fallback.mjs` | Además del fallback, que solo se acepta un proxy de Claude con TLS |
 
 ## Riesgos residuales
 
 Lo que queda abierto, a propósito o por alcance:
 
 - **Inyección de prompt**: se acota (roles filtrados, datos etiquetados, valores cerrados en rutinas), pero no hay forma de eliminarla del todo con un LLM. El impacto queda limitado al propio usuario: el modelo no tiene herramientas ni acceso a datos de otros.
-- **Sin bloqueo local en la PWA** (fila 9): quien tenga el teléfono desbloqueado y la app abierta ve los datos. Un bloqueo con passkey (WebAuthn) es el siguiente paso natural.
+- **El bloqueo es opcional** (fila 9): protege a quien lo activa. Hacerlo obligatorio implicaría que todo usuario tenga un teléfono con passkeys.
 - **Dependencias con fix mayor pendiente**: `postcss` dentro de Next (solo build, procesa nuestro propio CSS) pide Next 16; `jsondiffpatch` y `@ai-sdk/*` piden AI SDK 7; `uuid` dentro de `gaxios` (dependencia de Google) no usa la función afectada. Ninguna se ejecuta con entrada del usuario.
 - **Reclamo de UUID viejos**: durante 90 días, quien conozca un UUID viejo **todavía no reclamado** puede reclamarlo antes que su dueño. El dueño lo reclama solo al abrir la app por primera vez después del deploy.
 - **El dueño de la base** sigue teniendo acceso total. Queda auditado lo que hace la app, no lo que haga un operador con el superusuario.
-- **El proxy de Claude** (fila 8) es un servicio del host en `10.0.1.1:7779`. Lo alcanza cualquier contenedor del servidor, de cualquier red, así que su token es el único límite. Sacarlo de ahí es tema del servidor, no de Pulso.
+- **El proxy de Claude del servidor** (`10.0.1.1:7779`) sigue alcanzable por cualquier contenedor, con su token como único límite. Ya no es un riesgo de Pulso, que no lo usa ni guarda su token, pero sí del servidor.
+- **Las claves que estuvieron escritas en la imagen** nunca salieron del servidor (no hay registry), y las imágenes se borraron. Igual conviene rotarlas en Anthropic y Google, si alguna vez se exportó una imagen.
 - **Traefik** está en las dos redes (`coolify` y `pulso`): es el único otro participante de la red de Pulso, porque tiene que rutear las peticiones a la app.
 
 ## Segregación de red

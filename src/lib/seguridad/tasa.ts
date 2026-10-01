@@ -34,6 +34,12 @@ export const LIMITES = {
   sesionIp:   { max: 30,  ventana: HORA },
   /** Borrado total de datos: raro por definición. */
   supresion:  { max: 3,   ventana: HORA },
+  /** Registrar o quitar passkeys del bloqueo. */
+  passkey:    { max: 20,  ventana: HORA },
+  passkeyIp:  { max: 60,  ventana: HORA },
+  /** Intentos de desbloqueo: una passkey no se adivina, pero igual se acota. */
+  desbloqueo:   { max: 30, ventana: HORA },
+  desbloqueoIp: { max: 90, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;

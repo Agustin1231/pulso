@@ -167,7 +167,7 @@ Las 7 rutas de IA de texto usan el mismo modelo (`claude-sonnet-4-6`), y todas l
 | `apikey` (default) | `ANTHROPIC_API_KEY` directo a `api.anthropic.com` | La API, por token |
 | `oauth` | Un proxy externo que habla el protocolo de la Messages API y resuelve con el CLI de Claude Code | La suscripción de Claude |
 
-En modo `oauth` hacen falta `CLAUDE_PROXY_URL` y `CLAUDE_PROXY_TOKEN`; si falta cualquiera de las dos, `provider.ts` tira error en vez de arrancar con una credencial vacía.
+En modo `oauth` hacen falta `CLAUDE_PROXY_URL` y `CLAUDE_PROXY_TOKEN`; si falta cualquiera de las dos, `provider.ts` tira error en vez de arrancar con una credencial vacía. Además, **el proxy tiene que ser HTTPS** (o `http://localhost` en desarrollo): los prompts llevan datos de salud, y con un proxy en HTTP plano `provider.ts` lo ignora y usa la API de Anthropic, que siempre va cifrada.
 
 **El proxy no vive en este repo.** Es un servicio aparte, y quien monte el proyecto desde cero no lo tiene: por eso el default es `apikey`.
 
@@ -190,7 +190,8 @@ Creá un `.env.local` en la raíz (partí de `.env.example`):
 DATABASE_URL=postgres://pulso_app:password@host:5432/pulso
 DATABASE_ADMIN_URL=postgres://postgres:password@host:5432/pulso   # solo setup-db
 PULSO_APP_PASSWORD=       # solo setup-db: habilita el login de pulso_app
-PGSSL=                    # "require" solo si tu Postgres exige TLS
+PGSSL=                    # verify-full (producción, con PGSSL_CA) | require | vacío
+PGSSL_CA=                 # CA en PEM para verify-full
 PGPOOL_MAX=10             # opcional
 
 # Archivos subidos (imágenes de recetas)
@@ -220,7 +221,8 @@ El código lee **12** variables (más `TZ`, que la usa Node y no el código):
 
 - **Requeridas:** `DATABASE_URL`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
 - **Solo para `npm run setup-db`, nunca en la app:** `DATABASE_ADMIN_URL`, `PULSO_APP_PASSWORD`
-- **Con default, se pueden omitir:** `MEDIA_DIR`, `PGSSL`, `PGPOOL_MAX`, `CLAUDE_AUTH_MODE`
+- **Con default, se pueden omitir:** `MEDIA_DIR`, `PGSSL`, `PGSSL_CA`, `PGPOOL_MAX`, `CLAUDE_AUTH_MODE`
+- **Ninguna clave va como variable de build** salvo `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (que es pública): una variable de build queda escrita en la imagen Docker y cualquiera que la inspeccione la lee.
 - **Solo si `CLAUDE_AUTH_MODE=oauth`:** `CLAUDE_PROXY_URL`, `CLAUDE_PROXY_TOKEN`
 - **Solo para push:** las tres de VAPID — y hoy el push no está montado, ver [Limitaciones conocidas](#limitaciones-conocidas)
 

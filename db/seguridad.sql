@@ -15,6 +15,10 @@
 --   * Fila 5 — auditoría append-only (un trigger bloquea update/delete/truncate).
 --   * Fila 3 — consentimiento para mandar datos de salud a la IA (Ley 1581).
 --   * Fila 6 — límites de tasa por sesión e IP.
+--   * Fila 7 — rotación: el token se reemplaza por uno nuevo cada día de uso.
+--   * Fila 9 — bloqueo opcional con passkey (huella / Face ID / PIN del equipo):
+--     con el bloqueo activo, una sesión sin desbloquear no resuelve a ningún
+--     uid, así que el servidor no entrega ni un dato aunque la cookie sea válida.
 --
 -- Las tablas de sistema (identidades, sesiones, uids_legado, limites_tasa) no
 -- tienen grants para `pulso_app`: solo se tocan a través de las funciones
@@ -86,6 +90,17 @@ create table if not exists sesiones (
 
 create index if not exists sesiones_uid_idx on sesiones (uid);
 
+-- Rotación (fila 7): cuando un token se reemplaza, `rotada_at` se marca y su
+-- vencimiento se acorta a 2 minutos (gracia para peticiones en vuelo).
+-- Bloqueo (fila 9): `desbloqueada_hasta` es la ventana de uso tras desbloquear.
+-- Desafío WebAuthn: uno por sesión, de un solo uso y con vencimiento.
+alter table sesiones
+  add column if not exists rotada_at          timestamptz,
+  add column if not exists desbloqueada_hasta timestamptz,
+  add column if not exists desafio            text,
+  add column if not exists desafio_tipo       text,
+  add column if not exists desafio_expira     timestamptz;
+
 -- ─── Consentimiento (Ley 1581 de 2012) ───────────────────────────────────────
 
 create table if not exists consentimientos (
@@ -96,6 +111,22 @@ create table if not exists consentimientos (
   revocado_at timestamptz,
   primary key (uid, tipo)
 );
+
+-- ─── Bloqueo con passkey (fila 9) ────────────────────────────────────────────
+-- Una fila por passkey registrada. Se guarda solo la clave PÚBLICA: la privada
+-- nunca sale del autenticador del teléfono (huella, Face ID o PIN del equipo).
+
+create table if not exists credenciales_bloqueo (
+  id            text primary key,      -- credential id, base64url
+  uid           text not null references identidades (uid) on delete cascade,
+  clave_publica bytea not null,
+  contador      bigint not null default 0,
+  transportes   text[] not null default '{}',
+  created_at    timestamptz not null default now(),
+  ultimo_uso    timestamptz
+);
+
+create index if not exists credenciales_bloqueo_uid_idx on credenciales_bloqueo (uid);
 
 -- ─── Auditoría append-only ───────────────────────────────────────────────────
 
@@ -184,8 +215,76 @@ begin
   return v_uid;
 end $$;
 
--- uid de una sesión vigente, o null. No escribe: la renovación es aparte.
+/** Ventana de uso tras desbloquear: se corre con cada petición. */
+create or replace function pulso_minutos_desbloqueo() returns int
+language sql immutable as $$ select 15 $$;
+
+-- uid de una sesión vigente y utilizable, o null.
+-- Si el usuario activó el bloqueo, además tiene que estar desbloqueada: sin
+-- eso devuelve null y el servidor no entrega datos (fila 9). La ventana es
+-- deslizante: mientras se usa, se corre, pero solo se escribe cuando le
+-- quedan menos de 10 minutos.
 create or replace function pulso_resolver_sesion(p_token_hash text)
+returns text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid   text;
+  v_hasta timestamptz;
+begin
+  select s.uid, s.desbloqueada_hasta into v_uid, v_hasta
+    from sesiones s
+   where s.token_hash = p_token_hash
+     and s.revocada_at is null
+     and s.expira_at > now();
+
+  if v_uid is null then
+    return null;
+  end if;
+  if not exists (select 1 from credenciales_bloqueo c where c.uid = v_uid) then
+    return v_uid;
+  end if;
+  if v_hasta is null or v_hasta <= now() then
+    return null;
+  end if;
+  if v_hasta < now() + interval '10 minutes' then
+    update sesiones
+       set desbloqueada_hasta = now() + make_interval(mins => pulso_minutos_desbloqueo())
+     where token_hash = p_token_hash;
+  end if;
+  return v_uid;
+end $$;
+
+-- Estado para el cliente: 'sin_sesion', 'bloqueada' o 'activa', y si el
+-- usuario tiene el bloqueo activado. No desliza la ventana.
+create or replace function pulso_estado_sesion(p_token_hash text)
+returns table (estado text, bloqueo boolean)
+language plpgsql stable security definer set search_path = public, pg_temp as $$
+declare
+  v_uid   text;
+  v_hasta timestamptz;
+  v_bloq  boolean;
+begin
+  select s.uid, s.desbloqueada_hasta into v_uid, v_hasta
+    from sesiones s
+   where s.token_hash = p_token_hash
+     and s.revocada_at is null
+     and s.expira_at > now();
+
+  if v_uid is null then
+    return query select 'sin_sesion'::text, false;
+    return;
+  end if;
+  v_bloq := exists (select 1 from credenciales_bloqueo c where c.uid = v_uid);
+  if v_bloq and (v_hasta is null or v_hasta <= now()) then
+    return query select 'bloqueada'::text, true;
+  else
+    return query select 'activa'::text, v_bloq;
+  end if;
+end $$;
+
+-- uid de una sesión vigente IGNORANDO el bloqueo. Solo para el flujo de
+-- desbloqueo, que necesita saber de quién son las passkeys a verificar.
+create or replace function pulso_uid_de_token(p_token_hash text)
 returns text
 language sql stable security definer set search_path = public, pg_temp as $$
   select uid
@@ -204,9 +303,112 @@ language sql security definer set search_path = public, pg_temp as $$
          expira_at  = now() + make_interval(days => pulso_dias_validos(p_dias))
    where token_hash = p_token_hash
      and revocada_at is null
+     and rotada_at is null
      and expira_at > now()
   returning uid
 $$;
+
+-- Renueva la sesión y, si el token tiene más de un día, lo ROTA (fila 7):
+-- crea una sesión nueva con `p_hash_nuevo` para el mismo uid (conserva la
+-- ventana de desbloqueo) y deja al viejo 2 minutos de gracia para las
+-- peticiones que ya estaban en vuelo. Un token ya rotado no se vuelve a rotar
+-- ni a renovar: así un token robado deja de servir al día siguiente.
+create or replace function pulso_renovar_o_rotar(p_hash_viejo text, p_hash_nuevo text, p_dias int)
+returns table (uid text, rotada boolean)
+language plpgsql security definer set search_path = public, pg_temp as $$
+#variable_conflict use_column
+declare
+  v_s sesiones%rowtype;
+begin
+  select * into v_s
+    from sesiones s
+   where s.token_hash = p_hash_viejo
+     and s.revocada_at is null
+     and s.rotada_at is null
+     and s.expira_at > now()
+   for update;
+
+  if not found then
+    return;
+  end if;
+
+  if v_s.created_at > now() - interval '1 day' then
+    update sesiones
+       set ultimo_uso = now(),
+           expira_at  = now() + make_interval(days => pulso_dias_validos(p_dias))
+     where token_hash = p_hash_viejo;
+    return query select v_s.uid, false;
+    return;
+  end if;
+
+  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
+  values (p_hash_nuevo, v_s.uid,
+          now() + make_interval(days => pulso_dias_validos(p_dias)),
+          v_s.desbloqueada_hasta);
+
+  update sesiones
+     set rotada_at = now(),
+         expira_at = least(expira_at, now() + interval '2 minutes')
+   where token_hash = p_hash_viejo;
+
+  return query select v_s.uid, true;
+end $$;
+
+-- Abre la ventana de uso después de verificar la passkey. La verificación la
+-- hace la app (WebAuthn); esto solo registra el resultado.
+create or replace function pulso_desbloquear(p_token_hash text)
+returns boolean
+language sql security definer set search_path = public, pg_temp as $$
+  update sesiones
+     set desbloqueada_hasta = now() + make_interval(mins => pulso_minutos_desbloqueo())
+   where token_hash = p_token_hash
+     and revocada_at is null
+     and expira_at > now()
+  returning true
+$$;
+
+-- "Bloquear ahora": cierra la ventana de uso de esta sesión.
+create or replace function pulso_bloquear(p_token_hash text)
+returns void
+language sql security definer set search_path = public, pg_temp as $$
+  update sesiones
+     set desbloqueada_hasta = null
+   where token_hash = p_token_hash
+$$;
+
+-- Desafío WebAuthn de un solo uso, atado a la sesión, válido 5 minutos.
+create or replace function pulso_fijar_desafio(p_token_hash text, p_tipo text, p_desafio text)
+returns void
+language sql security definer set search_path = public, pg_temp as $$
+  update sesiones
+     set desafio = p_desafio, desafio_tipo = p_tipo, desafio_expira = now() + interval '5 minutes'
+   where token_hash = p_token_hash
+     and revocada_at is null
+     and expira_at > now()
+$$;
+
+create or replace function pulso_consumir_desafio(p_token_hash text, p_tipo text)
+returns text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_desafio text;
+begin
+  select s.desafio into v_desafio
+    from sesiones s
+   where s.token_hash = p_token_hash
+     and s.desafio_tipo = p_tipo
+     and s.desafio_expira > now()
+   for update;
+
+  if v_desafio is null then
+    return null;
+  end if;
+
+  update sesiones
+     set desafio = null, desafio_tipo = null, desafio_expira = null
+   where token_hash = p_token_hash;
+  return v_desafio;
+end $$;
 
 create or replace function pulso_revocar_sesion(p_token_hash text)
 returns void
@@ -277,7 +479,14 @@ revoke execute on function
   pulso_renovar_sesion(text, int),
   pulso_revocar_sesion(text),
   pulso_eliminar_datos(text),
-  pulso_consumir_tasa(text, int, int)
+  pulso_consumir_tasa(text, int, int),
+  pulso_estado_sesion(text),
+  pulso_uid_de_token(text),
+  pulso_renovar_o_rotar(text, text, int),
+  pulso_desbloquear(text),
+  pulso_bloquear(text),
+  pulso_fijar_desafio(text, text, text),
+  pulso_consumir_desafio(text, text)
 from public;
 
 grant execute on function
@@ -287,7 +496,14 @@ grant execute on function
   pulso_renovar_sesion(text, int),
   pulso_revocar_sesion(text),
   pulso_eliminar_datos(text),
-  pulso_consumir_tasa(text, int, int)
+  pulso_consumir_tasa(text, int, int),
+  pulso_estado_sesion(text),
+  pulso_uid_de_token(text),
+  pulso_renovar_o_rotar(text, text, int),
+  pulso_desbloquear(text),
+  pulso_bloquear(text),
+  pulso_fijar_desafio(text, text, text),
+  pulso_consumir_desafio(text, text)
 to pulso_app;
 
 -- ─── Grants (mínimo privilegio) ──────────────────────────────────────────────
@@ -300,6 +516,7 @@ grant select, insert, update, delete on
 to pulso_app;
 
 grant select, insert, update on consentimientos to pulso_app;
+grant select, insert, update, delete on credenciales_bloqueo to pulso_app;
 
 -- La app escribe auditoría pero no la lee ni la modifica; la lee el auditor.
 grant insert on auditoria to pulso_app;
@@ -317,7 +534,7 @@ begin
   foreach t in array array[
     'metricas', 'habitos', 'habitos_definicion', 'habitos_registro',
     'recetas_guardadas', 'listas_mercado', 'rutinas', 'suscripciones_push',
-    'perfil', 'consentimientos'
+    'perfil', 'consentimientos', 'credenciales_bloqueo'
   ]
   loop
     execute format('alter table %I enable row level security', t);

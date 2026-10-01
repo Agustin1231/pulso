@@ -11,6 +11,7 @@ import {
   otorgarConsentimientoIA,
   revocarConsentimientoIA,
 } from "@/lib/db/consentimiento";
+import { SeccionBloqueo } from "./seccion-bloqueo";
 
 function Seccion({ icono: Icono, titulo, children }: {
   icono: typeof Database;
@@ -81,11 +82,13 @@ export function PrivacidadClient() {
 
       <Seccion icono={KeyRound} titulo="Tu sesión">
         <p>
-          Tu acceso es una cookie protegida que el navegador no deja leer a ningún script. Si no usás Pulso
-          durante 180 días, la sesión vence. Como no hay cuenta, si borrás las cookies del navegador perdés el
-          acceso a tus datos.
+          Tu acceso es una cookie protegida que el navegador no deja leer a ningún script, y se renueva sola
+          cada día que usás la app. Si no usás Pulso durante 180 días, la sesión vence. Como no hay cuenta, si
+          borrás las cookies del navegador perdés el acceso a tus datos.
         </p>
       </Seccion>
+
+      <SeccionBloqueo />
 
       <Seccion icono={Share2} titulo="Quién recibe tus datos">
         <p>

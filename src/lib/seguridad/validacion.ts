@@ -200,3 +200,45 @@ export const cuerpoPushSchema = z.object({
 export const cuerpoSesionSchema = z.object({
   legado: z.string().max(64).optional(),
 });
+
+// ─── Respuestas WebAuthn (bloqueo con passkey) ────────────────────────────────
+// Solo se acota la forma y el tamaño: la verificación criptográfica la hace
+// @simplewebauthn/server. `passthrough` deja pasar los campos que la librería
+// conoce y acá no se enumeran.
+
+const b64u = (max: number) => z.string().regex(/^[A-Za-z0-9_-]+$/).max(max);
+
+const credencialBase = {
+  id:    b64u(1_024),
+  rawId: b64u(1_024),
+  type:  z.literal("public-key"),
+  clientExtensionResults:  z.record(z.unknown()).default({}),
+  authenticatorAttachment: z.enum(["platform", "cross-platform"]).optional(),
+};
+
+export const respuestaRegistroSchema = z
+  .object({
+    ...credencialBase,
+    response: z
+      .object({
+        clientDataJSON:    b64u(4_096),
+        attestationObject: b64u(16_384),
+        transports:        z.array(z.string().max(32)).max(10).optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
+export const respuestaAutenticacionSchema = z
+  .object({
+    ...credencialBase,
+    response: z
+      .object({
+        clientDataJSON:    b64u(4_096),
+        authenticatorData: b64u(4_096),
+        signature:         b64u(1_024),
+        userHandle:        b64u(512).optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
