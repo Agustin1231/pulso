@@ -6,6 +6,7 @@
 
 Entradas: docs/evaluacion-sintetica.json, docs/entrenamiento-uci.json, docs/entrenamiento-nhanes.json,
           docs/figuras/datos-figuras.json
+          data/nhanes-2021-2023/muestra-analitica.csv (resumen SHAP sobre la muestra)
 Salida:   docs/figuras/fig*.png (300 dpi) y .svg
 """
 import json, os
@@ -270,3 +271,107 @@ ax.set_title("Recalibración del índice con datos reales")
 ax.legend(handles=[Patch(color=S1, label="Compatible con la literatura (el IC incluye 1)"), Patch(color=S2, label="Difiere de la literatura")],
           loc="upper center", bbox_to_anchor=(0.45, -0.2), ncol=2)
 guardar(fig, "fig11-pesos-indice-nhanes")
+
+# ── valores SHAP de la logística NHANES (figuras 12 y 13) ────────────────────
+# Rojo/azul: par divergente de la paleta (aumenta / reduce el riesgo).
+# Azules: rampa secuencial para el valor de la variable (claro = bajo).
+SUBE, BAJA = "#e34948", "#2a78d6"
+RAMPA = matplotlib.colors.LinearSegmentedColormap.from_list("azules", ["#86b6ef", "#3987e5", "#1c5cab", "#0d366b"])
+
+def es(v, d=2, signo=False):
+    """Número en formato español, con signo menos tipográfico."""
+    txt = f"{v:+.{d}f}" if signo else f"{v:.{d}f}"
+    return txt.replace(".", ",").replace("-", "−")
+
+FMT_ES = matplotlib.ticker.FuncFormatter(lambda v, _: es(v, 1))
+sh = datos["shap"]
+VARS = sh["variables"]
+MEDIA = dict(zip(VARS, sh["media"]))
+
+# ── Fig. 12: explicación SHAP de una predicción individual ────────────────────
+ej = sh["ejemplo"]
+x = dict(zip(VARS, ej["valores"]))
+phi = dict(zip(VARS, ej["phi"]))
+ETQ_EJ = {
+    "fc": f"FC en reposo = {x['fc']:.0f} lpm (media {es(MEDIA['fc'], 1)})",
+    "imc": f"IMC = {x['imc']:.0f} kg/m² (media {es(MEDIA['imc'], 1)})",
+    "sueno": f"Sueño = {es(x['sueno'], 1)} h (media {es(MEDIA['sueno'], 1)})",
+    "phq9": f"Estrés: PHQ-9 = {x['phq9']:.0f}, {ej['estres']}/10 en la app (media {es(MEDIA['phq9'], 1)})",
+    "fumador": f"Fumador = {'sí' if x['fumador'] else 'no'} ({MEDIA['fumador'] * 100:.0f} % fuma)",
+    "edad": f"Edad = {x['edad']:.0f} años (media {es(MEDIA['edad'], 1)})",
+    "hombre": f"Sexo = {'hombre' if x['hombre'] else 'mujer'} ({MEDIA['hombre'] * 100:.0f} % hombres)",
+}
+orden = sorted(VARS, key=lambda v: abs(phi[v]))          # de abajo (menor |φ|) hacia arriba
+p_base = 1 / (1 + np.exp(-sh["base"]))
+fig, ax = plt.subplots(figsize=(6.6, 3.8))
+acum = sh["base"]
+for y, v in enumerate(orden):
+    f = phi[v]
+    ax.barh(y, f, left=acum, height=0.55, color=SUBE if f > 0 else BAJA)
+    extremo = acum + f
+    ax.text(max(acum, extremo) + 0.012, y, f"{es(f, 2, signo=True)}  (odds ×{es(np.exp(f), 2)})", va="center", fontsize=7.5, color=INK,
+            bbox=dict(boxstyle="round,pad=0.15", fc=SURFACE, ec="none"), zorder=3)
+    if y < len(orden) - 1:
+        ax.plot([extremo, extremo], [y + 0.28, y + 0.72], color=AXIS, lw=0.8)
+    acum = extremo
+ax.axvline(sh["base"], color=INK2, lw=0.8, ls=(0, (3, 3)))
+ax.axvline(ej["logit"], color=INK, lw=1)
+alto = len(orden) - 0.35
+ax.text(sh["base"], -0.85, f"valor base {es(sh['base'])}\n(persona promedio, {es(p_base * 100, 1)} %)", fontsize=7.5, color=INK2, ha="right", va="center")
+ax.text(ej["logit"], -0.85, f" predicción {es(ej['logit'])}\n ({es(ej['probabilidad'] * 100, 1)} % de riesgo)", fontsize=7.5, color=INK, ha="left", va="center")
+ax.set_yticks(range(len(orden))); ax.set_yticklabels([ETQ_EJ[v] for v in orden]); ax.tick_params(axis="y", length=0)
+ax.set_ylim(-1.4, alto)
+ax.set_xlim(sh["base"] - 0.42, sh["base"] + 0.52)
+ax.xaxis.set_major_formatter(FMT_ES)
+ax.set_xlabel("Log-odds de antecedente cardiovascular (regresión logística, NHANES 2021-2023)")
+ax.xaxis.grid(True); ax.set_axisbelow(True)
+ax.set_title("Valores SHAP de una predicción individual\nmujer de 55 años, IMC 35, no fumadora (persona hipotética)")
+ax.legend(handles=[Patch(color=SUBE, label="Aumenta el riesgo frente al promedio"), Patch(color=BAJA, label="Reduce el riesgo frente al promedio")],
+          loc="upper center", bbox_to_anchor=(0.35, -0.17), ncol=2)
+guardar(fig, "fig12-shap-individual")
+
+# ── Fig. 13: resumen de los valores SHAP sobre la muestra de NHANES ───────────
+# φ = β^z·z con los mismos coeficientes; se contrasta con el resumen que
+# calculó el motor en TypeScript (explicarSHAP) para no tener dos verdades.
+import csv
+est_ = nhanes["coeficientes"]["completo"]["estandarizados"]
+filas_ = list(csv.DictReader(open("data/nhanes-2021-2023/muestra-analitica.csv", encoding="utf-8")))
+X_ = np.array([[float(f[v]) for v in VARS] for f in filas_])
+PHI = (X_ - np.array(est_["media"])) / np.array(est_["sd"]) * np.array(est_["beta"][1:])
+assert len(filas_) == sh["muestra"]["n"]
+assert np.allclose(np.abs(PHI).mean(axis=0), sh["muestra"]["mediaAbsPhi"], atol=1e-9), "SHAP de Python y del motor no coinciden"
+ETQ_RES = {"fc": "FC en reposo", "imc": "IMC", "sueno": "Sueño", "phq9": "Estrés (PHQ-9)",
+           "fumador": "Tabaquismo", "edad": "Edad", "hombre": "Sexo (hombre)"}
+media_abs = np.abs(PHI).mean(axis=0)
+orden_j = list(np.argsort(media_abs))                     # de abajo hacia arriba
+rng_ = np.random.default_rng(42)
+fig, ax = plt.subplots(figsize=(6.6, 4.4))
+bordes = np.linspace(PHI.min(), PHI.max(), 160)
+for y, j in enumerate(orden_j):
+    f, v = PHI[:, j], X_[:, j]
+    # enjambre: dentro de cada bin de φ los puntos se apilan alternando arriba/abajo
+    bin_ = np.digitize(f, bordes)
+    desp = np.zeros(len(f))
+    for b in np.unique(bin_):
+        idx = rng_.permutation(np.where(bin_ == b)[0])
+        k = np.arange(len(idx))
+        desp[idx] = np.where(k % 2 == 0, 1, -1) * ((k + 1) // 2)
+    desp = desp / max(np.abs(desp).max(), 1) * 0.38
+    lo, hi = np.percentile(v, [5, 95])
+    color = np.clip((v - lo) / (hi - lo if hi > lo else 1), 0, 1)
+    perm = rng_.permutation(len(f))
+    ax.scatter(f[perm], y + desp[perm], c=color[perm], cmap=RAMPA, vmin=0, vmax=1, s=2.5, lw=0, rasterized=True)
+ax.axvline(0, color=INK2, lw=0.8)
+ax.set_yticks(range(len(orden_j)))
+ax.set_yticklabels([f"{ETQ_RES[VARS[j]]}\n|φ| medio {es(media_abs[j])}" for j in orden_j], fontsize=7.5)
+ax.tick_params(axis="y", length=0)
+ax.xaxis.set_major_formatter(FMT_ES)
+ax.set_xlabel("Valor SHAP: contribución al log-odds frente a la persona promedio")
+ax.xaxis.grid(True); ax.set_axisbelow(True)
+ax.set_title(f"Valores SHAP sobre los {sh['muestra']['n']:,} adultos de NHANES 2021-2023".replace(",", ".") +
+             "\ncada punto es una persona; a la derecha del 0, la variable sube su riesgo")
+cb = fig.colorbar(matplotlib.cm.ScalarMappable(cmap=RAMPA, norm=matplotlib.colors.Normalize(0, 1)), ax=ax, pad=0.02, aspect=30, shrink=0.8)
+cb.set_ticks([0, 1]); cb.set_ticklabels(["bajo", "alto"]); cb.outline.set_visible(False)
+cb.set_label("Valor de la variable (sí / hombre = alto)", fontsize=7.5, color=INK2)
+cb.ax.tick_params(labelsize=7.5, colors=INK2, length=0)
+guardar(fig, "fig13-shap-resumen-nhanes")

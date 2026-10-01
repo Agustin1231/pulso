@@ -124,3 +124,33 @@ export function coeficientesOriginales(modelo: ModeloLogistico, est: Estandariza
   beta[0] = intercepto;
   return { beta, errorEstandar: se };
 }
+
+// ─── Explicación SHAP exacta ─────────────────────────────────────────────────
+//
+// En un modelo lineal en la escala logit, el valor SHAP de la variable j es
+//   φ_j = β_j (x_j − x̄_j) = β^z_j · z_j
+// (β^z: coeficiente sobre la variable estandarizada; x̄: media del entrenamiento)
+// y el valor base es el log-odds medio de la muestra, β^z_0. Se cumple la
+// propiedad de eficiencia, base + Σ φ_j = logit de la predicción, sin muestreo
+// (Lundberg y Lee 2017). El supuesto es el habitual del explicador lineal:
+// variables independientes en la distribución de referencia.
+
+export interface ExplicacionSHAP {
+  /** Log-odds medio de la muestra de entrenamiento. */
+  base: number;
+  /** Contribución de cada variable al log-odds, en el orden de las columnas. */
+  phi: number[];
+  logit: number;
+  probabilidad: number;
+}
+
+export function explicarSHAP(
+  modelo: Pick<ModeloLogistico, "beta">,
+  est: Pick<Estandarizador, "media" | "sd">,
+  x: readonly number[],
+): ExplicacionSHAP {
+  const base = modelo.beta[0];
+  const phi = x.map((v, j) => (modelo.beta[j + 1] * (v - est.media[j])) / est.sd[j]);
+  const logit = base + phi.reduce((s, v) => s + v, 0);
+  return { base, phi, logit, probabilidad: sigmoide(logit) };
+}

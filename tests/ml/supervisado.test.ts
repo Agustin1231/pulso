@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { resolver, invertir } from "../../src/lib/ml/supervisado/algebra";
-import { entrenarLogistica, predecirProbabilidades, estandarizador, coeficientesOriginales } from "../../src/lib/ml/supervisado/logistica";
+import { entrenarLogistica, predecirProbabilidades, estandarizador, coeficientesOriginales, explicarSHAP } from "../../src/lib/ml/supervisado/logistica";
 import { predecirKNN } from "../../src/lib/ml/supervisado/knn";
 import { auc, metricas, curvaROC, calibracion } from "../../src/lib/ml/supervisado/metricas";
 import { kFoldEstratificado, complemento } from "../../src/lib/ml/supervisado/validacion";
@@ -50,6 +50,26 @@ test("estandarizar y volver a la escala original deja las mismas predicciones", 
   const pStd = predecirProbabilidades(m, est.aplicar(X));
   const pOrig = X.map((x) => 1 / (1 + Math.exp(-(orig.beta[0] + orig.beta[1] * x[0] + orig.beta[2] * x[1]))));
   pStd.forEach((p, i) => cerca(p, pOrig[i], 1e-9));
+});
+
+test("SHAP lineal: base + Σφ reproduce la predicción y φ = β(x − x̄) en la escala original", () => {
+  const rng = crearPRNG(9);
+  const X = Array.from({ length: 400 }, () => [60 + rng.normal(0, 8), rng.uniforme() < 0.3 ? 1 : 0, 25 + rng.normal(0, 4)]);
+  const y = X.map((x) => (0.05 * x[0] + 0.9 * x[1] + 0.1 * x[2] + rng.normal(0, 1) > 6.4 ? 1 : 0));
+  const est = estandarizador(X);
+  const m = entrenarLogistica(est.aplicar(X), y);
+  const orig = coeficientesOriginales(m, est);
+  const p = predecirProbabilidades(m, est.aplicar(X));
+  X.forEach((x, i) => {
+    const e = explicarSHAP(m, est, x);
+    cerca(e.probabilidad, p[i], 1e-12);
+    cerca(e.base + e.phi.reduce((s, v) => s + v, 0), e.logit, 1e-12);
+    e.phi.forEach((f, j) => cerca(f, orig.beta[j + 1] * (x[j] - est.media[j]), 1e-12));
+  });
+  // La persona promedio no tiene nada que explicar: φ = 0 y queda el valor base.
+  const promedio = explicarSHAP(m, est, est.media);
+  promedio.phi.forEach((f) => cerca(f, 0, 1e-12));
+  cerca(promedio.logit, m.beta[0], 1e-12);
 });
 
 test("métricas: AUC de ranking perfecto = 1, invertido = 0, empates = 0.5", () => {

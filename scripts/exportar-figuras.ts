@@ -6,10 +6,12 @@
  *   - pronóstico de ejemplo con bandas (FC del usuario demo sintético)
  *   - traza CUSUM sobre una serie con cambio de régimen conocido
  *   - pendientes verdaderas vs. estimadas en la cohorte sintética
+ *   - valores SHAP de la logística de NHANES: una persona de ejemplo y el
+ *     resumen sobre la muestra (coeficientes de docs/entrenamiento-nhanes.json)
  *
  *   npm run figuras   (corre este export y después el script de Python)
  */
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { generarUsuario, generarSerie, generarCohorte } from "../src/lib/ml/sintetico";
 import { generarInforme } from "../src/lib/ml";
 import { construirSerie, aPuntos, interpolar, segmentoRegular, sumarDias } from "../src/lib/ml/series";
@@ -17,6 +19,9 @@ import { cusumDetallado } from "../src/lib/ml/anomalias/cusum";
 import { ajustarOLS } from "../src/lib/ml/modelos/lineal";
 import { ajustarTheilSen } from "../src/lib/ml/modelos/robusta";
 import { ajustarHolt } from "../src/lib/ml/modelos/holt";
+import { explicarSHAP } from "../src/lib/ml/supervisado/logistica";
+import { desdeCSV, estresDesdePHQ9 } from "../src/lib/ml/supervisado/nhanes";
+import type { FilaNHANES } from "../src/lib/ml/supervisado/nhanes";
 
 const SALIDA = process.argv[2] ?? "docs/figuras/datos-figuras.json";
 
@@ -67,5 +72,28 @@ const pendientes = generarCohorte(42)
     };
   });
 
-writeFileSync(SALIDA, JSON.stringify({ pronostico, cusum, pendientes }, null, 2));
-console.log(`✓ ${SALIDA}: pronóstico (${pronostico.pronostico.length} días), CUSUM (${cusum.traza.length} pasos, ${cusum.alertas.length} alerta/s), ${pendientes.length} series con pendiente`);
+// ── 4. valores SHAP de la logística «estilo de vida + edad y sexo» ──────────
+// Se usan los coeficientes ya reportados en el documento, no un reajuste.
+const nhanes = JSON.parse(readFileSync("docs/entrenamiento-nhanes.json", "utf-8"));
+const modeloNHANES = nhanes.coeficientes.completo.estandarizados as { nombres: (keyof FilaNHANES)[]; beta: number[]; media: number[]; sd: number[] };
+const filas = desdeCSV(readFileSync("data/nhanes-2021-2023/muestra-analitica.csv", "utf-8"));
+const explicaciones = filas.map((f) => explicarSHAP(modeloNHANES, modeloNHANES, modeloNHANES.nombres.map((c) => Number(f[c]))));
+// Persona hipotética del ejemplo de VII-B: IMC alto y sin tabaquismo.
+const persona: Partial<Record<keyof FilaNHANES, number>> = { fc: 78, imc: 35, sueno: 7.5, phq9: 4, fumador: 0, edad: 55, hombre: 0 };
+const xPersona = modeloNHANES.nombres.map((c) => persona[c] as number);
+const ePersona = explicarSHAP(modeloNHANES, modeloNHANES, xPersona);
+const shap = {
+  variables: modeloNHANES.nombres,
+  media: modeloNHANES.media,
+  base: ePersona.base,
+  prevalencia: nhanes.dataset.prevalencia,
+  ejemplo: { valores: xPersona, estres: estresDesdePHQ9(persona.phq9 as number), phi: ePersona.phi, logit: ePersona.logit, probabilidad: ePersona.probabilidad },
+  muestra: {
+    n: filas.length,
+    mediaAbsPhi: modeloNHANES.nombres.map((_, j) => explicaciones.reduce((s, e) => s + Math.abs(e.phi[j]), 0) / filas.length),
+    probabilidadMedia: explicaciones.reduce((s, e) => s + e.probabilidad, 0) / filas.length,
+  },
+};
+
+writeFileSync(SALIDA, JSON.stringify({ pronostico, cusum, pendientes, shap }, null, 2));
+console.log(`✓ ${SALIDA}: pronóstico (${pronostico.pronostico.length} días), CUSUM (${cusum.traza.length} pasos, ${cusum.alertas.length} alerta/s), ${pendientes.length} series con pendiente, SHAP de ${shap.muestra.n} adultos`);
