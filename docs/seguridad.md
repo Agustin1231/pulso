@@ -27,7 +27,7 @@ entre usuarios, sin depender solo del código de la app.
 | 5 | Score de riesgo | Ningún registro: imposible investigar un incidente o rebatir un reclamo | Tabla `auditoria` append-only (trigger); cada llamada a la IA guarda el hash del informe que la generó | M8 | 8.15 |
 | 6 | Claves de IA | Los 7 endpoints de IA sin auth ni límite (DoS económico) | Sesión obligatoria; límites por sesión **y** por IP en Postgres; las imágenes con límite propio | M1 | 8.6 |
 | 7 | UUID en localStorage | Permanente, legible por cualquier script, filtrado en las URLs de las imágenes | Cookie `__Host-` httpOnly, Secure, SameSite=Strict; token de 256 bits; la base guarda solo su hash; vencimiento por inactividad; imágenes en carpeta derivada y servidas solo al dueño | M9 | 5.17 |
-| 8 | VPS, Coolify y base | Secretos y base alcanzables desde la red Docker compartida; dependencias vulnerables | La app se conecta con un rol sin privilegios (`pulso_app`), no con el superusuario; la base no está publicada; `next-pwa` y `uuid` (sin uso) eliminados; Next actualizado. **Pendiente:** red Docker dedicada (ver Riesgos residuales) | M2 | 8.22 |
+| 8 | VPS, Coolify y base | Secretos y base alcanzables desde la red Docker compartida; dependencias vulnerables | App y base en una red Docker propia (`pulso`, destino Coolify `pulso-aislado`): ningún otro contenedor del servidor llega a la base. La app se conecta con un rol sin privilegios (`pulso_app`); la base no está publicada; `next-pwa` y `uuid` (sin uso) eliminados; Next actualizado | M2 | 8.22 |
 | 9 | Teléfono con la PWA | Quien tenga el equipo entra directo; datos en caché | La sesión vence; "Borrar mis datos" limpia la base, las imágenes, la cookie, el storage, la caché del SW y la suscripción push | M9 | 7.9 |
 | 10 | Comunicación entre capas | Sin headers de seguridad | CSP con nonce por petición, HSTS, `frame-ancestors 'none'`, nosniff, Referrer-Policy, Permissions-Policy, COOP; `X-Powered-By` apagado; `no-store` en la API | M5 | 8.20 |
 
@@ -121,4 +121,19 @@ Lo que queda abierto, a propósito o por alcance:
 - **Dependencias con fix mayor pendiente**: `postcss` dentro de Next (solo build, procesa nuestro propio CSS) pide Next 16; `jsondiffpatch` y `@ai-sdk/*` piden AI SDK 7; `uuid` dentro de `gaxios` (dependencia de Google) no usa la función afectada. Ninguna se ejecuta con entrada del usuario.
 - **Reclamo de UUID viejos**: durante 90 días, quien conozca un UUID viejo **todavía no reclamado** puede reclamarlo antes que su dueño. El dueño lo reclama solo al abrir la app por primera vez después del deploy.
 - **El dueño de la base** sigue teniendo acceso total. Queda auditado lo que hace la app, no lo que haga un operador con el superusuario.
-- **Red compartida** (fila 8): `pulso-db` y la app siguen en la red `coolify`, junto con unos 30 contenedores más del servidor. Un contenedor vecino comprometido llega al puerto 5432, aunque necesita credenciales: la app ya no usa el superusuario, y `pulso_app` no puede hacer DDL ni ver datos sin `app.uid`. Hacerlo bien en Coolify implica crear un destino con su propia red, recrear la base ahí restaurando el backup, mover la app y que el proxy se conecte a la red nueva. Como el proxy es compartido con los demás servicios del servidor, conviene hacerlo en una ventana de mantenimiento, no como parte de este cambio.
+- **El proxy de Claude** (fila 8) es un servicio del host en `10.0.1.1:7779`. Lo alcanza cualquier contenedor del servidor, de cualquier red, así que su token es el único límite. Sacarlo de ahí es tema del servidor, no de Pulso.
+- **Traefik** está en las dos redes (`coolify` y `pulso`): es el único otro participante de la red de Pulso, porque tiene que rutear las peticiones a la app.
+
+## Segregación de red
+
+Desde el 2026-10-01, la app y `pulso-db` viven en el destino Coolify `pulso-aislado` (red Docker `pulso`), separados de la red `coolify` que comparten los otros ~30 contenedores del servidor.
+
+| Desde | Hacia | Resultado |
+|---|---|---|
+| Un contenedor en la red `coolify` | `pulso-db:5432` | **Bloqueado** (aislamiento entre redes de Docker) |
+| La app (red `pulso`) | `pulso-db:5432` | Permitido |
+| La app | proxy de Claude (`10.0.1.1:7779`, host) | Permitido: es una IP local del host, no otra red |
+| La app | internet (Anthropic, Gemini, push) | Permitido |
+| Traefik | la app | Permitido: Coolify conecta el proxy a la red del destino |
+
+Se movieron con las mismas piezas que usa Coolify (`MigrateResourceToDestination::applyDestination`, `RestartDatabase`, un deploy normal y `ConnectProxyToNetworksJob`). Los datos no se tocaron: están en volúmenes con nombre. Para volver atrás, se aplica el destino original (`coolify`, id 0) a los dos recursos, se reinicia la base y se redespliega la app.
