@@ -71,7 +71,44 @@ export const pool = {
   },
 };
 
-/** Traduce un error de pg al `{ error }` que ya devolvían las funciones de Supabase. */
+/** Lo mínimo que necesita un módulo de datos: la misma forma que `pool.query`. */
+export interface Db {
+  query<R extends pg.QueryResultRow = pg.QueryResultRow>(
+    sql: string,
+    params?: readonly unknown[]
+  ): Promise<pg.QueryResult<R>>;
+}
+
+/**
+ * Corre `fn` en una transacción con `app.uid` fijado, que es lo que leen las
+ * políticas de RLS (db/seguridad.sql). Fuera de esto, la app conectada como
+ * `pulso_app` no ve ni escribe ninguna fila de datos.
+ *
+ * `set_config(..., true)` es local a la transacción: al hacer commit o rollback
+ * se borra, así que una conexión devuelta al pool no arrastra el uid de nadie.
+ */
+export async function conUsuario<T>(uid: string, fn: (db: Db) => Promise<T>): Promise<T> {
+  const client = await obtenerPool().connect();
+  try {
+    await client.query("begin");
+    await client.query("select set_config('app.uid', $1, true)", [uid]);
+    const resultado = await fn({
+      query: (sql, params) => client.query(sql, params as unknown[]),
+    });
+    await client.query("commit");
+    return resultado;
+  } catch (err) {
+    await client.query("rollback").catch(() => {});
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Mensaje de un error para el LOG del servidor. Nunca se devuelve al cliente:
+ * los mensajes de pg traen nombres de tablas, columnas y restricciones.
+ */
 export function mensajeError(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }

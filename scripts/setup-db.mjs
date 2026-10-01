@@ -1,11 +1,18 @@
 #!/usr/bin/env node
 /**
- * Aplica db/schema.sql contra la base apuntada por DATABASE_URL.
+ * Aplica db/schema.sql y db/seguridad.sql contra la base.
  *
  *   npm run setup-db
  *
- * Es idempotente (todo el schema usa `if not exists`), así que se puede correr
- * en cada deploy o a mano sin miedo.
+ * Es idempotente (todo usa `if not exists` / `create or replace`), así que se
+ * puede correr en cada deploy o a mano sin miedo.
+ *
+ * Necesita el rol DUEÑO de la base (crea tablas, roles y políticas), así que
+ * prefiere DATABASE_ADMIN_URL y cae a DATABASE_URL. En producción la app NO usa
+ * el dueño: se conecta como `pulso_app`, que no puede correr esto.
+ *
+ * Si está PULSO_APP_PASSWORD, además habilita el login de `pulso_app` con esa
+ * contraseña. Así la contraseña nunca queda escrita en el repo.
  */
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -14,19 +21,28 @@ import pg from "pg";
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
-/** Lee DATABASE_URL del entorno o, si no está, de .env.local / .env. */
+/**
+ * Lee la conexión del entorno o, si no está, de .env.local / .env. Prueba
+ * DATABASE_ADMIN_URL antes que DATABASE_URL en cada fuente.
+ */
 async function resolverConnectionString() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
+  const claves = ["DATABASE_ADMIN_URL", "DATABASE_URL"];
+  for (const clave of claves) {
+    if (process.env[clave]) return process.env[clave];
+  }
 
   for (const archivo of [".env.local", ".env"]) {
+    let texto;
     try {
-      const texto = await readFile(path.join(raiz, archivo), "utf8");
+      texto = await readFile(path.join(raiz, archivo), "utf8");
+    } catch {
+      continue; // el archivo no existe: seguimos con el siguiente
+    }
+    for (const clave of claves) {
       for (const linea of texto.split("\n")) {
-        const m = linea.match(/^\s*DATABASE_URL\s*=\s*(.*)\s*$/);
+        const m = linea.match(new RegExp(`^\\s*${clave}\\s*=\\s*(.*)\\s*$`));
         if (m) return m[1].trim().replace(/^["']|["']$/g, "");
       }
-    } catch {
-      // el archivo no existe: seguimos con el siguiente
     }
   }
   return null;
@@ -42,7 +58,11 @@ if (!connectionString) {
   process.exit(1);
 }
 
-const schema = await readFile(path.join(raiz, "db", "schema.sql"), "utf8");
+// El orden importa: seguridad.sql protege las tablas que crea schema.sql.
+const ARCHIVOS = ["schema.sql", "seguridad.sql"];
+const sqls = await Promise.all(
+  ARCHIVOS.map((a) => readFile(path.join(raiz, "db", a), "utf8"))
+);
 
 const client = new pg.Client({
   connectionString,
@@ -55,7 +75,20 @@ try {
   console.log(`→ Conectado a "${rows[0].db}" (${rows[0].v.split(" ").slice(0, 2).join(" ")})`);
 
   await client.query("begin");
-  await client.query(schema);
+  for (const [i, sql] of sqls.entries()) {
+    await client.query(sql);
+    console.log(`✓ ${ARCHIVOS[i]}`);
+  }
+
+  const password = process.env.PULSO_APP_PASSWORD;
+  if (password) {
+    if (password.length < 24) {
+      throw new Error("PULSO_APP_PASSWORD tiene que tener al menos 24 caracteres.");
+    }
+    // DDL no admite parámetros: se escapa como literal.
+    await client.query(`alter role pulso_app login password ${client.escapeLiteral(password)}`);
+    console.log("✓ pulso_app habilitado para login");
+  }
   await client.query("commit");
 
   const { rows: tablas } = await client.query(

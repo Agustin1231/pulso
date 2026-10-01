@@ -1,5 +1,9 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
+import { cuerpoMercadoSchema } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
@@ -41,44 +45,51 @@ REGLAS:
 - Si el usuario dice que no le gusta un ingrediente o quiere cambiarlo, sustitúyelo y regenera la lista completa.
 - Prioriza siempre: omega-3, fibra, potasio, antioxidantes, bajo sodio y grasas saludables.
 - Responde siempre en español.
-- NUNCA menciones diagnósticos ni recetes para condiciones médicas.`;
+- NUNCA menciones diagnósticos ni recetes para condiciones médicas.
 
-export async function POST(req: Request) {
-  const { periodo, ingredientes_recetas, listas_anteriores, historial, pregunta } = await req.json();
+${REGLA_DATOS_DEL_USUARIO}`;
 
-  if (!periodo) {
-    return new Response("Período requerido", { status: 400 });
+export const POST = rutaProtegida(
+  {
+    nombre:  "ia.mercado",
+    cuerpo:  cuerpoMercadoSchema,
+    limites: (uid, ip) => [limite("ia", uid), limite("iaIp", ip)],
+  },
+  async ({ uid, ip, cuerpo }) => {
+    const { periodo, ingredientes_recetas, listas_anteriores, historial, pregunta } = cuerpo;
+    await auditar({ uid, accion: "ia.mercado", resultado: "ok", ip, detalle: { proveedor: "anthropic", periodo } });
+
+    // Contexto de recetas guardadas
+    const contextoRecetas = ingredientes_recetas.length
+      ? `\nIngredientes de las recetas guardadas del usuario: ${datosDelUsuario(ingredientes_recetas.join(", "))}`
+      : "";
+
+    // Contexto de listas anteriores (últimas 2)
+    const contextoHistorial = listas_anteriores.length
+      ? `\nListas de compra anteriores del usuario (para dar continuidad y variedad):\n${
+          listas_anteriores.slice(0, 2).map((l) =>
+            datosDelUsuario(`[${l.nombre}]:\n${l.contenido.slice(0, 600)}...`)
+          ).join("\n\n")
+        }`
+      : "";
+
+    const mensajeInicial = pregunta
+      ? datosDelUsuario(pregunta)
+      : `Genera una lista de compras ${periodo} para una alimentación cardioprotectora.${contextoRecetas}${contextoHistorial}`;
+
+    const messages = [
+      ...historial,
+      { role: "user" as const, content: mensajeInicial },
+    ];
+
+    const result = streamText({
+      model: modeloClaude(),
+      system: SYSTEM,
+      messages,
+      onError: ({ error }) => console.error("[ai] mercado:", error instanceof Error ? error.message : error),
+      maxTokens: 1100,
+    });
+
+    return result.toDataStreamResponse();
   }
-
-  // Contexto de recetas guardadas
-  const contextoRecetas = ingredientes_recetas?.length
-    ? `\nIngredientes de las recetas guardadas del usuario: ${ingredientes_recetas.join(", ")}`
-    : "";
-
-  // Contexto de listas anteriores (últimas 2)
-  const contextoHistorial = listas_anteriores?.length
-    ? `\nListas de compra anteriores del usuario (para dar continuidad y variedad):\n${
-        listas_anteriores.map((l: { nombre: string; contenido: string }, i: number) =>
-          `[${l.nombre}]:\n${l.contenido.slice(0, 600)}...`
-        ).join("\n\n")
-      }`
-    : "";
-
-  const mensajeInicial = pregunta
-    ? pregunta
-    : `Genera una lista de compras ${periodo} para una alimentación cardioprotectora.${contextoRecetas}${contextoHistorial}`;
-
-  const messages = [
-    ...(historial ?? []),
-    { role: "user" as const, content: mensajeInicial },
-  ];
-
-  const result = streamText({
-    model: modeloClaude(),
-    system: SYSTEM,
-    messages,
-    maxTokens: 1100,
-  });
-
-  return result.toDataStreamResponse();
-}
+);

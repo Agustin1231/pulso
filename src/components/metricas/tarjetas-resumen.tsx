@@ -16,7 +16,6 @@ import type { MetricaRow, MetricaType } from "@/lib/db/types";
 
 interface Props {
   metricas:      MetricaRow[];
-  uid:           string;
   onSelect:      (tipo: MetricaType) => void;
   seleccion:     MetricaType | null;
   onActualizar:  () => void;
@@ -24,7 +23,7 @@ interface Props {
   alertas?:      Set<MetricaType>;
 }
 
-export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualizar, alertas }: Props) {
+export function TarjetasResumen({ metricas, onSelect, seleccion, onActualizar, alertas }: Props) {
   const mapaUltimas = Object.fromEntries(metricas.map((m) => [m.tipo, m.valor]));
 
   return (
@@ -34,7 +33,6 @@ export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualiz
           key={cfg.tipo}
           cfg={cfg}
           valor={mapaUltimas[cfg.tipo]}
-          uid={uid}
           activa={seleccion === cfg.tipo}
           alerta={alertas?.has(cfg.tipo) ?? false}
           onSelect={onSelect}
@@ -48,11 +46,10 @@ export function TarjetasResumen({ metricas, uid, onSelect, seleccion, onActualiz
 // ─── tarjeta individual con edición inline ────────────────────────────────────
 
 function MetricaCard({
-  cfg, valor, uid, activa, alerta, onSelect, onActualizar,
+  cfg, valor, activa, alerta, onSelect, onActualizar,
 }: {
   cfg:          MetricaConfig;
   valor:        number | undefined;
-  uid:          string;
   activa:       boolean;
   alerta:       boolean;
   onSelect:     (tipo: MetricaType) => void;
@@ -64,6 +61,7 @@ function MetricaCard({
   const [suenoM,    setSuenoM]    = useState("");
   const [guardando, setGuardando] = useState(false);
   const [guardado,  setGuardado]  = useState(false);
+  const [error,     setError]     = useState<string | null>(null);
 
   const tieneData = valor !== undefined;
   const estado    = tieneData ? getEstado(cfg.tipo, valor) : "sin-datos";
@@ -91,7 +89,12 @@ function MetricaCard({
     }
 
     if (!isNaN(valorNum) && valorNum >= 0) {
-      await guardarMetrica(uid, cfg.tipo, valorNum, cfg.unidad);
+      const { error } = await guardarMetrica(cfg.tipo, valorNum);
+      setError(error);
+      if (error) {
+        setGuardando(false);
+        return;
+      }
       setGuardado(true);
       setTimeout(() => {
         setGuardado(false);
@@ -160,6 +163,8 @@ function MetricaCard({
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">{cfg.unidad}</span>
           </div>
         )}
+
+        {error && <p className="text-[11px] text-coral">{error}</p>}
 
         {/* Guardar */}
         <button

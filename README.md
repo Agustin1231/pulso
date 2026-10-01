@@ -186,8 +186,10 @@ En modo `oauth` hacen falta `CLAUDE_PROXY_URL` y `CLAUDE_PROXY_TOKEN`; si falta 
 Creá un `.env.local` en la raíz (partí de `.env.example`):
 
 ```bash
-# PostgreSQL
-DATABASE_URL=postgres://usuario:password@host:5432/pulso
+# PostgreSQL — la app usa el rol sin privilegios `pulso_app` (ver Seguridad)
+DATABASE_URL=postgres://pulso_app:password@host:5432/pulso
+DATABASE_ADMIN_URL=postgres://postgres:password@host:5432/pulso   # solo setup-db
+PULSO_APP_PASSWORD=       # solo setup-db: habilita el login de pulso_app
 PGSSL=                    # "require" solo si tu Postgres exige TLS
 PGPOOL_MAX=10             # opcional
 
@@ -217,6 +219,7 @@ VAPID_EMAIL=mailto:tu@email.com
 El código lee **12** variables (más `TZ`, que la usa Node y no el código):
 
 - **Requeridas:** `DATABASE_URL`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
+- **Solo para `npm run setup-db`, nunca en la app:** `DATABASE_ADMIN_URL`, `PULSO_APP_PASSWORD`
 - **Con default, se pueden omitir:** `MEDIA_DIR`, `PGSSL`, `PGPOOL_MAX`, `CLAUDE_AUTH_MODE`
 - **Solo si `CLAUDE_AUTH_MODE=oauth`:** `CLAUDE_PROXY_URL`, `CLAUDE_PROXY_TOKEN`
 - **Solo para push:** las tres de VAPID — y hoy el push no está montado, ver [Limitaciones conocidas](#limitaciones-conocidas)
@@ -230,7 +233,7 @@ El código lee **12** variables (más `TZ`, que la usa Node y no el código):
 ```bash
 npm install
 cp .env.example .env.local     # y completá los valores
-npm run setup-db               # crea las 9 tablas (idempotente)
+npm run setup-db               # tablas, roles y políticas (idempotente; usa DATABASE_ADMIN_URL)
 npm run dev
 ```
 
@@ -247,7 +250,7 @@ ssh -N -L 5433:<ip-del-contenedor>:5432 <tu-host-ssh>
 
 ## Base de datos
 
-El schema completo está en **`db/schema.sql`** y se aplica con `npm run setup-db`. Es idempotente (todo `if not exists`), así que se puede correr en cada deploy.
+El schema está en dos archivos que aplica `npm run setup-db`, en orden: **`db/schema.sql`** (las tablas de datos) y **`db/seguridad.sql`** (roles, RLS, sesiones, auditoría, consentimiento y límites). Los dos son idempotentes, así que se pueden correr en cada deploy. Necesitan el rol dueño (`DATABASE_ADMIN_URL`).
 
 | Tabla | Para qué |
 |---|---|
@@ -260,6 +263,17 @@ El schema completo está en **`db/schema.sql`** y se aplica con `npm run setup-d
 | `rutinas` | Sesiones generadas (`contenido` jsonb, baja lógica vía `activa`) |
 | `suscripciones_push` | Suscripciones Web Push — único `(uid, endpoint)` |
 | `perfil` | Perfil anónimo (edad, sexo, altura, fumador) para el motor de riesgo — `uid` es la PK, una fila por usuario |
+
+Y las de `db/seguridad.sql`, que la app no lee directo (salvo `consentimientos`):
+
+| Tabla | Para qué |
+|---|---|
+| `identidades` | Un uid por usuario anónimo; lo genera la base |
+| `sesiones` | Hash SHA-256 del token de sesión, vencimiento y revocación |
+| `uids_legado` | UUIDs de la versión anterior, reclamables una sola vez |
+| `consentimientos` | Autorización versionada para mandar datos de salud a la IA |
+| `auditoria` | Registro append-only de escrituras, llamadas a la IA y accesos denegados |
+| `limites_tasa` | Contadores por ventana para los límites por sesión e IP |
 
 Notas de diseño que importan si tocás el schema:
 
@@ -275,39 +289,66 @@ Toda la lógica de datos vive en `src/lib/db/` y corre **en el servidor**:
 
 ```
 src/lib/db/
-  pool.ts      pool de pg, perezoso, con los type parsers de fecha
-  types.ts     tipos de fila y enums  ← el único importable desde el cliente
-  metricas.ts  \
-  recetas.ts    |  "use server" — server actions con SQL parametrizado
-  mercado.ts    |
-  rutinas.ts    |
-  habitos.ts    |
-  perfil.ts     |
-  informe.ts   /   carga historial + perfil + adherencia y llama al motor (`lib/ml`)
+  pool.ts            pool de pg perezoso + conUsuario (transacción con app.uid para RLS)
+  types.ts           tipos de fila y enums  ← el único importable desde el cliente
+  metricas.ts      \
+  recetas.ts        |
+  mercado.ts        |  "use server" — server actions. Ninguna recibe el uid:
+  rutinas.ts        |  lo sacan de la sesión (lib/seguridad/accion.ts)
+  habitos.ts        |
+  perfil.ts         |
+  consentimiento.ts |
+  informe.ts       /
+  consultas.ts       lecturas compartidas que reciben uid (server-only, NO "use server")
+  calculo-informe.ts historial + perfil + adherencia → motor (`lib/ml`)
+
+src/lib/sesion.ts    cookie de sesión, reclamo de uids legado, supresión
+src/lib/seguridad/
+  accion.ts          envoltorio de server actions: zod → sesión → RLS → auditoría
+  ruta.ts            envoltorio de /api: origen → sesión → consentimiento → tasa → zod
+  validacion.ts      esquemas zod de todo lo que entra del cliente
+  auditoria.ts  tasa.ts  red.ts  consentimiento.ts
+src/middleware.ts    CSP con nonce por petición
 ```
 
-`types.ts` está aparte porque un archivo `"use server"` solo puede exportar funciones async. Los componentes cliente importan las funciones de los módulos y los tipos de `types.ts`.
+`types.ts` está aparte porque un archivo `"use server"` solo puede exportar funciones async. Por la misma razón, todo lo que recibe un uid vive en módulos `server-only` que no son `"use server"`: cada export de un archivo `"use server"` es un endpoint público.
 
-Las imágenes se guardan en `MEDIA_DIR` y se sirven por `src/app/api/img/[...path]/route.ts`, que valida la ruta para evitar path traversal.
+Las imágenes se guardan en `MEDIA_DIR` y se sirven por `src/app/api/img/[...path]/route.ts`, que valida la ruta (path traversal) y exige la sesión del dueño.
 
 ---
 
 ## Deploy (Coolify)
 
 1. Crear un recurso **PostgreSQL** y anotar su hostname interno
-2. En la app, setear las 9 variables de entorno — `NEXT_PUBLIC_VAPID_PUBLIC_KEY` marcada como **build time**
-3. Agregar un **volumen persistente** montado en `/data` (el valor de `MEDIA_DIR`). Sin esto, las imágenes de recetas se borran en cada deploy.
-4. Correr el schema contra la base:
+2. Correr el schema contra la base, con el rol dueño. `PULSO_APP_PASSWORD` habilita el login de `pulso_app`:
    ```bash
-   cat db/schema.sql | ssh <host> "docker exec -i <contenedor-db> psql -U pulso -d pulso"
+   cat db/schema.sql db/seguridad.sql | ssh <host> "docker exec -i <contenedor-db> psql -U <dueño> -d <base> -v ON_ERROR_STOP=1"
+   # y aparte, sin dejar la contraseña en el historial:
+   #   alter role pulso_app login password '<openssl rand -hex 24>';
    ```
+3. En la app, setear las variables de entorno — `DATABASE_URL` con el usuario **`pulso_app`**, nunca el dueño, y `NEXT_PUBLIC_VAPID_PUBLIC_KEY` marcada como **build time**
+4. Agregar un **volumen persistente** montado en `/data` (el valor de `MEDIA_DIR`). Sin esto, las imágenes de recetas se borran en cada deploy.
 5. Push a `main` → auto-deploy
+
+---
+
+## Seguridad
+
+Los controles están mapeados fila por fila contra la matriz de activos del Proyecto Integrador en **[docs/seguridad.md](docs/seguridad.md)**. En corto:
+
+- **Sesión emitida por el servidor**: cookie `__Host-` httpOnly, Secure y SameSite=Strict; la base guarda solo el hash del token. Ninguna server action recibe el uid.
+- **RBAC y RLS en Postgres**: la app es `pulso_app` (sin DDL); cada usuario ve solo sus filas, y sin sesión no se ve ninguna.
+- **Auditoría append-only**, **consentimiento** para mandar datos de salud a la IA (Ley 1581) y **derecho de supresión** en `/privacidad`.
+- **Límites de tasa** por sesión e IP en las rutas de IA y push; **validación con zod** de todo lo que entra.
+- **CSP con nonce**, HSTS y el resto de los headers.
+
+Pruebas: `npm run test:seguridad` contra una base descartable (ver el documento).
 
 ---
 
 ## Decisiones de diseño
 
-- **Sin login:** UUID anónimo generado en el dispositivo y guardado en `localStorage`. Si el usuario borra la caché, pierde el historial.
+- **Sin login, pero con sesión:** el usuario es anónimo (no hay email ni nombre), pero la identidad es una cookie httpOnly que emite el servidor, no un UUID en `localStorage`. Si el usuario borra las cookies, pierde el acceso a su historial. Detalle en [docs/seguridad.md](docs/seguridad.md).
 - **Tema oscuro:** paleta Obsidian + Coral Pulse (`--color-coral: #ff6b6b`). Es un tema único, no un dark mode conmutable.
 - **Disclaimer médico:** aparece en el onboarding y en el módulo de Score.
 - **Mobile-first:** bottom nav en móvil, sidebar en desktop.
@@ -322,7 +363,8 @@ Cosas que existen en el código pero no funcionan end-to-end. Están acá para q
 - **Push: los recordatorios programados solo salen con la app abierta.** La suscripción y el envío funcionan (campana del header → panel de notificaciones; `/api/notificaciones/*`), pero el "recordatorio programado" es un `setTimeout` en el navegador, no un cron del servidor. Sin `NEXT_PUBLIC_VAPID_PUBLIC_KEY` en el build, el panel avisa que el push no está configurado.
 - **Offline básico, no completo.** `public/sw.js` guarda las pantallas visitadas (red primero) y los estáticos de `/_next/static/` (caché primero); una pantalla nunca visitada muestra "Sin conexión". Los datos se leen con server actions (POST), así que sin red la interfaz abre pero los números necesitan conexión. Al cambiar `sw.js`, subir `VERSION`.
 - **`htmlLimitedBots: /.*/` en `next.config.ts` no se toca.** Next 15.5 manda la metadata de las páginas dinámicas en streaming dentro del `<body>`, y Chrome solo reconoce el `<link rel="manifest">` en el `<head>`: sin esa línea la PWA deja de ser instalable ("no-manifest").
-- **`next-pwa` está en `package.json` pero no se usa.** El service worker es `public/sw.js`, escrito a mano; los íconos se regeneran con `python3 scripts/iconos.py`.
+- **El service worker es `public/sw.js`, escrito a mano** (`next-pwa` se quitó: no se usaba y arrastraba dependencias vulnerables). Los íconos se regeneran con `python3 scripts/iconos.py`.
+- **Toda la app se renderiza por petición** (`dynamic = "force-dynamic"` en el layout raíz): la CSP lleva un nonce distinto en cada respuesta y Next solo lo puede inyectar en páginas que no están pre-renderizadas. No sacar esa línea: sin nonce, el navegador bloquea los scripts y la app queda en blanco.
 - **El índice de riesgo no es una escala clínica.** Cita de dónde sale cada coeficiente, pero eso no lo convierte en Framingham, ASCVD ni similares; no compararlo con ellas.
 - **El pronóstico se evaluó sobre datos sintéticos.** Demuestra que la implementación es correcta bajo patrones conocidos, no desempeño sobre usuarios reales. El índice sí se validó con datos reales (NHANES 2021-2023), pero ese dataset es transversal: mide antecedente cardiovascular, no incidencia futura.
 - **`getInforme` recalcula el backtesting en cada carga** de `/dashboard` y `/score` (~100–300 ms por usuario con 90 días). No hay caché; si crece el uso, cachear por uid y fecha.

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bell, BellOff, Check, Loader2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -16,13 +16,19 @@ function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
 
 type PermisoState = "default" | "granted" | "denied" | "unsupported";
 
+/** Códigos de error del servidor que conviene traducir. */
+const MENSAJES_ERROR: Record<string, string> = {
+  demasiadas_peticiones: "llegaste al límite de notificaciones por esta hora",
+  sesion_requerida:      "tu sesión no es válida, recargá la página",
+};
+
 // Se inyecta en el build: si falta, el servidor no puede firmar los envíos.
 const VAPID_PUBLICA = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 // El service worker solo se registra en producción (RegistroServiceWorker).
 const SIN_SW_EN_DESARROLLO = process.env.NODE_ENV !== "production";
 
 export function PushManager() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [permiso, setPermiso] = useState<PermisoState>("default");
   const [suscrito, setSuscrito] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -52,7 +58,7 @@ export function PushManager() {
   }, []);
 
   async function activarNotificaciones() {
-    if (!uid) return;
+    if (!sesion) return;
     setCargando(true);
     setResultado(null);
 
@@ -75,7 +81,7 @@ export function PushManager() {
       const res = await fetch("/api/notificaciones/suscribir", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, subscription: subJson }),
+        body: JSON.stringify({ subscription: subJson }),
       });
       if (!res.ok) throw new Error(`suscribir: HTTP ${res.status}`);
 
@@ -90,7 +96,7 @@ export function PushManager() {
   }
 
   async function enviarPrueba() {
-    if (!uid) return;
+    if (!sesion) return;
     setEnviando(true);
     setResultado(null);
 
@@ -98,7 +104,6 @@ export function PushManager() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        uid,
         title: "Pulso 💚",
         body: "¡Las notificaciones funcionan! Cuida tu corazón hoy.",
         url: "/dashboard",
@@ -106,12 +111,12 @@ export function PushManager() {
     });
 
     const data = await res.json();
-    setResultado(res.ok ? "✓ Notificación enviada — revisa tu dispositivo" : `Error: ${data.error}`);
+    setResultado(res.ok ? "✓ Notificación enviada — revisa tu dispositivo" : `Error: ${MENSAJES_ERROR[data.error] ?? data.error}`);
     setEnviando(false);
   }
 
   function programarRecordatorio() {
-    if (!uid || !horaRecordatorio) return;
+    if (!sesion || !horaRecordatorio) return;
 
     // Cancelar si ya había uno programado
     if (timerRef) clearTimeout(timerRef);
@@ -132,7 +137,6 @@ export function PushManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          uid,
           title: "Pulso — Recordatorio 🥗",
           body: "Es hora de revisar tu alimentación. ¿Comiste algo saludable hoy?",
           url: "/recetas",

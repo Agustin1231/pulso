@@ -184,12 +184,14 @@ GEMINI_API_KEY=
 ## Arquitectura de Datos
 
 ### Estrategia anónima
-1. Primera visita → se genera UUID v4 aleatorio en el browser
-2. Se guarda en `localStorage` del dispositivo
-3. Todos los datos en PostgreSQL se vinculan solo a ese UUID
+1. Primera visita → el servidor crea una identidad anónima (uid generado por la base)
+2. La sesión es una cookie httpOnly; la base guarda solo el hash del token
+3. Todos los datos en PostgreSQL se vinculan a ese uid, y RLS impide ver los de otro
 4. Sin email, sin nombre, sin datos personales
-5. Si el usuario borra la caché → pierde el historial (aceptable en MVP)
-6. Futuro: opción de "guardar progreso" vinculando un email al UUID
+5. Si el usuario borra las cookies → pierde el acceso al historial (aceptable en MVP)
+6. Futuro: opción de "guardar progreso" vinculando un email o una passkey a la identidad
+
+> Hasta la versión de octubre de 2026 el uid era un UUID generado en el browser y guardado en `localStorage`. Ver [docs/seguridad.md](docs/seguridad.md) por qué se cambió y cómo se migran los usuarios anteriores.
 
 ### Tablas en PostgreSQL
 

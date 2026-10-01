@@ -8,10 +8,10 @@ import {
   ShoppingCart, Send, MessageCircle, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
+import { fetchIA, mensajeErrorIA } from "@/lib/ia-cliente";
 import {
   guardarReceta, getRecetasGuardadas, eliminarReceta, calificarReceta,
-  uploadRecetaImagen,
 } from "@/lib/db/recetas";
 import type { RecetaRow } from "@/lib/db/types";
 import {
@@ -153,7 +153,7 @@ interface ChatMsg { role: "user" | "assistant"; content: string; esReceta?: bool
 // ─── componente principal ─────────────────────────────────────────────────────
 
 export function RecetasClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>("recetas");
   const [subTab, setSubTab] = useState<SubTabRecetas>("nueva");
   const [ingredientes, setIngredientes] = useState("");
@@ -205,11 +205,7 @@ export function RecetasClient() {
     setImagenUrl(null); setGuardada(false); setError(null); setChatMsgs([]);
 
     try {
-      const res = await fetch("/api/recetas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredientes: ingredientes.trim() }),
-      });
+      const res = await fetchIA("/api/recetas", { ingredientes: ingredientes.trim() });
       if (!res.ok || !res.body) throw new Error("Error al conectar con el asistente");
 
       const textoCompleto = await leerStream(res, (t) => {
@@ -221,18 +217,14 @@ export function RecetasClient() {
       await generarImagen(extraerTitulo(textoCompleto));
       setEstado("completo");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado");
+      setError(mensajeErrorIA(err, err instanceof Error ? err.message : "Error inesperado"));
       setEstado("idle");
     }
   }, [ingredientes, estado]);
 
   const generarImagen = async (titulo: string) => {
     try {
-      const res = await fetch("/api/recetas/imagen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ titulo, uid }),
-      });
+      const res = await fetchIA("/api/recetas/imagen", { titulo });
       if (res.ok) {
         const data = await res.json();
         if (data.imagen) setImagenUrl(data.imagen);
@@ -252,11 +244,7 @@ export function RecetasClient() {
     setChatMsgs((prev) => [...prev, { role: "user", content: pregunta }]);
 
     try {
-      const res = await fetch("/api/recetas/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ receta: recetaTexto, pregunta, historial: historialApi }),
-      });
+      const res = await fetchIA("/api/recetas/chat", { receta: recetaTexto, pregunta, historial: historialApi });
       if (!res.ok || !res.body) throw new Error();
 
       let respuestaCompleta = "";
@@ -265,8 +253,8 @@ export function RecetasClient() {
       const esReceta = respuestaCompleta.includes("##") && respuestaCompleta.includes("###");
       setChatMsgs((prev) => [...prev, { role: "assistant", content: respuestaCompleta, esReceta }]);
       setChatRespuesta("");
-    } catch {
-      setChatMsgs((prev) => [...prev, { role: "assistant", content: "No se pudo procesar tu pregunta. Intenta de nuevo." }]);
+    } catch (err) {
+      setChatMsgs((prev) => [...prev, { role: "assistant", content: mensajeErrorIA(err, "No se pudo procesar tu pregunta. Intenta de nuevo.") }]);
     } finally {
       setChatCargando(false);
     }
@@ -284,16 +272,12 @@ export function RecetasClient() {
 
   // ── guardar receta ──────────────────────────────────────────────────────────
   const handleGuardar = async () => {
-    if (!uid || !recetaTexto || guardando || guardada) return;
+    if (!sesion || !recetaTexto || guardando || guardada) return;
     setGuardando(true);
     const titulo = extraerTitulo(recetaTexto);
     const ingredientesArray = extraerIngredientes(recetaTexto, ingredientes);
-    let urlFinal: string | null = imagenUrl;
-    if (imagenUrl?.startsWith("data:")) {
-      const uploaded = await uploadRecetaImagen(uid, imagenUrl);
-      urlFinal = uploaded;
-    }
-    const { error: errDB } = await guardarReceta(uid, titulo, recetaTexto, urlFinal, ingredientesArray);
+    // La imagen ya la guardó el servidor al generarla: acá solo va su URL.
+    const { error: errDB } = await guardarReceta(titulo, recetaTexto, imagenUrl, ingredientesArray);
     if (!errDB) setGuardada(true);
     else setError("No se pudo guardar la receta. Intenta de nuevo.");
     setGuardando(false);
@@ -301,11 +285,11 @@ export function RecetasClient() {
 
   // ── guardadas ───────────────────────────────────────────────────────────────
   const cargarGuardadas = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargandoGuardadas(true);
-    setGuardadas(await getRecetasGuardadas(uid));
+    setGuardadas(await getRecetasGuardadas());
     setCargandoGuardadas(false);
-  }, [uid]);
+  }, [sesion]);
 
   const handleEliminar = async (id: string) => {
     await eliminarReceta(id);
@@ -430,7 +414,7 @@ export function RecetasClient() {
                   {estado === "completo" && (
                     <div className="flex items-center gap-3 pt-2 border-t border-border/50">
                       {!guardada ? (
-                        <Button onClick={handleGuardar} disabled={guardando || !uid} variant="ghost" className="gap-2 text-teal border border-teal/30 hover:bg-teal/10">
+                        <Button onClick={handleGuardar} disabled={guardando || !sesion} variant="ghost" className="gap-2 text-teal border border-teal/30 hover:bg-teal/10">
                           {guardando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bookmark className="h-4 w-4" />}
                           {guardando ? "Guardando..." : "Guardar receta"}
                         </Button>
@@ -714,7 +698,7 @@ function parsearItemsMercado(contenido: string): { seccion: string; items: strin
 }
 
 function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] }) {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [periodo, setPeriodo] = useState<"semanal" | "mensual">("semanal");
   const [estado, setEstado] = useState<"idle" | "streaming" | "completo">("idle");
   const [listaTexto, setListaTexto] = useState("");
@@ -734,9 +718,9 @@ function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] })
 
   // Cargar historial al montar para tener contexto
   useEffect(() => {
-    if (!uid) return;
-    getListasMercado(uid).then(setListas);
-  }, [uid]);
+    if (!sesion) return;
+    getListasMercado().then(setListas);
+  }, [sesion]);
 
   // typewriter
   useEffect(() => {
@@ -755,16 +739,12 @@ function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] })
     if (listaTexto && chatMsgs.length === 0) {
       historialApi.unshift({ role: "assistant" as const, content: listaTexto });
     }
-    const res = await fetch("/api/mercado", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        periodo,
-        ingredientes_recetas: ingredientesRecetas,
-        listas_anteriores: listas.slice(0, 2).map((l) => ({ nombre: l.nombre, contenido: l.contenido })),
-        historial: historialApi,
-        pregunta,
-      }),
+    const res = await fetchIA("/api/mercado", {
+      periodo,
+      ingredientes_recetas: ingredientesRecetas,
+      listas_anteriores: listas.slice(0, 2).map((l) => ({ nombre: l.nombre, contenido: l.contenido })),
+      historial: historialApi,
+      pregunta,
     });
     if (!res.ok || !res.body) throw new Error("Error al conectar");
     return res;
@@ -800,11 +780,11 @@ function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] })
 
   const handleGuardar = async () => {
     const texto = listaRef.current;
-    if (!uid || !texto || guardando || guardada) return;
+    if (!sesion || !texto || guardando || guardada) return;
     setGuardando(true);
     setErrorGuardar(null);
     const nombre = `Lista ${periodo} — ${new Date().toLocaleDateString("es-ES", { day: "numeric", month: "short" })}`;
-    const { error } = await guardarListaMercado(uid, nombre, periodo, texto);
+    const { error } = await guardarListaMercado(nombre, periodo, texto);
     if (!error) {
       setGuardada(true);
     } else {
@@ -814,9 +794,9 @@ function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] })
   };
 
   const cargarListas = async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargandoListas(true);
-    const data = await getListasMercado(uid);
+    const data = await getListasMercado();
     setListas(data);
     setCargandoListas(false);
   };

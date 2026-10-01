@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Sparkles, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { fetchIA, mensajeErrorIA } from "@/lib/ia-cliente";
 
 // ─── helpers markdown (mismo estilo que recetas) ─────────────────────────────
 
@@ -73,12 +74,11 @@ function formatearContenido(texto: string): React.ReactNode {
 // ─── componente ───────────────────────────────────────────────────────────────
 
 interface Props {
-  uid:      string;
   /** Si no hay ninguna métrica registrada, el botón no se muestra. */
   hayDatos: boolean;
 }
 
-export function AnalisisIA({ uid, hayDatos }: Props) {
+export function AnalisisIA({ hayDatos }: Props) {
   const [textoCompleto, setTextoCompleto] = useState("");
   const [textoMostrado, setTextoMostrado] = useState("");
   const textoRef = useRef("");
@@ -108,12 +108,8 @@ export function AnalisisIA({ uid, hayDatos }: Props) {
 
     try {
       // El servidor calcula el informe del motor (tendencias, pronósticos,
-      // alertas) a partir del uid; la IA redacta sobre esos números.
-      const res = await fetch("/api/analisis-metricas", {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ uid }),
-      });
+      // alertas) con la sesión; la IA redacta sobre esos números.
+      const res = await fetchIA("/api/analisis-metricas");
 
       if (!res.ok || !res.body) throw new Error("Error al conectar con la IA");
 
@@ -150,8 +146,8 @@ export function AnalisisIA({ uid, hayDatos }: Props) {
       }
 
       setListo(true);
-    } catch {
-      const err = "No se pudo conectar con el análisis. Verifica tu conexión e intenta de nuevo.";
+    } catch (e) {
+      const err = mensajeErrorIA(e, "No se pudo conectar con el análisis. Verifica tu conexión e intenta de nuevo.");
       textoRef.current = err;
       setTextoCompleto(err);
       setListo(true);

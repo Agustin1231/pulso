@@ -15,8 +15,10 @@ import {
   Play, CheckCircle, SkipForward, Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
 import { getUltimasMetricas } from "@/lib/db/metricas";
+import { PASOS, type PasoId } from "@/lib/rutinas-opciones";
+import { fetchIA, mensajeErrorIA } from "@/lib/ia-cliente";
 import {
   guardarRutina, getRutinasGuardadas, eliminarRutina,
 } from "@/lib/db/rutinas";
@@ -127,48 +129,6 @@ function fmt(n: number): string {
 
 // ─── tipos ────────────────────────────────────────────────────────────────────
 
-const PASOS = [
-  {
-    id: "nivel" as const,
-    pregunta: "¿Cuál es tu nivel de actividad actual?",
-    opciones: [
-      { valor: "Sedentario (poco o nada de ejercicio)", etiqueta: "Sedentario", desc: "Poco o nada de ejercicio" },
-      { valor: "Algo activo (camino regularmente)", etiqueta: "Algo activo", desc: "Camino regularmente" },
-      { valor: "Activo (ejercicio 2-3 veces por semana)", etiqueta: "Activo", desc: "2-3 veces por semana" },
-    ],
-  },
-  {
-    id: "tiempo" as const,
-    pregunta: "¿Cuánto tiempo tienes disponible?",
-    opciones: [
-      { valor: "15", etiqueta: "15 min", desc: "Sesión rápida" },
-      { valor: "30", etiqueta: "30 min", desc: "Sesión estándar" },
-      { valor: "45", etiqueta: "45 min", desc: "Sesión completa" },
-      { valor: "60", etiqueta: "60 min", desc: "Sesión larga" },
-    ],
-  },
-  {
-    id: "lugar" as const,
-    pregunta: "¿Dónde vas a entrenar?",
-    opciones: [
-      { valor: "En casa sin equipamiento", etiqueta: "En casa", desc: "Sin equipamiento" },
-      { valor: "Gimnasio con máquinas", etiqueta: "Gimnasio", desc: "Con máquinas" },
-      { valor: "Al aire libre", etiqueta: "Al aire libre", desc: "Parque o calle" },
-    ],
-  },
-  {
-    id: "limitacion" as const,
-    pregunta: "¿Tienes alguna limitación física?",
-    opciones: [
-      { valor: "Ninguna limitación", etiqueta: "Ninguna", desc: "Sin restricciones" },
-      { valor: "Problemas en rodillas o piernas", etiqueta: "Rodillas/piernas", desc: "Evitar impacto" },
-      { valor: "Problemas en espalda o lumbar", etiqueta: "Espalda", desc: "Cuidar lumbar" },
-      { valor: "Problemas en hombros o brazos", etiqueta: "Hombros/brazos", desc: "Cuidar tren superior" },
-    ],
-  },
-] as const;
-
-type PasoId = (typeof PASOS)[number]["id"];
 type Respuestas = Partial<Record<PasoId, string>>;
 type Vista = "nueva" | "guardadas";
 type EstadoGen = "idle" | "streaming" | "completo";
@@ -176,7 +136,7 @@ type EstadoGen = "idle" | "streaming" | "completo";
 // ─── componente principal ─────────────────────────────────────────────────────
 
 export function RutinasClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [vista, setVista] = useState<Vista>("nueva");
   const [sueno, setSueno] = useState<number | undefined>();
   const [estres, setEstres] = useState<number | undefined>();
@@ -197,21 +157,21 @@ export function RutinasClient() {
   const [rutinaDetalle, setRutinaDetalle] = useState<RutinaRow | null>(null);
 
   useEffect(() => {
-    if (!uid) return;
-    getUltimasMetricas(uid).then((metricas) => {
+    if (!sesion) return;
+    getUltimasMetricas().then((metricas) => {
       const s = metricas.find((m) => m.tipo === "horas_sueno");
       const e = metricas.find((m) => m.tipo === "nivel_estres");
       if (s) setSueno(Math.round(Number(s.valor) * 10) / 10);
       if (e) setEstres(Math.round(Number(e.valor)));
     });
-  }, [uid]);
+  }, [sesion]);
 
   const cargarGuardadas = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargandoGuardadas(true);
-    setGuardadas(await getRutinasGuardadas(uid));
+    setGuardadas(await getRutinasGuardadas());
     setCargandoGuardadas(false);
-  }, [uid]);
+  }, [sesion]);
 
   // typewriter
   useEffect(() => {
@@ -239,18 +199,10 @@ export function RutinasClient() {
     setGuardada(false); setError(null);
 
     try {
-      const res = await fetch("/api/rutinas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nivel: r.nivel, tiempo: r.tiempo, lugar: r.lugar, limitacion: r.limitacion,
-          metricas: { sueno, estres },
-          historial_count: guardadas.length,
-          ejercicios_previos: guardadas
-            .slice(0, 5)
-            .flatMap((r) => r.contenido.ejercicios?.map((e) => e.nombre) ?? [])
-            .filter((n, i, arr) => arr.indexOf(n) === i),
-        }),
+      // Sueño, estrés y el historial de rutinas los lee el servidor de la base:
+      // solo viajan las cuatro respuestas del cuestionario.
+      const res = await fetchIA("/api/rutinas", {
+        nivel: r.nivel, tiempo: r.tiempo, lugar: r.lugar, limitacion: r.limitacion,
       });
       if (!res.ok || !res.body) throw new Error("Error al conectar con el asistente");
 
@@ -279,13 +231,13 @@ export function RutinasClient() {
       }
       setEstado("completo");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado");
+      setError(mensajeErrorIA(err, err instanceof Error ? err.message : "Error inesperado"));
       setEstado("idle");
     }
-  }, [sueno, estres, guardadas.length]);
+  }, []);
 
   const handleGuardar = async () => {
-    if (!uid || !rutinaTexto || guardando || guardada) return;
+    if (!sesion || !rutinaTexto || guardando || guardada) return;
     setGuardando(true);
     const nombre = extraerNombre(rutinaTexto);
     const ejercicios = parsearEjercicios(rutinaTexto);
@@ -298,13 +250,14 @@ export function RutinasClient() {
       metricas: { sueno, estres },
       ejercicios,
     };
-    const { error: err } = await guardarRutina(uid, nombre, contenido);
+    const { error: err } = await guardarRutina(nombre, contenido);
     if (!err) {
       setGuardada(true);
-      setGuardadas((prev) => [{
-        id: Date.now().toString(), uid, nombre, contenido, activa: true,
-        created_at: new Date().toISOString(),
-      }, ...prev]);
+      // Se recarga en vez de agregar una fila armada acá: así la rutina tiene
+      // su id real y se puede eliminar sin recargar la página.
+      await cargarGuardadas();
+    } else {
+      setError(err);
     }
     setGuardando(false);
   };
@@ -461,7 +414,7 @@ export function RutinasClient() {
                   {estado === "completo" && !escribiendo && (
                     <div className="flex items-center gap-3 pt-3 mt-2 border-t border-border/50">
                       {!guardada ? (
-                        <Button onClick={handleGuardar} disabled={guardando || !uid} variant="ghost" className="gap-2 text-coral border border-coral/30 hover:bg-coral/10">
+                        <Button onClick={handleGuardar} disabled={guardando || !sesion} variant="ghost" className="gap-2 text-coral border border-coral/30 hover:bg-coral/10">
                           {guardando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Bookmark className="h-4 w-4" />}
                           {guardando ? "Guardando..." : "Guardar rutina"}
                         </Button>

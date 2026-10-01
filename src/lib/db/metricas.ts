@@ -1,32 +1,34 @@
 "use server";
 
-import { pool, mensajeError } from "./pool";
+import { z } from "zod";
+import { escritura, lectura, SIN_ENTRADA } from "@/lib/seguridad/accion";
+import { diasSchema, metricaSchema, RANGO_METRICA, tipoMetricaSchema } from "@/lib/seguridad/validacion";
+import { ultimasMetricas } from "./consultas";
 import type { MetricaRow, MetricaType } from "./types";
+
+// Ninguna acción recibe el uid: sale de la sesión (ver lib/seguridad/accion).
 
 /**
  * Guarda o actualiza la métrica de hoy (upsert por día).
  *
- * Un solo statement: actualiza el registro de hoy si existe y, si no existe,
- * inserta. Antes eran dos viajes (select + update/insert) contra Supabase.
+ * La unidad la pone el servidor según el tipo; el valor se valida contra el
+ * rango de la métrica.
  *
- * Nota: el límite del "día" se calcula con la zona horaria del **servidor**,
- * no la del browser como antes. Fijá `TZ` en el contenedor (ej.
- * `TZ=America/Argentina/Buenos_Aires`) para que coincida con tus usuarios.
+ * Nota: el límite del "día" se calcula con la zona horaria del **servidor**.
+ * Fijá `TZ` en el contenedor para que coincida con tus usuarios.
  */
 export async function guardarMetrica(
-  uid:    string,
   tipo:   MetricaType,
   valor:  number,
-  unidad: string,
   notas?: string
 ): Promise<{ error: string | null }> {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const manana = new Date(hoy);
-  manana.setDate(manana.getDate() + 1);
+  return escritura("metrica.guardar", metricaSchema, { tipo, valor, notas }, async ({ db, uid, auditar }, d) => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
 
-  try {
-    await pool.query(
+    await db.query(
       `with actualizado as (
          update metricas
             set valor = $3, unidad = $4, notas = $5
@@ -37,83 +39,38 @@ export async function guardarMetrica(
        insert into metricas (uid, tipo, valor, unidad, notas)
        select $1, $2, $3, $4, $5
         where not exists (select 1 from actualizado)`,
-      [uid, tipo, valor, unidad, notas ?? null, hoy.toISOString(), manana.toISOString()]
+      [uid, d.tipo, d.valor, RANGO_METRICA[d.tipo].unidad, d.notas, hoy.toISOString(), manana.toISOString()]
     );
-    return { error: null };
-  } catch (err) {
-    return { error: mensajeError(err) };
-  }
+    await auditar({ accion: "metrica.guardar", recurso: "metricas", detalle: { tipo: d.tipo } });
+    return null;
+  });
 }
 
-/**
- * Último registro de cada tipo para un usuario.
- *
- * El `distinct on` reemplaza el filtrado en JS que hacía la versión anterior;
- * el `order by created_at desc` de afuera preserva el orden que devolvía antes.
- */
-export async function getUltimasMetricas(uid: string): Promise<MetricaRow[]> {
-  try {
-    const { rows } = await pool.query<MetricaRow>(
-      `select * from (
-         select distinct on (tipo) *
-           from metricas
-          where uid = $1
-          order by tipo, created_at desc
-       ) ultimas
-       order by created_at desc`,
-      [uid]
-    );
-    return rows;
-  } catch (err) {
-    console.error("[db/metricas] getUltimasMetricas:", mensajeError(err));
-    return [];
-  }
+/** Último registro de cada tipo. */
+export async function getUltimasMetricas(): Promise<MetricaRow[]> {
+  return lectura("metrica.ultimas", null, SIN_ENTRADA, [], ({ db, uid }) => ultimasMetricas(db, uid));
 }
 
-/** Historial de una métrica para graficar (últimos N días) */
+/** Historial de una métrica para graficar (últimos N días). */
 export async function getHistorialMetrica(
-  uid:  string,
   tipo: MetricaType,
   dias: number = 30
 ): Promise<MetricaRow[]> {
-  const desde = new Date();
-  desde.setDate(desde.getDate() - dias);
-
-  try {
-    const { rows } = await pool.query<MetricaRow>(
-      `select * from metricas
-        where uid = $1 and tipo = $2 and created_at >= $3
-        order by created_at asc`,
-      [uid, tipo, desde.toISOString()]
-    );
-    return rows;
-  } catch (err) {
-    console.error("[db/metricas] getHistorialMetrica:", mensajeError(err));
-    return [];
-  }
-}
-
-/**
- * Historial de TODAS las métricas en una sola query (últimos N días), para el
- * motor de predicción (`lib/ml`). Ordenado por tipo y fecha ascendente.
- */
-export async function getHistorialMetricas(
-  uid:  string,
-  dias: number = 90
-): Promise<MetricaRow[]> {
-  const desde = new Date();
-  desde.setDate(desde.getDate() - dias);
-
-  try {
-    const { rows } = await pool.query<MetricaRow>(
-      `select * from metricas
-        where uid = $1 and created_at >= $2
-        order by tipo, created_at asc`,
-      [uid, desde.toISOString()]
-    );
-    return rows;
-  } catch (err) {
-    console.error("[db/metricas] getHistorialMetricas:", mensajeError(err));
-    return [];
-  }
+  return lectura(
+    "metrica.historial",
+    z.object({ tipo: tipoMetricaSchema, dias: diasSchema }),
+    { tipo, dias },
+    [],
+    async ({ db, uid }, d) => {
+      const desde = new Date();
+      desde.setDate(desde.getDate() - d.dias);
+      const { rows } = await db.query<MetricaRow>(
+        `select * from metricas
+          where uid = $1 and tipo = $2 and created_at >= $3
+          order by created_at asc`,
+        [uid, d.tipo, desde.toISOString()]
+      );
+      return rows;
+    }
+  );
 }

@@ -1,5 +1,9 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
+import { cuerpoChatRecetaSchema } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
@@ -16,28 +20,35 @@ REGLAS:
   ### Ingredientes / ### Preparación / ### Beneficios cardiovasculares
 - Responde siempre en español.
 - NUNCA menciones diagnósticos ni recetes para condiciones médicas.
-- Sé breve en las respuestas conversacionales (máximo 3 oraciones).`;
+- Sé breve en las respuestas conversacionales (máximo 3 oraciones).
 
-export async function POST(req: Request) {
-  const { receta, pregunta, historial } = await req.json();
+${REGLA_DATOS_DEL_USUARIO}`;
 
-  if (!pregunta || !receta) {
-    return new Response("Datos incompletos", { status: 400 });
+export const POST = rutaProtegida(
+  {
+    nombre:  "ia.receta_chat",
+    cuerpo:  cuerpoChatRecetaSchema,
+    limites: (uid, ip) => [limite("ia", uid), limite("iaIp", ip)],
+  },
+  async ({ uid, ip, cuerpo }) => {
+    await auditar({ uid, accion: "ia.receta_chat", resultado: "ok", ip, detalle: { proveedor: "anthropic", turnos: cuerpo.historial.length } });
+
+    // El historial ya viene filtrado a roles user/assistant (ver validacion.ts).
+    const messages = [
+      { role: "user" as const, content: `Esta es la receta actual:\n\n${datosDelUsuario(cuerpo.receta)}` },
+      { role: "assistant" as const, content: "Entendido, tengo la receta. ¿En qué te puedo ayudar?" },
+      ...cuerpo.historial,
+      { role: "user" as const, content: datosDelUsuario(cuerpo.pregunta) },
+    ];
+
+    const result = streamText({
+      model: modeloClaude(),
+      system: SYSTEM,
+      messages,
+      onError: ({ error }) => console.error("[ai] receta_chat:", error instanceof Error ? error.message : error),
+      maxTokens: 900,
+    });
+
+    return result.toDataStreamResponse();
   }
-
-  const messages = [
-    { role: "user" as const, content: `Esta es la receta actual:\n\n${receta}` },
-    { role: "assistant" as const, content: "Entendido, tengo la receta. ¿En qué te puedo ayudar?" },
-    ...(historial ?? []),
-    { role: "user" as const, content: pregunta },
-  ];
-
-  const result = streamText({
-    model: modeloClaude(),
-    system: SYSTEM,
-    messages,
-    maxTokens: 900,
-  });
-
-  return result.toDataStreamResponse();
-}
+);

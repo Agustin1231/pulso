@@ -1,67 +1,61 @@
 import { GoogleGenAI, Modality } from "@google/genai";
-import { uploadRecetaImagen } from "@/lib/db/recetas";
+import { guardarImagenReceta } from "@/lib/media";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { json, rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
+import { cuerpoImagenSchema } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
-export async function POST(req: Request) {
-  const { titulo, descripcion, uid } = await req.json();
+/**
+ * Genera la foto de una receta con Gemini y la guarda en el volumen de medios.
+ *
+ * Es lo más caro de la app: límite propio, más bajo que el del texto. A Gemini
+ * solo va el título de la receta, ningún dato de salud.
+ *
+ * Antes, ante un error se devolvían el mensaje y el stack completos al
+ * cliente, y si no había uid se devolvía la imagen en base64 para que el
+ * browser la subiera después. Ahora la guarda siempre el servidor.
+ */
+export const POST = rutaProtegida(
+  {
+    nombre:  "ia.imagen",
+    cuerpo:  cuerpoImagenSchema,
+    limites: (uid, ip) => [limite("imagen", uid), limite("imagenIp", ip)],
+  },
+  async ({ uid, ip, cuerpo }) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.error("[imagen] falta GEMINI_API_KEY");
+      return json({ error: "no_disponible" }, 503);
+    }
 
-  if (!titulo) {
-    return Response.json({ error: "Título requerido" }, { status: 400 });
-  }
+    await auditar({ uid, accion: "ia.imagen", resultado: "ok", ip, detalle: { proveedor: "google" } });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return Response.json({ error: "API key no configurada" }, { status: 500 });
-  }
-
-  try {
-    console.log("[imagen] Iniciando generación para:", titulo);
     const ai = new GoogleGenAI({ apiKey });
-
-    const prompt = `Professional food photography of "${titulo}". ${
-      descripcion ?? "Healthy cardiovascular dish, Mediterranean style"
+    const prompt = `Professional food photography of "${cuerpo.titulo}". ${
+      cuerpo.descripcion || "Healthy cardiovascular dish, Mediterranean style"
     }. Shot from above, natural lighting, rustic wooden table, vibrant colors, appetizing, high resolution.`;
 
-    console.log("[imagen] Llamando al modelo de imagen...");
     const response = await ai.models.generateContent({
       model: "gemini-3.1-flash-image-preview",
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: { responseModalities: [Modality.IMAGE, Modality.TEXT] },
     });
-    console.log("[imagen] Respuesta recibida");
 
-    // Buscar la parte de imagen en la respuesta
     const parts = response.candidates?.[0]?.content?.parts ?? [];
-    const imagePart = parts.find((p) => p.inlineData?.data);
-
-    if (!imagePart?.inlineData?.data) {
-      console.error("[imagen] No se encontró imagen en la respuesta:", JSON.stringify(response));
-      return Response.json({ error: "No se pudo generar la imagen", detalle: "Sin datos de imagen en respuesta" }, { status: 500 });
+    const datos = parts.find((p) => p.inlineData?.data)?.inlineData?.data;
+    if (!datos) {
+      console.error("[imagen] la respuesta no trajo imagen");
+      return json({ error: "sin_imagen" }, 502);
     }
 
-    const { data: imageBytes, mimeType = "image/png" } = imagePart.inlineData;
-    console.log("[imagen] Imagen OK, mimeType:", mimeType, "tamaño:", imageBytes.length);
-
-    const base64DataUrl = `data:${mimeType};base64,${imageBytes}`;
-
-    // Guardar en el volumen de medios si hay uid
-    if (uid) {
-      console.log("[imagen] Guardando imagen en disco, uid:", uid);
-      const publicUrl = await uploadRecetaImagen(uid, base64DataUrl);
-      console.log("[imagen] URL pública:", publicUrl);
-      if (publicUrl) {
-        return Response.json({ imagen: publicUrl });
-      }
-      console.warn("[imagen] Guardado en disco falló, usando fallback base64");
+    const url = await guardarImagenReceta(uid, Buffer.from(datos, "base64"));
+    if (!url) {
+      console.error("[imagen] los bytes recibidos no son una imagen válida");
+      return json({ error: "sin_imagen" }, 502);
     }
 
-    // Fallback: devolver base64 si no hay uid o falló el upload
-    return Response.json({ imagen: base64DataUrl });
-  } catch (err) {
-    const mensaje = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack : undefined;
-    console.error("[imagen] Error:", err);
-    return Response.json({ error: "Error al generar imagen", detalle: mensaje, stack }, { status: 500 });
+    return json({ imagen: url });
   }
-}
+);

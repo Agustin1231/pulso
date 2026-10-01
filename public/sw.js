@@ -8,7 +8,7 @@
 // Los datos se leen con server actions (POST), así que sin conexión la interfaz
 // abre pero los números necesitan red. Subir VERSION al cambiar este archivo.
 
-const VERSION = "pulso-v2";
+const VERSION = "pulso-v3";
 const CACHE_PAGINAS = `${VERSION}-paginas`;
 const CACHE_ESTATICO = `${VERSION}-estatico`;
 const MAX_PAGINAS = 30;
@@ -130,11 +130,17 @@ self.addEventListener("notificationclick", (event) => {
 
   if (event.action === "cerrar") return;
 
-  const url = event.notification.data?.url ?? "/dashboard";
+  // Solo rutas del propio origen: un push con un enlace externo es phishing.
+  // El servidor ya lo valida; esto es la segunda barrera.
+  let url = "/dashboard";
+  try {
+    const destino = new URL(event.notification.data?.url ?? "/dashboard", self.location.origin);
+    if (destino.origin === self.location.origin) url = destino.pathname + destino.search + destino.hash;
+  } catch (_) {}
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
-      const existing = clients.find((c) => c.url.includes(self.location.origin));
+      const existing = clients.find((c) => new URL(c.url).origin === self.location.origin);
       if (existing) {
         existing.focus();
         existing.navigate(url);

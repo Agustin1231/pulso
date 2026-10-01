@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, RefreshCw, Clock, ChevronDown, ChevronUp, Loader2, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
+import { fetchIA, mensajeErrorIA } from "@/lib/ia-cliente";
 import { getUltimasMetricas } from "@/lib/db/metricas";
 import type { MetricaRow } from "@/lib/db/types";
 
@@ -387,7 +388,7 @@ function ArticuloCard({ art, expandido, onToggle }: {
 const CATEGORIAS: Array<Categoria | "Todos"> = ["Todos", "Corazón", "Nutrición", "Movimiento", "Sueño", "Estrés"];
 
 export function TipsClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [metricas, setMetricas] = useState<MetricaRow[]>([]);
   const [cargando, setCargando] = useState(true);
 
@@ -403,12 +404,12 @@ export function TipsClient() {
 
   // cargar métricas
   useEffect(() => {
-    if (!uid) return;
-    getUltimasMetricas(uid).then((data) => {
+    if (!sesion) return;
+    getUltimasMetricas().then((data) => {
       setMetricas(data);
       setCargando(false);
     });
-  }, [uid]);
+  }, [sesion]);
 
   // typewriter effect
   useEffect(() => {
@@ -421,17 +422,21 @@ export function TipsClient() {
   }, [tipsTexto, textoMostrado]);
 
   const generarTips = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setEstadoIA("cargando");
     setTipsTexto(""); setTextoMostrado(""); tipsRef.current = "";
 
     // El servidor calcula el informe del motor (factores, alertas, tendencias)
-    // a partir del uid; la IA redacta los tips sobre esos números.
-    const res = await fetch("/api/tips", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid }),
-    });
+    // con la sesión; la IA redacta los tips sobre esos números.
+    let res: Response;
+    try {
+      res = await fetchIA("/api/tips");
+    } catch (e) {
+      const msg = mensajeErrorIA(e, "");
+      if (!msg) { setEstadoIA("idle"); return; }
+      tipsRef.current = msg; setTipsTexto(msg); setEstadoIA("listo");
+      return;
+    }
 
     if (!res.ok || !res.body) { setEstadoIA("idle"); return; }
 
@@ -458,13 +463,13 @@ export function TipsClient() {
       }
     }
     setEstadoIA("listo");
-  }, [uid]);
+  }, [sesion]);
 
   const articulosFiltrados = categoriaFiltro === "Todos"
     ? ARTICULOS
     : ARTICULOS.filter((a) => a.categoria === categoriaFiltro);
 
-  if (!uid || cargando) {
+  if (!sesion || cargando) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />

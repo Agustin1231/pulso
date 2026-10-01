@@ -7,7 +7,6 @@ import { getPerfil, guardarPerfil } from "@/lib/db/perfil";
 import type { PerfilRow, Sexo } from "@/lib/db/types";
 
 interface Props {
-  uid:        string;
   onGuardado?: () => void;
 }
 
@@ -34,7 +33,7 @@ function chip(activo: boolean) {
  * Perfil anónimo mínimo para el motor de riesgo: edad y sexo (contexto),
  * altura (IMC) y tabaquismo. Todo opcional; lo que falte se excluye del índice.
  */
-export function PerfilForm({ uid, onGuardado }: Props) {
+export function PerfilForm({ onGuardado }: Props) {
   const [perfil,    setPerfil]    = useState<PerfilRow | null | undefined>(undefined);
   const [editando,  setEditando]  = useState(false);
   const [edad,      setEdad]      = useState("");
@@ -46,11 +45,11 @@ export function PerfilForm({ uid, onGuardado }: Props) {
   const [error,     setError]     = useState<string | null>(null);
 
   useEffect(() => {
-    getPerfil(uid).then((p) => {
+    getPerfil().then((p) => {
       setPerfil(p);
       if (!p) setEditando(true);
     });
-  }, [uid]);
+  }, []);
 
   function abrir() {
     setEdad(perfil?.edad != null ? String(perfil.edad) : "");
@@ -78,13 +77,13 @@ export function PerfilForm({ uid, onGuardado }: Props) {
     }
     setError(null);
     setGuardando(true);
-    const res = await guardarPerfil(uid, data);
+    const res = await guardarPerfil(data);
     setGuardando(false);
     if (res.error) {
       setError(res.error);
       return;
     }
-    setPerfil({ uid, ...data, actualizado_at: new Date().toISOString() });
+    setPerfil(await getPerfil());
     setOk(true);
     setTimeout(() => {
       setOk(false);

@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart } from "lucide-react";
+import { Heart, ShieldCheck } from "lucide-react";
 import { BotonNotificaciones } from "@/components/notificaciones/boton-notificaciones";
 
 const titles: Record<string, { label: string; desc: string }> = {
@@ -11,6 +12,7 @@ const titles: Record<string, { label: string; desc: string }> = {
   "/calendario": { label: "Hábitos",   desc: "Tu seguimiento diario" },
   "/score":      { label: "Mi Score",  desc: "Análisis de riesgo cardiovascular" },
   "/tips":       { label: "Tips",      desc: "Consejos personalizados" },
+  "/privacidad": { label: "Privacidad", desc: "Tus datos y tus derechos" },
 };
 
 export function Header() {
@@ -44,7 +46,17 @@ export function Header() {
         </div>
       </div>
 
-      <BotonNotificaciones />
+      <div className="flex items-center gap-1">
+        <Link
+          href="/privacidad"
+          title="Privacidad y mis datos"
+          aria-label="Privacidad y mis datos"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <ShieldCheck className="h-4 w-4" />
+        </Link>
+        <BotonNotificaciones />
+      </div>
     </header>
   );
 }

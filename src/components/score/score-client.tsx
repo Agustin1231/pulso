@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Sparkles, RefreshCw, Loader2, AlertTriangle, ChevronDown, ChevronUp, Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
+import { fetchIA, mensajeErrorIA } from "@/lib/ia-cliente";
 import { getInforme } from "@/lib/db/informe";
 import type { Informe, FactorResultado, Alerta, MetricaType } from "@/lib/ml/tipos";
 import { PerfilForm } from "./perfil-form";
@@ -174,7 +175,7 @@ function FactorCard({ f }: { f: FactorResultado }) {
 // ─── componente principal ─────────────────────────────────────────────────────
 
 export function ScoreClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [informe, setInforme] = useState<Informe | null>(null);
   const [cargando, setCargando] = useState(true);
   const [verComoSeCalcula, setVerComoSeCalcula] = useState(false);
@@ -186,15 +187,15 @@ export function ScoreClient() {
   const [estadoIA, setEstadoIA] = useState<"idle" | "cargando" | "streaming" | "listo">("idle");
 
   const cargar = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     try {
-      setInforme(await getInforme(uid));
+      setInforme(await getInforme());
     } catch {
       setInforme(null);
     } finally {
       setCargando(false);
     }
-  }, [uid]);
+  }, [sesion]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -209,15 +210,19 @@ export function ScoreClient() {
   }, [analisisTexto, textoMostrado]);
 
   const generarAnalisis = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setEstadoIA("cargando");
     setAnalisisTexto(""); setTextoMostrado(""); analisisRef.current = "";
 
-    const res = await fetch("/api/score-analisis", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid }),
-    });
+    let res: Response;
+    try {
+      res = await fetchIA("/api/score-analisis");
+    } catch (e) {
+      const msg = mensajeErrorIA(e, "");
+      if (!msg) { setEstadoIA("idle"); return; }
+      analisisRef.current = msg; setAnalisisTexto(msg); setEstadoIA("listo");
+      return;
+    }
 
     if (!res.ok || !res.body) { setEstadoIA("idle"); return; }
 
@@ -245,9 +250,9 @@ export function ScoreClient() {
       }
     }
     setEstadoIA("listo");
-  }, [uid]);
+  }, [sesion]);
 
-  if (!uid || cargando) {
+  if (!sesion || cargando) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -303,7 +308,7 @@ export function ScoreClient() {
       </div>
 
       {/* Perfil */}
-      <PerfilForm uid={uid} onGuardado={cargar} />
+      <PerfilForm onGuardado={cargar} />
 
       {/* Proyección */}
       {hayMetricas && (

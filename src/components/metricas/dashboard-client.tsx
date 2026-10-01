@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
 import { getUltimasMetricas, getHistorialMetrica } from "@/lib/db/metricas";
 import { getInforme } from "@/lib/db/informe";
 import type { MetricaRow } from "@/lib/db/types";
@@ -16,7 +16,7 @@ import type { MetricaType } from "@/lib/db/types";
 import { Loader2, WifiOff, RefreshCw } from "lucide-react";
 
 export function DashboardClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
 
   const [ultimas,    setUltimas]    = useState<MetricaRow[]>([]);
   const [informe,    setInforme]    = useState<Informe | null>(null);
@@ -26,15 +26,15 @@ export function DashboardClient() {
   const [sinConexion, setSinConexion] = useState(false);
 
   const cargarDatos = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargando(true);
     setSinConexion(false);
     // El informe (pronósticos, alertas, modelo elegido) lo calcula el motor en
     // el servidor sobre los últimos 90 días; se pide junto con los últimos valores.
     try {
       const [data, inf] = await Promise.all([
-        getUltimasMetricas(uid),
-        getInforme(uid).catch(() => null),
+        getUltimasMetricas(),
+        getInforme().catch(() => null),
       ]);
       setUltimas(data);
       setInforme(inf);
@@ -48,20 +48,20 @@ export function DashboardClient() {
     } finally {
       setCargando(false);
     }
-  }, [uid, seleccion]);
+  }, [sesion, seleccion]);
 
-  useEffect(() => { cargarDatos(); }, [uid]);
+  useEffect(() => { cargarDatos(); }, [sesion]);
 
   useEffect(() => {
-    if (!uid || !seleccion) return;
-    getHistorialMetrica(uid, seleccion, 30).then(setHistorial).catch(() => setHistorial([]));
-  }, [uid, seleccion]);
+    if (!sesion || !seleccion) return;
+    getHistorialMetrica(seleccion, 30).then(setHistorial).catch(() => setHistorial([]));
+  }, [sesion, seleccion]);
 
   function handleSeleccion(tipo: MetricaType) {
     setSeleccion(tipo);
   }
 
-  if (!uid || cargando) {
+  if (!sesion || cargando) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />
@@ -99,7 +99,7 @@ export function DashboardClient() {
     <div className="space-y-5 animate-fade-in">
 
       {/* Registrar */}
-      <RegistrarMetrica uid={uid} onGuardar={cargarDatos} />
+      <RegistrarMetrica onGuardar={cargarDatos} />
 
       {/* Tarjetas de resumen */}
       <div>
@@ -108,7 +108,6 @@ export function DashboardClient() {
         </h3>
         <TarjetasResumen
           metricas={ultimas}
-          uid={uid}
           onSelect={handleSeleccion}
           seleccion={seleccion}
           onActualizar={cargarDatos}
@@ -140,7 +139,7 @@ export function DashboardClient() {
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
           Análisis personalizado
         </h3>
-        <AnalisisIA uid={uid} hayDatos={ultimas.length > 0} />
+        <AnalisisIA hayDatos={ultimas.length > 0} />
       </div>
 
     </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, X, Check, Loader2, ChevronRight, Pencil, Clock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAnonymousId } from "@/hooks/use-anonymous-id";
+import { useSesion } from "@/hooks/use-sesion";
 import { getRutinasGuardadas } from "@/lib/db/rutinas";
 import type { RutinaRow, Ejercicio } from "@/lib/db/types";
 import {
@@ -297,7 +297,7 @@ function HabitoForm({
 // ─── componente principal ─────────────────────────────────────────────────────
 
 export function HabitosClient() {
-  const uid = useAnonymousId();
+  const sesion = useSesion();
   const [tab, setTab] = useState<"hoy" | "semana" | "gestionar">("hoy");
 
   const [rutinaActiva, setRutinaActiva] = useState<RutinaRow | null>(null);
@@ -321,34 +321,34 @@ export function HabitosClient() {
 
   // ── carga inicial ───────────────────────────────────────────────────────────
   const cargarDatos = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargando(true);
     const [rutinas, defs, { fijos, registro }] = await Promise.all([
-      getRutinasGuardadas(uid),
-      getHabitosDefinicion(uid),
-      getHabitosFecha(uid, fecha),
+      getRutinasGuardadas(),
+      getHabitosDefinicion(),
+      getHabitosFecha(fecha),
     ]);
     setRutinaActiva(rutinas[0] ?? null);
     setHabitosDef(defs);
     setFijosDone(new Set(fijos.filter((f) => f.completado).map((f) => f.tipo)));
     setRegistroDone(new Set(registro.map((r) => r.ref_id)));
     setCargando(false);
-  }, [uid, fecha]);
+  }, [sesion, fecha]);
 
   useEffect(() => { cargarDatos(); }, [cargarDatos]);
 
   const cargarSemana = useCallback(async () => {
-    if (!uid) return;
+    if (!sesion) return;
     setCargandoSemana(true);
     const dias = getSemanaActual();
-    const { fijos, registro } = await getHabitosSemana(uid, dias[0], dias[6]);
+    const { fijos, registro } = await getHabitosSemana(dias[0], dias[6]);
     const conteo: Record<string, number> = {};
     dias.forEach((d) => { conteo[d] = 0; });
     fijos.filter((f) => f.completado).forEach((f) => { conteo[f.fecha] = (conteo[f.fecha] ?? 0) + 1; });
     registro.forEach((r) => { conteo[r.fecha] = (conteo[r.fecha] ?? 0) + 1; });
     setSemanaData(conteo);
     setCargandoSemana(false);
-  }, [uid]);
+  }, [sesion]);
 
   useEffect(() => { if (tab === "semana") cargarSemana(); }, [tab, cargarSemana]);
 
@@ -359,7 +359,7 @@ export function HabitosClient() {
     const done = !fijosDone.has(tipo);
     setFijosDone((prev) => { const n = new Set(prev); done ? n.add(tipo) : n.delete(tipo); return n; });
     setToggling((prev) => new Set(prev).add(key));
-    await toggleHabitoFijo(uid!, fecha, tipo, done);
+    await toggleHabitoFijo(fecha, tipo, done);
     setToggling((prev) => { const n = new Set(prev); n.delete(key); return n; });
   }
 
@@ -369,7 +369,7 @@ export function HabitosClient() {
     const done = !registroDone.has(refId);
     setRegistroDone((prev) => { const n = new Set(prev); done ? n.add(refId) : n.delete(refId); return n; });
     setToggling((prev) => new Set(prev).add(key));
-    await toggleHabitoRegistro(uid!, fecha, tipo, refId, done);
+    await toggleHabitoRegistro(fecha, tipo, refId, done);
     setToggling((prev) => { const n = new Set(prev); n.delete(key); return n; });
   }
 
@@ -392,12 +392,12 @@ export function HabitosClient() {
   }
 
   async function handleGuardar(data: HabitoFormData) {
-    if (!uid) return;
+    if (!sesion) return;
     setGuardando(true);
     if (editandoId) {
       await editarHabitoDefinicion(editandoId, data);
     } else {
-      await crearHabitoDefinicion(uid, data);
+      await crearHabitoDefinicion(data);
     }
     await cargarDatos();
     cerrarForm();
@@ -420,7 +420,7 @@ export function HabitosClient() {
   const hoyFecha = new Date();
   const hoyLabel = `${DIAS_ES[hoyFecha.getDay()]} ${hoyFecha.getDate()} de ${MESES_ES[hoyFecha.getMonth()]}`;
 
-  if (!uid || cargando) {
+  if (!sesion || cargando) {
     return (
       <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
         <Loader2 className="h-5 w-5 animate-spin" />

@@ -9,17 +9,17 @@ import { guardarMetrica } from "@/lib/db/metricas";
 import type { MetricaType } from "@/lib/db/types";
 
 interface Props {
-  uid:       string;
   onGuardar: () => void;
 }
 
-export function RegistrarMetrica({ uid, onGuardar }: Props) {
+export function RegistrarMetrica({ onGuardar }: Props) {
   const [abierto, setAbierto]     = useState(false);
   const [valores, setValores]     = useState<Partial<Record<MetricaType, string>>>({});
   const [suenoH, setSuenoH]       = useState("");   // horas de sueño (parte entera)
   const [suenoM, setSuenoM]       = useState("");   // minutos de sueño
   const [guardando, setGuardando] = useState(false);
   const [ok, setOk]               = useState(false);
+  const [error, setError]         = useState<string | null>(null);
 
   function cambiarValor(tipo: MetricaType, val: string) {
     setValores((prev) => ({ ...prev, [tipo]: val }));
@@ -40,13 +40,21 @@ export function RegistrarMetrica({ uid, onGuardar }: Props) {
     if (entradas.length === 0 && !tieneSueno) return;
 
     setGuardando(true);
+    setError(null);
+    const resultados = [];
     for (const m of entradas) {
-      await guardarMetrica(uid, m.tipo, Number(valores[m.tipo]), m.unidad);
+      resultados.push(await guardarMetrica(m.tipo, Number(valores[m.tipo])));
     }
     if (tieneSueno && valorSueno > 0) {
-      await guardarMetrica(uid, "horas_sueno", valorSueno, "h");
+      resultados.push(await guardarMetrica("horas_sueno", valorSueno));
     }
     setGuardando(false);
+    // El servidor valida el rango de cada métrica: si rechaza alguna, se avisa.
+    const fallo = resultados.find((r) => r.error);
+    if (fallo) {
+      setError(fallo.error);
+      return;
+    }
     setOk(true);
     setValores({});
     setSuenoH("");
@@ -167,6 +175,7 @@ export function RegistrarMetrica({ uid, onGuardar }: Props) {
 
       {/* Footer */}
       <div className="px-4 pb-4">
+        {error && <p className="mb-2 text-xs text-coral">{error}</p>}
         <Button className="w-full" onClick={guardar} disabled={!hayValores || guardando || ok}>
           {ok ? (
             <><Check className="h-4 w-4" /> Guardado</>

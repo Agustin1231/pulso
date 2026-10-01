@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { Sidebar }   from "@/components/layout/sidebar";
 import { Header }    from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { DialogoConsentimiento } from "@/components/privacidad/dialogo-consentimiento";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,6 +21,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom nav — solo móvil */}
       <BottomNav />
+
+      {/* Lo abre fetchIA cuando una función necesita mandar datos de salud a la IA */}
+      <DialogoConsentimiento />
     </div>
   );
 }

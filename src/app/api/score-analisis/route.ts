@@ -1,12 +1,18 @@
+import { createHash } from "node:crypto";
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
-import { getInforme } from "@/lib/db/informe";
+import { calcularInforme } from "@/lib/db/calculo-informe";
+import { conUsuario } from "@/lib/db/pool";
 import { resumirInforme } from "@/lib/ml/resumen";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { json, rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
 
 export const runtime = "nodejs";
 
-// El informe lo calcula el motor (`lib/ml`) en el servidor a partir del uid;
-// el cliente no manda números. El modelo de lenguaje redacta sobre ellos.
+// El informe lo calcula el motor (`lib/ml`) en el servidor con el uid de la
+// sesión; el cliente no manda nada. El modelo de lenguaje redacta sobre esos
+// números. Manda datos de salud a Anthropic: exige consentimiento.
 
 const SYSTEM = `Eres el analista de salud cardiovascular de Pulso. Recibes un INFORME calculado por el motor estadístico de la app (índice de riesgo por factor, pronósticos con intervalos, alertas de cambio de régimen, limitaciones) y lo interpretas para el usuario con recomendaciones prácticas y motivadoras.
 
@@ -42,30 +48,48 @@ REGLAS:
 - Si el informe trae una tendencia significativa, úsala
 - Responde en español`;
 
-export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const uid = typeof body?.uid === "string" ? body.uid : "";
-  if (!uid) return new Response("Falta uid", { status: 400 });
+export const POST = rutaProtegida(
+  {
+    nombre:         "ia.score",
+    cuerpo:         null,
+    consentimiento: true,
+    limites:        (uid, ip) => [limite("ia", uid), limite("iaIp", ip)],
+  },
+  async ({ uid, ip }) => {
+    const informe = await conUsuario(uid, (db) => calcularInforme(db, uid));
+    if (Object.keys(informe.metricas).length === 0) {
+      return json({ error: "sin_datos" }, 400);
+    }
 
-  const informe = await getInforme(uid);
-  if (Object.keys(informe.metricas).length === 0) {
-    return new Response("Sin datos", { status: 400 });
-  }
+    const resumen = resumirInforme(informe);
 
-  const result = streamText({
-    model: modeloClaude(),
-    system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `${resumirInforme(informe)}\n\nGenera el análisis personalizado siguiendo el formato exacto.`,
+    // Trazabilidad (fila 5): el hash del informe que vio la IA permite
+    // reconstruir después qué datos generaron qué recomendación, sin guardar
+    // los datos de salud en la auditoría.
+    await auditar({
+      uid, accion: "ia.score", resultado: "ok", ip,
+      detalle: {
+        proveedor:    "anthropic",
+        informe_hash: createHash("sha256").update(resumen).digest("hex").slice(0, 16),
+        metricas:     Object.keys(informe.metricas),
       },
-    ],
-    // El SDK convierte los errores del modelo en una parte `3:` del stream sin
-    // loguearlos; sin esto un fallo de API/proxy es invisible en el servidor.
-    onError: ({ error }) => console.error("[ai] score-analisis:", error instanceof Error ? error.message : error),
-    maxTokens: 650,
-  });
+    });
 
-  return result.toDataStreamResponse();
-}
+    const result = streamText({
+      model: modeloClaude(),
+      system: SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `${resumen}\n\nGenera el análisis personalizado siguiendo el formato exacto.`,
+        },
+      ],
+      // El SDK convierte los errores del modelo en una parte `3:` del stream sin
+      // loguearlos; sin esto un fallo de API/proxy es invisible en el servidor.
+      onError: ({ error }) => console.error("[ai] score-analisis:", error instanceof Error ? error.message : error),
+      maxTokens: 650,
+    });
+
+    return result.toDataStreamResponse();
+  }
+);

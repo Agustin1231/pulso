@@ -1,5 +1,9 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
+import { cuerpoRecetaSchema } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
@@ -29,26 +33,32 @@ REGLAS ESTRICTAS:
 - Responde siempre en español
 - Si el usuario menciona pocos ingredientes, complementa con ingredientes básicos saludables
 - NUNCA menciones diagnósticos, enfermedades ni recetes para condiciones médicas específicas
-- NUNCA uses frases como "consulta a tu médico" dentro de la receta (solo al final si hay algo relevante)`;
+- NUNCA uses frases como "consulta a tu médico" dentro de la receta (solo al final si hay algo relevante)
 
-export async function POST(req: Request) {
-  const { ingredientes } = await req.json();
+${REGLA_DATOS_DEL_USUARIO}`;
 
-  if (!ingredientes || typeof ingredientes !== "string" || ingredientes.trim().length === 0) {
-    return new Response("Ingredientes requeridos", { status: 400 });
+export const POST = rutaProtegida(
+  {
+    nombre:  "ia.receta",
+    cuerpo:  cuerpoRecetaSchema,
+    limites: (uid, ip) => [limite("ia", uid), limite("iaIp", ip)],
+  },
+  async ({ uid, ip, cuerpo }) => {
+    await auditar({ uid, accion: "ia.receta", resultado: "ok", ip, detalle: { proveedor: "anthropic" } });
+
+    const result = streamText({
+      model: modeloClaude(),
+      system: SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Tengo estos ingredientes disponibles: ${datosDelUsuario(cuerpo.ingredientes)}\n\nCrea una receta cardioprotectora con ellos.`,
+        },
+      ],
+      onError: ({ error }) => console.error("[ai] receta:", error instanceof Error ? error.message : error),
+      maxTokens: 800,
+    });
+
+    return result.toDataStreamResponse();
   }
-
-  const result = streamText({
-    model: modeloClaude(),
-    system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `Tengo estos ingredientes disponibles: ${ingredientes.trim()}\n\nCrea una receta cardioprotectora con ellos.`,
-      },
-    ],
-    maxTokens: 800,
-  });
-
-  return result.toDataStreamResponse();
-}
+);

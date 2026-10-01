@@ -1,5 +1,11 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { conUsuario } from "@/lib/db/pool";
+import { rutinasActivas, ultimasMetricas } from "@/lib/db/consultas";
+import { auditar } from "@/lib/seguridad/auditoria";
+import { rutaProtegida } from "@/lib/seguridad/ruta";
+import { limite } from "@/lib/seguridad/tasa";
+import { cuerpoRutinaSchema } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
@@ -49,26 +55,63 @@ REGLAS ESTRICTAS:
 - Responde siempre en español
 - NUNCA menciones diagnósticos ni recetes para condiciones médicas`;
 
-export async function POST(req: Request) {
-  const { nivel, tiempo, lugar, limitacion, metricas, historial_count, ejercicios_previos } = await req.json();
+/**
+ * El cliente solo manda las cuatro respuestas del cuestionario (valores
+ * cerrados). Sueño, estrés, cantidad de rutinas y ejercicios previos los lee
+ * el servidor de la base: antes llegaban del cliente y entraban al prompt tal
+ * cual. Manda datos de salud a Anthropic, así que exige consentimiento.
+ */
+export const POST = rutaProtegida(
+  {
+    nombre:         "ia.rutina",
+    cuerpo:         cuerpoRutinaSchema,
+    consentimiento: true,
+    limites:        (uid, ip) => [limite("ia", uid), limite("iaIp", ip)],
+  },
+  async ({ uid, ip, cuerpo }) => {
+    const { nivel, tiempo, lugar, limitacion } = cuerpo;
 
-  if (!nivel || !tiempo || !lugar) {
-    return new Response("Perfil incompleto", { status: 400 });
-  }
+    const { metricas, rutinas } = await conUsuario(uid, async (db) => ({
+      metricas: await ultimasMetricas(db, uid),
+      rutinas:  await rutinasActivas(db, uid),
+    }));
 
-  const sueno = metricas?.sueno;
-  const estres = metricas?.estres;
-  const semana = Math.floor((historial_count ?? 0) / 3) + 1;
+    const suenoRow = metricas.find((m) => m.tipo === "horas_sueno");
+    const estresRow = metricas.find((m) => m.tipo === "nivel_estres");
+    const sueno = suenoRow ? Math.round(Number(suenoRow.valor) * 10) / 10 : undefined;
+    const estres = estresRow ? Math.round(Number(estresRow.valor)) : undefined;
+    const historialCount = rutinas.length;
+    const ejerciciosPrevios = rutinas
+      .slice(0, 5)
+      .flatMap((r) => r.contenido.ejercicios?.map((e) => e.nombre) ?? [])
+      .filter((n, i, arr) => arr.indexOf(n) === i)
+      .slice(0, 60);
 
-  const contextoParts: string[] = [];
-  if (sueno !== undefined) contextoParts.push(`- Sueño de anoche: ${sueno}h${sueno < 7 ? " (por debajo de lo recomendado)" : ""}`);
-  if (estres !== undefined) contextoParts.push(`- Nivel de estrés hoy: ${estres}/10${estres > 5 ? " (elevado)" : ""}`);
-  contextoParts.push(`- Rutinas completadas hasta hoy: ${historial_count ?? 0} (semana ${semana} del plan)`);
-  if (ejercicios_previos?.length > 0) {
-    contextoParts.push(`- Ejercicios usados en rutinas anteriores (evitar repetir o variar significativamente): ${ejercicios_previos.join(", ")}`);
-  }
+    // Minimización: a la IA solo va lo que usa la rutina (sueño y estrés), sin
+    // el uid ni el resto de las métricas.
+    await auditar({
+      uid, accion: "ia.rutina", resultado: "ok", ip,
+      detalle: {
+        proveedor:   "anthropic",
+        datos_salud: [
+          sueno !== undefined && "horas_sueno",
+          estres !== undefined && "nivel_estres",
+          limitacion !== "Ninguna limitación" && "limitacion",
+        ].filter(Boolean),
+      },
+    });
 
-  const perfil = `
+    const semana = Math.floor(historialCount / 3) + 1;
+
+    const contextoParts: string[] = [];
+    if (sueno !== undefined) contextoParts.push(`- Sueño de anoche: ${sueno}h${sueno < 7 ? " (por debajo de lo recomendado)" : ""}`);
+    if (estres !== undefined) contextoParts.push(`- Nivel de estrés hoy: ${estres}/10${estres > 5 ? " (elevado)" : ""}`);
+    contextoParts.push(`- Rutinas completadas hasta hoy: ${historialCount} (semana ${semana} del plan)`);
+    if (ejerciciosPrevios.length > 0) {
+      contextoParts.push(`- Ejercicios usados en rutinas anteriores (evitar repetir o variar significativamente): ${ejerciciosPrevios.join(", ")}`);
+    }
+
+    const perfil = `
 Perfil del usuario:
 - Nivel de actividad: ${nivel}
 - Tiempo disponible: ${tiempo} minutos
@@ -77,19 +120,21 @@ Perfil del usuario:
 
 Estado de hoy:
 ${contextoParts.join("\n")}
-  `.trim();
+    `.trim();
 
-  const result = streamText({
-    model: modeloClaude(),
-    system: SYSTEM,
-    messages: [
-      {
-        role: "user",
-        content: `Crea mi rutina de ejercicio cardiovascular personalizada para hoy:\n\n${perfil}\n\nGenera una rutina completa, progresiva y motivadora.`,
-      },
-    ],
-    maxTokens: 950,
-  });
+    const result = streamText({
+      model: modeloClaude(),
+      system: SYSTEM,
+      messages: [
+        {
+          role: "user",
+          content: `Crea mi rutina de ejercicio cardiovascular personalizada para hoy:\n\n${perfil}\n\nGenera una rutina completa, progresiva y motivadora.`,
+        },
+      ],
+      onError: ({ error }) => console.error("[ai] rutina:", error instanceof Error ? error.message : error),
+      maxTokens: 950,
+    });
 
-  return result.toDataStreamResponse();
-}
+    return result.toDataStreamResponse();
+  }
+);
