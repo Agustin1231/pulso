@@ -72,8 +72,9 @@ export function PrivacidadClient() {
       <Seccion icono={Database} titulo="Qué guardamos">
         <p>
           Tus métricas, hábitos, recetas, rutinas, listas del mercado y el perfil del score (edad, sexo,
-          altura, tabaquismo). Nada más: <strong className="text-foreground">no pedimos nombre, email ni
-          teléfono</strong>. Tus datos están atados a un identificador aleatorio, no a vos.
+          altura, tabaquismo). Nada más: <strong className="text-foreground">no pedimos nombre ni
+          teléfono</strong>, y el correo solo si creás una cuenta, que es opcional. Tus datos están atados a un
+          identificador aleatorio, no a vos.
         </p>
         <p>
           Cada usuario solo puede leer y modificar sus propios datos: lo controla la base de datos, no solo la app.
@@ -83,8 +84,9 @@ export function PrivacidadClient() {
       <Seccion icono={KeyRound} titulo="Tu sesión">
         <p>
           Tu acceso es una cookie protegida que el navegador no deja leer a ningún script, y se renueva sola
-          cada día que usás la app. Si no usás Pulso durante 180 días, la sesión vence. Como no hay cuenta, si
-          borrás las cookies del navegador perdés el acceso a tus datos.
+          cada día que usás la app. Si no usás Pulso durante 180 días, la sesión vence. Sin cuenta, si borrás las
+          cookies del navegador perdés el acceso a tus datos. Con una cuenta volvés a entrar con tu correo y tu
+          contraseña, que se guarda cifrada (bcrypt) y nunca en texto.
         </p>
       </Seccion>
 
@@ -127,8 +129,8 @@ export function PrivacidadClient() {
         </div>
         <p className="mb-3 text-xs text-muted-foreground leading-relaxed">
           Elimina de forma definitiva todo lo que guardaste en Pulso, tus fotos de recetas y tu sesión, y limpia
-          este equipo. <strong className="text-foreground">No se puede deshacer</strong>: como no hay cuenta, no
-          hay copia a la que volver.
+          este equipo. Si tenés una cuenta, también se borra. <strong className="text-foreground">No se puede
+          deshacer</strong>: no queda copia a la que volver.
         </p>
         {!confirmando ? (
           <Button variant="destructive" disabled={!sesion} onClick={() => setConfirmando(true)}>

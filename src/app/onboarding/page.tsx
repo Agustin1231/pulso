@@ -31,6 +31,12 @@ export default function OnboardingPage() {
     router.replace("/dashboard");
   }
 
+  // Quien ya tiene cuenta acepta el mismo aviso y va directo a entrar.
+  function handleLogin() {
+    acceptDisclaimer();
+    router.replace("/cuenta");
+  }
+
   if (!ready) return null;
 
   return (
@@ -91,9 +97,13 @@ export default function OnboardingPage() {
           Entendido, empezar
         </Button>
 
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <Button variant="link" className="mt-3 w-full" onClick={handleLogin}>
+          Ya tengo cuenta, iniciar sesión
+        </Button>
+
+        <p className="mt-3 text-center text-xs text-muted-foreground">
           Tus datos se guardan de forma <strong className="text-foreground">anónima</strong>.
-          No necesitas crear una cuenta.
+          No necesitas crear una cuenta, pero puedes crearla para entrar desde otro equipo.
         </p>
       </div>
     </main>

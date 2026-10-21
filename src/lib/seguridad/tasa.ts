@@ -47,6 +47,20 @@ export const LIMITES = {
    */
   escritura:   { max: 300,  ventana: HORA },
   escrituraIp: { max: 1200, ventana: HORA },
+  /**
+   * Cuentas con correo y contraseña. `login` y `recuperacion` van por correo
+   * (un hash, no el correo): frenan adivinar la contraseña de una cuenta y que
+   * la recuperación sirva para llenarle la bandeja a alguien.
+   */
+  registro:       { max: 5,  ventana: HORA },
+  registroIp:     { max: 20, ventana: HORA },
+  login:          { max: 10, ventana: HORA },
+  loginIp:        { max: 30, ventana: HORA },
+  recuperacion:   { max: 3,  ventana: HORA },
+  recuperacionIp: { max: 10, ventana: HORA },
+  reenvio:        { max: 3,  ventana: HORA },
+  /** Activar la cuenta o restablecer la contraseña con el token del correo. */
+  enlaceIp:       { max: 30, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;

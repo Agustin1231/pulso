@@ -282,3 +282,23 @@ export const respuestaAutenticacionSchema = z
       .passthrough(),
   })
   .passthrough();
+
+// ─── Cuentas ──────────────────────────────────────────────────────────────────
+
+export const emailSchema = z.string().trim().toLowerCase().max(254).email();
+
+/** bcrypt solo mira los primeros 72 bytes: más largo no se acepta (la base tampoco). */
+export const contrasenaSchema = z
+  .string()
+  .min(10)
+  .max(72)
+  .refine((p) => new TextEncoder().encode(p).length <= 72, "contraseña demasiado larga");
+
+/** Token de un enlace del correo: 32 bytes en base64url. */
+export const tokenEnlaceSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
+
+export const registroSchema = z.object({ email: emailSchema, password: contrasenaSchema });
+export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(72) });
+export const recuperarSchema = z.object({ email: emailSchema });
+export const activarSchema = z.object({ token: tokenEnlaceSchema });
+export const restablecerSchema = z.object({ token: tokenEnlaceSchema, password: contrasenaSchema });

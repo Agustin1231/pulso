@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -83,6 +83,36 @@ export async function borrarImagenesDe(uid: string): Promise<void> {
     if (!CARPETA_RE.test(carpeta)) continue;
     const dir = rutaDentroDeMedia([RECETAS_SUBDIR, carpeta]);
     if (dir) await rm(dir, { recursive: true, force: true });
+  }
+}
+
+/**
+ * Al iniciar sesión, los datos anónimos del equipo se suman a la cuenta
+ * (`pulso_fusionar_identidad`). La base ya reescribió las URLs de las recetas
+ * a la carpeta de la cuenta; acá se mueven los archivos.
+ */
+export async function moverImagenes(de: string, a: string): Promise<void> {
+  const destino = rutaDentroDeMedia([RECETAS_SUBDIR, carpetaDeUsuario(a)]);
+  if (!destino) return;
+  for (const carpeta of carpetasPermitidas(de)) {
+    if (!CARPETA_RE.test(carpeta)) continue;
+    const origen = rutaDentroDeMedia([RECETAS_SUBDIR, carpeta]);
+    if (!origen) continue;
+    let archivos: string[];
+    try {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta generada por el servidor y validada
+      archivos = await readdir(origen);
+    } catch {
+      continue; // esa identidad no tenía imágenes en esta carpeta
+    }
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- ídem
+    await mkdir(destino, { recursive: true });
+    for (const archivo of archivos) {
+      if (!ARCHIVO_IMAGEN_RE.test(archivo)) continue;
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- ídem, y el nombre pasó ARCHIVO_IMAGEN_RE
+      await rename(path.join(origen, archivo), path.join(destino, archivo));
+    }
+    await rm(origen, { recursive: true, force: true });
   }
 }
 

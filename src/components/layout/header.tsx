@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, ShieldCheck } from "lucide-react";
+import { Heart, ShieldCheck, UserRound } from "lucide-react";
 import { BotonNotificaciones } from "@/components/notificaciones/boton-notificaciones";
 
 const titles: Record<string, { label: string; desc: string }> = {
@@ -13,6 +13,7 @@ const titles: Record<string, { label: string; desc: string }> = {
   "/score":      { label: "Mi Score",  desc: "Análisis de riesgo cardiovascular" },
   "/tips":       { label: "Tips",      desc: "Consejos personalizados" },
   "/privacidad": { label: "Privacidad", desc: "Tus datos y tus derechos" },
+  "/cuenta":     { label: "Cuenta",     desc: "Tu correo y tu acceso" },
 };
 
 export function Header() {
@@ -47,6 +48,14 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-1">
+        <Link
+          href="/cuenta"
+          title="Mi cuenta"
+          aria-label="Mi cuenta"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground"
+        >
+          <UserRound className="h-4 w-4" />
+        </Link>
         <Link
           href="/privacidad"
           title="Privacidad y mis datos"

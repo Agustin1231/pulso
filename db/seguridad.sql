@@ -455,6 +455,7 @@ end $$;
 --     sin uso, o se revocó) hace más de `p_dias` días;
 --   * los uids legado que ya no se pueden reclamar (90 días) más `p_dias`;
 --   * datos huérfanos: filas cuyo uid no es ni una identidad ni un legado.
+-- Las identidades con una cuenta activada (correo y contraseña) no se purgan.
 -- Es idempotente (correrla dos veces no borra nada más) y deja una fila en la
 -- auditoría por uid. La corre el DUEÑO desde un cron (ver
 -- scripts/purgar-inactivos.mjs); la app no tiene permiso. Devuelve los uids
@@ -467,10 +468,16 @@ declare
   v_gracia interval := make_interval(days => greatest(coalesce(p_dias, 30), 0));
   v_uid    text;
 begin
+  -- Enlaces de activación y recuperación usados o vencidos hace una semana.
+  delete from tokens_cuenta where coalesce(usado_at, expira_at) < now() - interval '7 days';
+
   for v_uid in
     select i.uid
       from identidades i
       left join sesiones s on s.uid = i.uid
+     -- Una cuenta activada no se purga: con el correo y la contraseña el dueño
+     -- puede volver a entrar aunque todas sus sesiones hayan vencido.
+     where not exists (select 1 from cuentas c where c.uid = i.uid and c.verificada_at is not null)
      group by i.uid, i.created_at
     having coalesce(max(least(s.expira_at, coalesce(s.revocada_at, s.expira_at))), i.created_at)
            < now() - v_gracia
@@ -691,3 +698,345 @@ begin
     end if;
   end loop;
 end $$;
+
+-- ─── Cuentas con correo y contraseña (21-oct-2026) ──────────────────────────
+-- Opcionales: la app se sigue usando sin cuenta, como antes. Crear una cuenta
+-- le pone correo y contraseña a la identidad de la sesión actual, así que todo
+-- lo que ya había guardado queda en la cuenta. Con la cuenta se puede volver a
+-- entrar desde otro equipo o después de borrar las cookies.
+--
+--   * La contraseña se guarda con bcrypt (pgcrypto, costo 12), nunca en claro.
+--     Se compara acá adentro: la app no puede leer los hashes ni abrir una
+--     sesión para una cuenta sin la contraseña correcta.
+--   * Los enlaces de activación y de recuperación llevan un token aleatorio de
+--     256 bits; acá se guarda solo su SHA-256, como con las sesiones. Son de un
+--     solo uso y vencen (24 horas la activación, 1 hora la recuperación).
+--   * Hasta activar la cuenta con el enlace del correo no se puede iniciar
+--     sesión con ella.
+--   * Como las demás tablas de sistema, `cuentas` y `tokens_cuenta` no tienen
+--     grants para `pulso_app`: solo se tocan con las funciones de abajo.
+
+create extension if not exists pgcrypto;
+
+create table if not exists cuentas (
+  uid            text primary key references identidades (uid) on delete cascade,
+  email          text not null check (email = lower(email) and char_length(email) <= 254),
+  password_hash  text not null,
+  verificada_at  timestamptz,
+  created_at     timestamptz not null default now(),
+  actualizada_at timestamptz not null default now()
+);
+
+create unique index if not exists cuentas_email_idx on cuentas (email);
+
+create table if not exists tokens_cuenta (
+  token_hash text primary key check (token_hash ~ '^[0-9a-f]{64}$'),
+  uid        text not null references identidades (uid) on delete cascade,
+  tipo       text not null check (tipo in ('activacion', 'recuperacion')),
+  expira_at  timestamptz not null,
+  usado_at   timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists tokens_cuenta_uid_idx on tokens_cuenta (uid);
+
+-- bcrypt solo mira los primeros 72 bytes: más largo no se acepta, para que
+-- dos contraseñas distintas no terminen siendo la misma.
+create or replace function pulso_contrasena_valida(p_password text) returns boolean
+language sql immutable as $$
+  select p_password is not null and char_length(p_password) >= 10 and octet_length(p_password) <= 72
+$$;
+
+-- Registro: la cuenta queda sobre la identidad de la sesión (desbloqueada),
+-- con todos sus datos. Devuelve:
+--   'ok'                  cuenta creada, falta activarla con el token
+--   'sin_sesion'          no hay sesión utilizable
+--   'ya_tiene_cuenta'     esta identidad ya tiene una cuenta
+--   'email_en_uso'        el correo es de otra cuenta (la app no lo dice: le
+--                         avisa por correo al dueño, para no revelar quién está registrado)
+--   'contrasena_invalida'
+-- Un registro que nunca se activó no retiene el correo: cuando su enlace
+-- vence, el correo se libera para quien lo pida de nuevo.
+create or replace function pulso_registrar_cuenta(p_sesion_hash text, p_email text, p_password text, p_token_hash text)
+returns text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid   text := pulso_resolver_sesion(p_sesion_hash);
+  v_email text := lower(btrim(p_email));
+  v_otro  cuentas%rowtype;
+begin
+  if v_uid is null then
+    return 'sin_sesion';
+  end if;
+  if not pulso_contrasena_valida(p_password) then
+    return 'contrasena_invalida';
+  end if;
+  if exists (select 1 from cuentas c where c.uid = v_uid) then
+    return 'ya_tiene_cuenta';
+  end if;
+
+  select * into v_otro from cuentas c where c.email = v_email for update;
+  if found then
+    if v_otro.verificada_at is not null
+       or exists (select 1 from tokens_cuenta t
+                   where t.uid = v_otro.uid and t.tipo = 'activacion'
+                     and t.usado_at is null and t.expira_at > now()) then
+      return 'email_en_uso';
+    end if;
+    delete from tokens_cuenta t where t.uid = v_otro.uid;
+    delete from cuentas c where c.uid = v_otro.uid;
+  end if;
+
+  insert into cuentas (uid, email, password_hash)
+  values (v_uid, v_email, crypt(p_password, gen_salt('bf', 12)));
+  insert into tokens_cuenta (token_hash, uid, tipo, expira_at)
+  values (p_token_hash, v_uid, 'activacion', now() + interval '24 hours');
+  return 'ok';
+exception
+  when unique_violation then
+    -- dos registros con el mismo correo a la vez: gana el primero
+    return 'email_en_uso';
+end $$;
+
+-- Activación con el token del correo. true si se activó.
+create or replace function pulso_activar_cuenta(p_token_hash text)
+returns boolean
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid text;
+begin
+  update tokens_cuenta t
+     set usado_at = now()
+   where t.token_hash = p_token_hash
+     and t.tipo = 'activacion'
+     and t.usado_at is null
+     and t.expira_at > now()
+  returning t.uid into v_uid;
+
+  if v_uid is null then
+    return false;
+  end if;
+  update cuentas c
+     set verificada_at = coalesce(c.verificada_at, now()), actualizada_at = now()
+   where c.uid = v_uid;
+  return found;
+end $$;
+
+-- Nuevo enlace de activación para la cuenta (sin activar) de la sesión. Los
+-- anteriores dejan de servir. Devuelve el correo al que mandarlo, o null.
+create or replace function pulso_reenviar_activacion(p_sesion_hash text, p_token_hash text)
+returns text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid   text := pulso_resolver_sesion(p_sesion_hash);
+  v_email text;
+begin
+  select c.email into v_email from cuentas c where c.uid = v_uid and c.verificada_at is null;
+  if v_email is null then
+    return null;
+  end if;
+  update tokens_cuenta t set usado_at = now()
+   where t.uid = v_uid and t.tipo = 'activacion' and t.usado_at is null;
+  insert into tokens_cuenta (token_hash, uid, tipo, expira_at)
+  values (p_token_hash, v_uid, 'activacion', now() + interval '24 hours');
+  return v_email;
+end $$;
+
+-- Cuenta de la sesión (desbloqueada), para mostrarla en la app.
+create or replace function pulso_cuenta_de_sesion(p_sesion_hash text)
+returns table (email text, verificada boolean)
+language sql security definer set search_path = public, pg_temp as $$
+  select c.email, c.verificada_at is not null
+    from cuentas c
+   where c.uid = pulso_resolver_sesion(p_sesion_hash)
+$$;
+
+-- Pasa los datos de una identidad sin cuenta a otra y borra la primera. La
+-- usa el inicio de sesión: lo que se guardó en este equipo antes de entrar se
+-- suma a la cuenta. Cuando hay choque (el mismo hábito del mismo día, el
+-- perfil, la misma suscripción push) gana lo que ya tenía la cuenta. Las
+-- imágenes de recetas pasan a la carpeta de la cuenta: acá se reescriben las
+-- URLs y la app mueve los archivos (ver `moverImagenes` en src/lib/media.ts).
+-- No se pasan el consentimiento ni las passkeys: son de quien los dio, y la
+-- cuenta tiene los suyos. Solo la llaman otras funciones: la app no la puede
+-- ejecutar.
+create or replace function pulso_fusionar_identidad(p_de text, p_a text)
+returns void
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_url_uid  text := '/api/img/recetas/' || p_de || '/';
+  v_url_hash text := '/api/img/recetas/' || substr(encode(digest('pulso-media:' || p_de, 'sha256'), 'hex'), 1, 32) || '/';
+  v_url_a    text := '/api/img/recetas/' || substr(encode(digest('pulso-media:' || p_a, 'sha256'), 'hex'), 1, 32) || '/';
+begin
+  update metricas set uid = p_a where uid = p_de;
+  update habitos h set uid = p_a
+   where h.uid = p_de
+     and not exists (select 1 from habitos x where x.uid = p_a and x.fecha = h.fecha and x.tipo = h.tipo);
+  update habitos_definicion set uid = p_a where uid = p_de;
+  update habitos_registro h set uid = p_a
+   where h.uid = p_de
+     and not exists (select 1 from habitos_registro x
+                      where x.uid = p_a and x.fecha = h.fecha and x.tipo = h.tipo
+                        and x.ref_id is not distinct from h.ref_id);
+  update recetas_guardadas
+     set uid = p_a,
+         imagen_url = case
+           when starts_with(imagen_url, v_url_uid)  then v_url_a || substr(imagen_url, char_length(v_url_uid) + 1)
+           when starts_with(imagen_url, v_url_hash) then v_url_a || substr(imagen_url, char_length(v_url_hash) + 1)
+           else imagen_url
+         end
+   where uid = p_de;
+  update listas_mercado set uid = p_a where uid = p_de;
+  update rutinas set uid = p_a where uid = p_de;
+  update suscripciones_push s set uid = p_a
+   where s.uid = p_de
+     and not exists (select 1 from suscripciones_push x where x.uid = p_a and x.endpoint = s.endpoint);
+  update perfil set uid = p_a
+   where uid = p_de
+     and not exists (select 1 from perfil x where x.uid = p_a);
+
+  -- Lo que no se pudo pasar (los choques) se borra con la identidad.
+  delete from metricas           where uid = p_de;
+  delete from habitos            where uid = p_de;
+  delete from habitos_definicion where uid = p_de;
+  delete from habitos_registro   where uid = p_de;
+  delete from recetas_guardadas  where uid = p_de;
+  delete from listas_mercado     where uid = p_de;
+  delete from rutinas            where uid = p_de;
+  delete from suscripciones_push where uid = p_de;
+  delete from perfil             where uid = p_de;
+  delete from uids_legado        where uid = p_de;
+  -- en cascada: sesiones, consentimientos y passkeys
+  delete from identidades        where uid = p_de;
+
+  insert into auditoria (uid, accion, resultado, detalle)
+  values (p_a, 'cuenta.fusionar', 'ok', jsonb_build_object('de', p_de));
+end $$;
+
+-- Inicio de sesión con correo y contraseña. Si la contraseña es correcta y la
+-- cuenta está activada, crea una sesión nueva para la cuenta (ya desbloqueada:
+-- la contraseña es la prueba) y revoca la de este equipo. Si esa sesión era de
+-- una identidad sin cuenta, sus datos pasan a la cuenta.
+-- `resultado`: 'ok', 'credenciales' (correo o contraseña mal, sin decir cuál)
+-- o 'sin_verificar'. `uid_fusionado` es la identidad que se sumó, para que la
+-- app mueva sus imágenes.
+create or replace function pulso_iniciar_sesion_cuenta(
+  p_email text, p_password text, p_nuevo_hash text, p_dias int, p_actual_hash text
+)
+returns table (resultado text, uid_cuenta text, uid_fusionado text)
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_c      cuentas%rowtype;
+  v_actual text;
+begin
+  select * into v_c from cuentas c where c.email = lower(btrim(p_email));
+  if not found then
+    -- El mismo trabajo que con una cuenta real: que el tiempo de respuesta no
+    -- diga si el correo está registrado.
+    perform crypt(coalesce(p_password, ''), gen_salt('bf', 12));
+    return query select 'credenciales'::text, null::text, null::text;
+    return;
+  end if;
+  if p_password is null or crypt(p_password, v_c.password_hash) <> v_c.password_hash then
+    return query select 'credenciales'::text, null::text, null::text;
+    return;
+  end if;
+  if v_c.verificada_at is null then
+    return query select 'sin_verificar'::text, null::text, null::text;
+    return;
+  end if;
+
+  if p_actual_hash is not null then
+    -- Solo una sesión desbloqueada aporta sus datos: si la identidad tiene
+    -- bloqueo con passkey, iniciar sesión no puede ser la forma de saltarlo.
+    v_actual := pulso_resolver_sesion(p_actual_hash);
+    update sesiones s set revocada_at = now()
+     where s.token_hash = p_actual_hash and s.revocada_at is null;
+    if v_actual is not null and v_actual <> v_c.uid
+       and not exists (select 1 from cuentas c where c.uid = v_actual) then
+      perform pulso_fusionar_identidad(v_actual, v_c.uid);
+    else
+      v_actual := null;
+    end if;
+  end if;
+
+  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
+  values (p_nuevo_hash, v_c.uid,
+          now() + make_interval(days => pulso_dias_validos(p_dias)),
+          now() + make_interval(mins => pulso_minutos_desbloqueo()));
+  return query select 'ok'::text, v_c.uid, v_actual;
+end $$;
+
+-- Pide el enlace de recuperación. Los anteriores dejan de servir. true si el
+-- correo es de una cuenta (la app responde lo mismo en los dos casos).
+create or replace function pulso_solicitar_recuperacion(p_email text, p_token_hash text)
+returns boolean
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid text;
+begin
+  select c.uid into v_uid from cuentas c where c.email = lower(btrim(p_email));
+  if v_uid is null then
+    return false;
+  end if;
+  update tokens_cuenta t set usado_at = now()
+   where t.uid = v_uid and t.tipo = 'recuperacion' and t.usado_at is null;
+  insert into tokens_cuenta (token_hash, uid, tipo, expira_at)
+  values (p_token_hash, v_uid, 'recuperacion', now() + interval '1 hour');
+  return true;
+end $$;
+
+-- Contraseña nueva con el token de recuperación. Cierra todas las sesiones de
+-- la cuenta (si alguien entró con la contraseña vieja, queda afuera) y, como
+-- el enlace llegó al correo, la deja activada. true si se cambió.
+create or replace function pulso_restablecer_contrasena(p_token_hash text, p_password text)
+returns boolean
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid text;
+begin
+  if not pulso_contrasena_valida(p_password) then
+    return false;
+  end if;
+  update tokens_cuenta t
+     set usado_at = now()
+   where t.token_hash = p_token_hash
+     and t.tipo = 'recuperacion'
+     and t.usado_at is null
+     and t.expira_at > now()
+  returning t.uid into v_uid;
+
+  if v_uid is null then
+    return false;
+  end if;
+  update cuentas c
+     set password_hash  = crypt(p_password, gen_salt('bf', 12)),
+         verificada_at  = coalesce(c.verificada_at, now()),
+         actualizada_at = now()
+   where c.uid = v_uid;
+  update tokens_cuenta t set usado_at = now() where t.uid = v_uid and t.usado_at is null;
+  update sesiones s set revocada_at = now() where s.uid = v_uid and s.revocada_at is null;
+  return true;
+end $$;
+
+revoke execute on function
+  pulso_contrasena_valida(text),
+  pulso_registrar_cuenta(text, text, text, text),
+  pulso_activar_cuenta(text),
+  pulso_reenviar_activacion(text, text),
+  pulso_cuenta_de_sesion(text),
+  pulso_fusionar_identidad(text, text),
+  pulso_iniciar_sesion_cuenta(text, text, text, int, text),
+  pulso_solicitar_recuperacion(text, text),
+  pulso_restablecer_contrasena(text, text)
+from public;
+
+grant execute on function
+  pulso_registrar_cuenta(text, text, text, text),
+  pulso_activar_cuenta(text),
+  pulso_reenviar_activacion(text, text),
+  pulso_cuenta_de_sesion(text),
+  pulso_iniciar_sesion_cuenta(text, text, text, int, text),
+  pulso_solicitar_recuperacion(text, text),
+  pulso_restablecer_contrasena(text, text)
+to pulso_app;

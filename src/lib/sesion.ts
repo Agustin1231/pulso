@@ -15,7 +15,8 @@ import { pool } from "@/lib/db/pool";
  *     la ve), Secure y SameSite=Strict (no viaja en peticiones de otro sitio).
  *   - La base guarda solo el SHA-256 del token, y el uid lo genera la base.
  *   - Ninguna acción recibe un uid: lo sacan de la cookie con `requerirUid`.
- *   - Sigue siendo anónimo: no hay registro ni datos personales.
+ *   - Sigue siendo anónimo por defecto. La cuenta con correo y contraseña es
+ *     opcional (ver lib/cuenta.ts): se pone sobre la misma identidad.
  *
  * La app nativa (Android) no tiene cookies de browser: manda el mismo token en
  * `Authorization: Bearer`, y lo guarda cifrado con el Keystore del teléfono.
@@ -74,6 +75,20 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/** SHA-256 de un token que mandó el cliente (sesión o enlace del correo): es lo único que ve la base. */
+export function hashDeToken(token: string): string {
+  return hashToken(token);
+}
+
+/**
+ * Token para un enlace de un solo uso (activación, recuperación): el valor va
+ * en el correo y a la base solo llega su hash, como con las sesiones.
+ */
+export function nuevoTokenDeEnlace(): { token: string; hash: string } {
+  const token = randomBytes(32).toString("base64url");
+  return { token, hash: hashToken(token) };
+}
+
 /** Token del header `Authorization: Bearer` (app nativa), o null. */
 async function tokenDeBearer(): Promise<string | null> {
   const valor = (await headers()).get("authorization")?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1];
@@ -102,6 +117,12 @@ async function fijarCookie(token: string): Promise<void> {
 async function borrarCookie(): Promise<void> {
   // Con los mismos atributos: un `__Host-` sin Secure el browser lo ignora.
   (await cookies()).set(COOKIE_SESION, "", { ...opcionesCookie, maxAge: 0 });
+}
+
+/** Hash del token de sesión de la petición, o null si no trae uno. */
+export async function hashDeSesion(): Promise<string | null> {
+  const token = await tokenDeSolicitud();
+  return token ? hashToken(token) : null;
 }
 
 /** uid de la sesión vigente, o null. Solo lee: sirve en cualquier contexto de servidor. */
@@ -286,6 +307,34 @@ async function renovarOCrear(
     [hash, DIAS_SESION]
   );
   return { uid: rows[0].uid, origen: "nueva", token };
+}
+
+export type ResultadoLogin =
+  | { resultado: "ok"; uid: string; fusionado: string | null }
+  | { resultado: "credenciales" }
+  | { resultado: "sin_verificar" };
+
+/**
+ * Inicio de sesión con correo y contraseña. La base compara la contraseña y,
+ * si está bien, abre una sesión nueva para la cuenta (ya desbloqueada) y
+ * revoca la de este equipo. Si esa sesión era anónima, sus datos se suman a la
+ * cuenta: `fusionado` es la identidad que se sumó, para mover sus imágenes.
+ *
+ * Escribe la cookie: solo se puede llamar desde un route handler o una server action.
+ */
+export async function iniciarSesionConCuenta(email: string, password: string): Promise<ResultadoLogin> {
+  const actual = await tokenDeSolicitud();
+  const token = randomBytes(32).toString("base64url");
+  const { rows } = await pool.query<{ resultado: string; uid_cuenta: string | null; uid_fusionado: string | null }>(
+    "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4, $5)",
+    [email, password, hashToken(token), DIAS_SESION, actual ? hashToken(actual) : null]
+  );
+  const r = rows[0];
+  if (r?.resultado !== "ok" || !r.uid_cuenta) {
+    return r?.resultado === "sin_verificar" ? { resultado: "sin_verificar" } : { resultado: "credenciales" };
+  }
+  await fijarCookie(token);
+  return { resultado: "ok", uid: r.uid_cuenta, fusionado: r.uid_fusionado };
 }
 
 /**

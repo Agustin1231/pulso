@@ -163,6 +163,59 @@ export function rutaProtegida<T, X = unknown>(
   };
 }
 
+interface OpcionesPublica<T> {
+  /** Nombre del evento en la auditoría, ej. "cuenta.login". */
+  nombre: string;
+  cuerpo: z.ZodType<T, z.ZodTypeDef, unknown>;
+  /** Límites a consumir, armados con la IP y el cuerpo ya validado (ej. por correo). */
+  limites: (ip: string, cuerpo: T) => Limite[];
+}
+
+/**
+ * Envoltorio de las rutas de la cuenta que NO exigen sesión (iniciar sesión,
+ * activar, recuperar): las usa alguien que todavía no entró. Mismo orden que
+ * `rutaProtegida` sin el paso de la sesión: origen (403), cuerpo con tope de
+ * 4 KB (413) y zod (400), límites (429) y error genérico (500). En la
+ * auditoría quedan los nombres de los campos inválidos, nunca sus valores (la
+ * contraseña no se registra en ningún lado).
+ */
+export function rutaPublica<T>(
+  op: OpcionesPublica<T>,
+  manejador: (ctx: { req: Request; ip: string | null; cuerpo: T }) => Promise<Response>
+): (req: Request) => Promise<Response> {
+  return async (req) => {
+    const ip = await ipCliente();
+    const denegar = async (status: number, error: string, detalle?: Record<string, unknown>) => {
+      await auditar({ accion: op.nombre, resultado: "denegado", ip, detalle: { motivo: error, ...detalle } });
+      return json({ error }, status, status === 429 ? { "Retry-After": "3600" } : undefined);
+    };
+
+    if (!(await origenValido())) return denegar(403, "origen_no_permitido");
+
+    let crudo: unknown;
+    try {
+      crudo = await leerJson(req, 4 * 1024);
+    } catch (err) {
+      if (err instanceof CuerpoDemasiadoGrande) return denegar(413, "cuerpo_demasiado_grande");
+      throw err;
+    }
+    const r = op.cuerpo.safeParse(crudo);
+    if (!r.success) {
+      return denegar(400, "datos_invalidos", { campos: r.error.issues.map((i) => i.path.join(".")) });
+    }
+
+    try {
+      const cupo = await consumir(op.limites(ip ?? "sin-ip", r.data));
+      if (!cupo.ok) return denegar(429, "demasiadas_peticiones", { limite: cupo.clave.split(":")[0] });
+      return await manejador({ req, ip, cuerpo: r.data });
+    } catch (err) {
+      console.error(`[api] ${op.nombre}:`, mensajeError(err));
+      await auditar({ accion: op.nombre, resultado: "error", ip });
+      return json({ error: "error_interno" }, 500);
+    }
+  };
+}
+
 /**
  * Las instrucciones del sistema van aparte; lo que escribe el usuario va
  * envuelto en etiquetas y el prompt de sistema aclara que es dato, no orden.
