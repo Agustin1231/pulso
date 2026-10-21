@@ -664,3 +664,30 @@ begin
     );
   end loop;
 end $$;
+
+-- ─── Llaves foráneas de las tablas de datos a identidades (21-oct-2026) ─────
+-- Las tablas de datos vienen de antes de `identidades`, cuando el uid lo
+-- generaba el navegador, y se relacionaban por `uid` sin llave declarada. Se
+-- agregan como NOT VALID: la base las exige para toda fila nueva o modificada,
+-- pero no revisa las filas viejas de uids legado todavía sin reclamar, que no
+-- están en `identidades` y que la purga borra al vencer su ventana de 90 días.
+-- Cuando ya no queden, se puede correr `alter table ... validate constraint`.
+-- Con `on delete cascade`, borrar una identidad borra sus datos (igual que hace
+-- `pulso_eliminar_datos` tabla por tabla). `auditoria` queda sin llave a
+-- propósito: es append-only y tiene que sobrevivir al borrado del usuario.
+do $$
+declare
+  t text;
+begin
+  foreach t in array array['metricas', 'habitos', 'habitos_definicion', 'habitos_registro',
+                           'recetas_guardadas', 'listas_mercado', 'rutinas', 'perfil',
+                           'suscripciones_push']
+  loop
+    if not exists (select 1 from pg_constraint
+                    where conrelid = t::regclass and conname = t || '_uid_fkey') then
+      execute format('alter table %I add constraint %I foreign key (uid)
+                        references identidades (uid) on delete cascade not valid',
+                     t, t || '_uid_fkey');
+    end if;
+  end loop;
+end $$;
