@@ -15,8 +15,9 @@ import { pool } from "@/lib/db/pool";
  *     la ve), Secure y SameSite=Strict (no viaja en peticiones de otro sitio).
  *   - La base guarda solo el SHA-256 del token, y el uid lo genera la base.
  *   - Ninguna acción recibe un uid: lo sacan de la cookie con `requerirUid`.
- *   - Sigue siendo anónimo por defecto. La cuenta con correo y contraseña es
- *     opcional (ver lib/cuenta.ts): se pone sobre la misma identidad.
+ *   - Para usar los datos hace falta una cuenta activada (correo y contraseña,
+ *     ver lib/cuenta.ts). La sesión anónima solo sirve para crearla o para
+ *     iniciar sesión: la cuenta se pone sobre esa misma identidad.
  *
  * La app nativa (Android) no tiene cookies de browser: manda el mismo token en
  * `Authorization: Bearer`, y lo guarda cifrado con el Keystore del teléfono.
@@ -125,8 +126,27 @@ export async function hashDeSesion(): Promise<string | null> {
   return token ? hashToken(token) : null;
 }
 
-/** uid de la sesión vigente, o null. Solo lee: sirve en cualquier contexto de servidor. */
+/**
+ * uid de la sesión vigente CON una cuenta activada, o null. Es el que usan
+ * todas las rutas y acciones de datos: sin cuenta no se lee ni se guarda nada.
+ * Solo lee: sirve en cualquier contexto de servidor.
+ */
 export async function uidDeSesion(): Promise<string | null> {
+  const token = await tokenDeSolicitud();
+  if (!token) return null;
+  const { rows } = await pool.query<{ uid: string | null }>(
+    "select pulso_uid_con_cuenta($1) as uid",
+    [hashToken(token)]
+  );
+  return rows[0]?.uid ?? null;
+}
+
+/**
+ * uid de la sesión vigente aunque no tenga cuenta (sí respeta el bloqueo).
+ * Solo para lo que se hace antes de tener cuenta: crearla, reenviar la
+ * activación, ver su estado, y el borrado de datos (Ley 1581).
+ */
+export async function uidDeSesionSinCuenta(): Promise<string | null> {
   const token = await tokenDeSolicitud();
   if (!token) return null;
   const { rows } = await pool.query<{ uid: string | null }>(
@@ -134,6 +154,19 @@ export async function uidDeSesion(): Promise<string | null> {
     [hashToken(token)]
   );
   return rows[0]?.uid ?? null;
+}
+
+export type EstadoCuenta = "ninguna" | "sin_activar" | "activa";
+
+/** Si la sesión de la petición tiene cuenta y si está activada. */
+export async function estadoCuenta(): Promise<EstadoCuenta> {
+  const token = await tokenDeSolicitud();
+  if (!token) return "ninguna";
+  const { rows } = await pool.query<{ e: EstadoCuenta | null }>(
+    "select pulso_estado_cuenta($1) as e",
+    [hashToken(token)]
+  );
+  return rows[0]?.e ?? "ninguna";
 }
 
 type Estado = { estado: "sin_sesion" | "bloqueada" | "activa"; bloqueo: EstadoBloqueo };

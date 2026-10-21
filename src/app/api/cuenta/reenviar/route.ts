@@ -10,6 +10,7 @@ export const runtime = "nodejs";
 export const POST = rutaProtegida(
   {
     nombre: "cuenta.reenviar",
+    sinCuenta: true,
     cuerpo: null,
     limites: (uid, ip) => [limite("reenvio", uid), limite("registroIp", ip)],
   },

@@ -1,5 +1,5 @@
 import { mensajeError } from "@/lib/db/pool";
-import { asegurarSesion, cerrarSesionEnEsteEquipo, estadoSesion, eventoSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
+import { asegurarSesion, cerrarSesionEnEsteEquipo, estadoCuenta, estadoSesion, eventoSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { ipCliente, origenValido } from "@/lib/seguridad/red";
 import { CuerpoDemasiadoGrande, json, leerJson } from "@/lib/seguridad/ruta";
@@ -62,7 +62,9 @@ export async function POST(req: Request) {
     }
 
     const { bloqueo } = await estadoSesion();
-    return json({ ok: true, origen, bloqueo });
+    // Una sesión recién creada todavía no viaja en la petición: no tiene cuenta.
+    const cuenta = origen === "nueva" || origen === "legado" ? "ninguna" : await estadoCuenta();
+    return json({ ok: true, origen, bloqueo, cuenta });
   } catch (err) {
     console.error("[api] sesion:", mensajeError(err));
     return json({ error: "error_interno" }, 500);
@@ -73,7 +75,7 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const { estado, bloqueo } = await estadoSesion();
-    return json({ estado, bloqueo });
+    return json({ estado, bloqueo, cuenta: await estadoCuenta() });
   } catch (err) {
     console.error("[api] sesion GET:", mensajeError(err));
     return json({ error: "error_interno" }, 500);

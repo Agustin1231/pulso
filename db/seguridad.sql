@@ -1040,3 +1040,36 @@ grant execute on function
   pulso_solicitar_recuperacion(text, text),
   pulso_restablecer_contrasena(text, text)
 to pulso_app;
+
+-- ─── Cuenta obligatoria (21-oct-2026) ────────────────────────────────────────
+-- Desde esta versión, para leer o guardar datos hace falta una cuenta activada.
+-- La sesión anónima sigue existiendo, pero solo sirve para crear la cuenta (la
+-- cuenta se pone sobre esa identidad) o iniciar sesión. La app saca el uid de
+-- los datos con esta función, no con `pulso_resolver_sesion`: sin cuenta
+-- activada devuelve null y no se entrega ni se guarda nada.
+create or replace function pulso_uid_con_cuenta(p_token_hash text)
+returns text
+language sql security definer set search_path = public, pg_temp as $$
+  select c.uid
+    from cuentas c
+   where c.uid = pulso_resolver_sesion(p_token_hash)
+     and c.verificada_at is not null
+$$;
+
+-- Estado de la cuenta de la sesión para el cliente: 'ninguna', 'sin_activar' o
+-- 'activa'. Ignora el bloqueo con passkey: no entrega datos, solo dice a qué
+-- pantalla ir.
+create or replace function pulso_estado_cuenta(p_token_hash text)
+returns text
+language sql stable security definer set search_path = public, pg_temp as $$
+  select case
+           when c.uid is null           then 'ninguna'
+           when c.verificada_at is null then 'sin_activar'
+           else 'activa'
+         end
+    from (select pulso_uid_de_token(p_token_hash) as uid) s
+    left join cuentas c on c.uid = s.uid
+$$;
+
+revoke execute on function pulso_uid_con_cuenta(text), pulso_estado_cuenta(text) from public;
+grant execute on function pulso_uid_con_cuenta(text), pulso_estado_cuenta(text) to pulso_app;

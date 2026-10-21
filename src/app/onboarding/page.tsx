@@ -18,7 +18,7 @@ export default function OnboardingPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Si ya aceptó el disclaimer, ir directo al dashboard
+    // Si ya aceptó el disclaimer, ir directo al dashboard (sin cuenta, la guardia lo manda a /acceso)
     if (hasAcceptedDisclaimer()) {
       router.replace("/dashboard");
     } else {
@@ -26,15 +26,10 @@ export default function OnboardingPage() {
     }
   }, [router]);
 
+  // Después del aviso, a iniciar sesión o crear la cuenta (la app la exige).
   function handleAccept() {
     acceptDisclaimer();
-    router.replace("/dashboard");
-  }
-
-  // Quien ya tiene cuenta acepta el mismo aviso y va directo a entrar.
-  function handleLogin() {
-    acceptDisclaimer();
-    router.replace("/cuenta");
+    router.replace("/acceso");
   }
 
   if (!ready) return null;
@@ -97,13 +92,9 @@ export default function OnboardingPage() {
           Entendido, empezar
         </Button>
 
-        <Button variant="link" className="mt-3 w-full" onClick={handleLogin}>
-          Ya tengo cuenta, iniciar sesión
-        </Button>
-
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          Tus datos se guardan de forma <strong className="text-foreground">anónima</strong>.
-          No necesitas crear una cuenta, pero puedes crearla para entrar desde otro equipo.
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          En el siguiente paso inicias sesión o creas tu cuenta con tu correo. Así entras desde
+          cualquier equipo y no pierdes tus datos.
         </p>
       </div>
     </main>

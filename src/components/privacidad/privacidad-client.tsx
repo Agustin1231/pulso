@@ -73,8 +73,8 @@ export function PrivacidadClient() {
         <p>
           Tus métricas, hábitos, recetas, rutinas, listas del mercado y el perfil del score (edad, sexo,
           altura, tabaquismo). Nada más: <strong className="text-foreground">no pedimos nombre ni
-          teléfono</strong>, y el correo solo si creás una cuenta, que es opcional. Tus datos están atados a un
-          identificador aleatorio, no a vos.
+          teléfono</strong>: solo el correo de tu cuenta, para entrar y recuperar la contraseña. Tus datos están
+          atados a un identificador aleatorio, no a tu nombre.
         </p>
         <p>
           Cada usuario solo puede leer y modificar sus propios datos: lo controla la base de datos, no solo la app.
@@ -84,9 +84,9 @@ export function PrivacidadClient() {
       <Seccion icono={KeyRound} titulo="Tu sesión">
         <p>
           Tu acceso es una cookie protegida que el navegador no deja leer a ningún script, y se renueva sola
-          cada día que usás la app. Si no usás Pulso durante 180 días, la sesión vence. Sin cuenta, si borrás las
-          cookies del navegador perdés el acceso a tus datos. Con una cuenta volvés a entrar con tu correo y tu
-          contraseña, que se guarda cifrada (bcrypt) y nunca en texto.
+          cada día que usás la app. Si no usás Pulso durante 180 días, la sesión vence. Si borrás las cookies o
+          cambiás de equipo, volvés a entrar con tu correo y tu contraseña, que se guarda cifrada (bcrypt) y
+          nunca en texto.
         </p>
       </Seccion>
 
@@ -129,7 +129,7 @@ export function PrivacidadClient() {
         </div>
         <p className="mb-3 text-xs text-muted-foreground leading-relaxed">
           Elimina de forma definitiva todo lo que guardaste en Pulso, tus fotos de recetas y tu sesión, y limpia
-          este equipo. Si tenés una cuenta, también se borra. <strong className="text-foreground">No se puede
+          este equipo. Tu cuenta también se borra. <strong className="text-foreground">No se puede
           deshacer</strong>: no queda copia a la que volver.
         </p>
         {!confirmando ? (

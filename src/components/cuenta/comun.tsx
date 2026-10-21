@@ -33,6 +33,7 @@ export function mensajeDeError(codigo: string | undefined): string {
     case "cuenta_sin_activar":
       return "Tu cuenta todavía no está activada. Abre el enlace que te llegó al correo, o usa \"Olvidé mi contraseña\" para recibir uno nuevo.";
     case "ya_tiene_cuenta":        return "Este equipo ya tiene una cuenta. Recarga la página.";
+    case "cuenta_requerida":       return "Inicia sesión para seguir.";
     case "datos_invalidos":        return "Revisa el correo y la contraseña (de 10 a 72 caracteres).";
     case "demasiadas_peticiones":  return "Demasiados intentos. Espera un rato y vuelve a intentar.";
     case "enlace_invalido":        return "El enlace venció o ya se usó.";
@@ -62,7 +63,7 @@ export function MarcoAcceso({ titulo, children }: { titulo: string; children: Re
   return (
     <main className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm animate-fade-in">
-        <Link href="/cuenta" className="mb-6 flex items-center justify-center gap-2">
+        <Link href="/acceso" className="mb-6 flex items-center justify-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-coral/15 border border-coral/25">
             <Heart className="h-4 w-4 fill-coral text-coral" />
           </div>

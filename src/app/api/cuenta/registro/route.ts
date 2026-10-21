@@ -18,6 +18,7 @@ export const runtime = "nodejs";
 export const POST = rutaProtegida(
   {
     nombre: "cuenta.registrar",
+    sinCuenta: true,
     cuerpo: registroSchema,
     limites: (uid, ip) => [limite("registro", uid), limite("registroIp", ip)],
   },
@@ -33,7 +34,7 @@ export const POST = rutaProtegida(
       enviarDespues(cuerpo.email, correoActivacion(urlDeLaApp(`/acceso/activar?token=${token}`)), "activacion");
       await auditar({ uid, accion: "cuenta.registrar", resultado: "ok", ip });
     } else {
-      enviarDespues(cuerpo.email, correoYaRegistrado(urlDeLaApp("/cuenta")), "ya_registrado");
+      enviarDespues(cuerpo.email, correoYaRegistrado(urlDeLaApp("/acceso")), "ya_registrado");
       await auditar({ uid, accion: "cuenta.registrar", resultado: "denegado", ip, detalle: { motivo: "email_en_uso" } });
     }
     return json({ ok: true });

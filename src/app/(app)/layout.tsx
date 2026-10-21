@@ -5,11 +5,13 @@ import { Header }    from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { DialogoConsentimiento } from "@/components/privacidad/dialogo-consentimiento";
 import { GuardiaBloqueo } from "@/components/privacidad/guardia-bloqueo";
+import { GuardiaCuenta } from "@/components/cuenta/guardia-cuenta";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    // Con el bloqueo activo y sin desbloquear, la guardia muestra la pantalla
-    // de bloqueo en lugar de la app (ver guardia-bloqueo.tsx).
+    // Sin una cuenta activada, a /acceso (guardia-cuenta.tsx). Con el bloqueo
+    // activo y sin desbloquear, la pantalla de bloqueo (guardia-bloqueo.tsx).
+    <GuardiaCuenta>
     <GuardiaBloqueo>
     <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar — solo desktop */}
@@ -30,5 +32,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <DialogoConsentimiento />
     </div>
     </GuardiaBloqueo>
+    </GuardiaCuenta>
   );
 }

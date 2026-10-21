@@ -30,12 +30,12 @@ export function ActivarClient({ token }: { token: string | null }) {
       {estado !== "activando" && estado !== "ok" && (
         <Aviso tipo="error">
           {mensajeDeError(estado)}
-          {estado === "enlace_invalido" && " Si ya la activaste, solo inicia sesión. Si no, entra y pide otro correo."}
+          {estado === "enlace_invalido" && " Si ya la activaste, solo inicia sesión. Si no, pide otro correo desde la pantalla de acceso."}
         </Aviso>
       )}
       {estado !== "activando" && (
         <Button asChild className="w-full">
-          <Link href="/cuenta">Ir a Pulso</Link>
+          <Link href="/acceso">Ir a Pulso</Link>
         </Button>
       )}
     </MarcoAcceso>

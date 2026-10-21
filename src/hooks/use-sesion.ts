@@ -28,12 +28,16 @@ export interface EstadoBloqueo {
   bloqueada: boolean;
 }
 
+/** La cuenta de la sesión. Sin una cuenta "activa" la app no muestra datos (ver GuardiaCuenta). */
+export type EstadoCuenta = "ninguna" | "sin_activar" | "activa";
+
 export interface EstadoSesion {
   lista:   boolean;
   bloqueo: EstadoBloqueo;
+  cuenta:  EstadoCuenta;
 }
 
-const INICIAL: EstadoSesion = { lista: false, bloqueo: { activo: false, bloqueada: false } };
+const INICIAL: EstadoSesion = { lista: false, bloqueo: { activo: false, bloqueada: false }, cuenta: "ninguna" };
 
 let estado: EstadoSesion = INICIAL;
 const oyentes = new Set<() => void>();
@@ -48,6 +52,10 @@ function suscribir(oyente: () => void): () => void {
   return () => {
     oyentes.delete(oyente);
   };
+}
+
+function cuentaDe(c: unknown): EstadoCuenta {
+  return c === "activa" || c === "sin_activar" ? c : "ninguna";
 }
 
 function normalizar(b: unknown): EstadoBloqueo {
@@ -70,7 +78,7 @@ async function pedir(): Promise<boolean> {
   // Reclamado o no, ya no sirve para nada: la identidad ahora es la cookie.
   if (legado) olvidarUidLegado();
   const data = await res.json().catch(() => ({}));
-  fijar({ lista: true, bloqueo: normalizar(data.bloqueo) });
+  fijar({ lista: true, bloqueo: normalizar(data.bloqueo), cuenta: cuentaDe(data.cuenta) });
   return true;
 }
 
@@ -114,7 +122,7 @@ export async function refrescarEstado(): Promise<void> {
     void asegurarSesion();
     return;
   }
-  fijar({ bloqueo: normalizar(data.bloqueo) });
+  fijar({ bloqueo: normalizar(data.bloqueo), cuenta: cuentaDe(data.cuenta) });
 }
 
 /** El servidor respondió 423: la sesión está bloqueada. */
@@ -154,10 +162,11 @@ export function useEstadoSesion(): EstadoSesion {
 }
 
 /**
- * true cuando la sesión está lista Y no está bloqueada: es lo que esperan los
- * componentes para pedir datos. Bloqueada, da false y ninguno los pide.
+ * true cuando la sesión está lista, tiene una cuenta activada Y no está
+ * bloqueada: es lo que esperan los componentes para pedir datos. Si falta
+ * algo, da false y ninguno los pide.
  */
 export function useSesion(): boolean {
-  const { lista, bloqueo } = useEstadoSesion();
-  return lista && !bloqueo.bloqueada;
+  const { lista, bloqueo, cuenta } = useEstadoSesion();
+  return lista && cuenta === "activa" && !bloqueo.bloqueada;
 }

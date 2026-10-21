@@ -45,7 +45,7 @@ export function RestablecerClient({ token }: { token: string | null }) {
             con la contraseña nueva.
           </Aviso>
           <Button asChild className="w-full">
-            <Link href="/cuenta">Iniciar sesión</Link>
+            <Link href="/acceso">Iniciar sesión</Link>
           </Button>
         </>
       ) : (

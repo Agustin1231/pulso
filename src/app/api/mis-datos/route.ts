@@ -18,6 +18,8 @@ export const runtime = "nodejs";
 export const DELETE = rutaProtegida(
   {
     nombre: "datos.eliminar",
+    // El derecho de supresión no depende de tener cuenta.
+    sinCuenta: true,
     cuerpo: null,
     limites: (uid, ip) => [limite("supresion", uid), limite("supresion", ip)],
   },

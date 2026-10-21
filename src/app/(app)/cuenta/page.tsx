@@ -5,7 +5,7 @@ export default function CuentaPage() {
     <div className="animate-fade-in space-y-2 max-w-md">
       <h2 className="text-2xl font-bold mb-1">Cuenta</h2>
       <p className="text-muted-foreground text-sm mb-6">
-        Opcional: con correo y contraseña entras desde cualquier equipo y no pierdes tus datos.
+        Tu correo y tu acceso a Pulso.
       </p>
       <CuentaClient />
     </div>

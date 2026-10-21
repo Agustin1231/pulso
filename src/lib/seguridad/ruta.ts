@@ -1,7 +1,7 @@
 import "server-only";
 import type { z } from "zod";
 import { conUsuario, mensajeError } from "@/lib/db/pool";
-import { estadoSesion, uidDeSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
+import { estadoSesion, uidDeSesion, uidDeSesionSinCuenta, uidIgnorandoBloqueo } from "@/lib/sesion";
 import { auditar } from "./auditoria";
 import { tieneConsentimientoIA } from "./consentimiento";
 import { ipCliente, origenValido } from "./red";
@@ -44,6 +44,12 @@ interface Opciones<T> {
    * que permiten salir del bloqueo, así que no pueden exigirlo.
    */
   permitirBloqueada?: boolean;
+  /**
+   * Acepta una sesión sin cuenta activada. Solo para crear la cuenta, ver su
+   * estado, reenviar la activación y borrar los datos: todo lo demás exige
+   * haber iniciado sesión.
+   */
+  sinCuenta?: boolean;
 }
 
 export function json(cuerpo: unknown, status = 200, headers?: Record<string, string>): Response {
@@ -117,14 +123,18 @@ export function rutaProtegida<T, X = unknown>(
 
     let uid: string | null;
     try {
-      uid = op.permitirBloqueada ? await uidIgnorandoBloqueo() : await uidDeSesion();
+      uid = op.permitirBloqueada ? await uidIgnorandoBloqueo()
+          : op.sinCuenta         ? await uidDeSesionSinCuenta()
+          : await uidDeSesion();
     } catch (err) {
       console.error(`[api] ${op.nombre}: no se pudo resolver la sesión:`, mensajeError(err));
       return json({ error: "error_interno" }, 500);
     }
     if (!uid) {
       const { estado } = await estadoSesion().catch(() => ({ estado: "sin_sesion" as const }));
-      return estado === "bloqueada" ? denegar(423, "sesion_bloqueada") : denegar(401, "sesion_requerida");
+      if (estado === "bloqueada") return denegar(423, "sesion_bloqueada");
+      // Hay sesión pero no una cuenta activada: el cliente manda a iniciar sesión.
+      return estado === "activa" ? denegar(401, "cuenta_requerida") : denegar(401, "sesion_requerida");
     }
 
     try {
