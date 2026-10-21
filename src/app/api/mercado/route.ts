@@ -1,5 +1,6 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { respuestaStreamIA } from "@/lib/ai/stream";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
 import { limite } from "@/lib/seguridad/tasa";
@@ -77,7 +78,13 @@ export const POST = rutaProtegida(
       ? datosDelUsuario(pregunta)
       : `Genera una lista de compras ${periodo} para una alimentación cardioprotectora.${contextoRecetas}${contextoHistorial}`;
 
+    // La web y la app mandan la lista actual como primer turno `assistant` para
+    // que la IA sepa qué ajustar, pero la Messages API exige que el primer
+    // mensaje sea del usuario: sin esto el ajuste fallaba siempre con el modelo
+    // real. Se antepone el pedido original que generó esa lista.
+    const pedidoOriginal = { role: "user" as const, content: `Genera una lista de compras ${periodo} para una alimentación cardioprotectora.` };
     const messages = [
+      ...(historial[0]?.role === "assistant" ? [pedidoOriginal] : []),
       ...historial,
       { role: "user" as const, content: mensajeInicial },
     ];
@@ -87,9 +94,9 @@ export const POST = rutaProtegida(
       system: SYSTEM,
       messages,
       onError: ({ error }) => console.error("[ai] mercado:", error instanceof Error ? error.message : error),
-      maxTokens: 1100,
+      maxOutputTokens: 1100,
     });
 
-    return result.toDataStreamResponse();
+    return respuestaStreamIA(result);
   }
 );

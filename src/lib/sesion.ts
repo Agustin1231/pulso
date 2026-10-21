@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { pool } from "@/lib/db/pool";
 
 /**
@@ -16,6 +16,12 @@ import { pool } from "@/lib/db/pool";
  *   - La base guarda solo el SHA-256 del token, y el uid lo genera la base.
  *   - Ninguna acción recibe un uid: lo sacan de la cookie con `requerirUid`.
  *   - Sigue siendo anónimo: no hay registro ni datos personales.
+ *
+ * La app nativa (Android) no tiene cookies de browser: manda el mismo token en
+ * `Authorization: Bearer`, y lo guarda cifrado con el Keystore del teléfono.
+ * Es la misma sesión, con el mismo hash, rotación y vencimiento. Un sitio
+ * ajeno no puede poner ese header (haría falta CORS, y no hay), así que no
+ * abre una puerta de CSRF.
  */
 
 const PRODUCCION = process.env.NODE_ENV === "production";
@@ -31,6 +37,15 @@ const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/; // 32 bytes en base64url
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export type OrigenSesion = "existente" | "rotada" | "nueva" | "legado";
+
+/** Evento de auditoría de una sesión que cambió (todas menos la que solo se renovó). */
+export function eventoSesion(origen: Exclude<OrigenSesion, "existente">): string {
+  switch (origen) {
+    case "legado": return "sesion.reclamar";
+    case "nueva":  return "sesion.crear";
+    case "rotada": return "sesion.rotar";
+  }
+}
 
 /** Estado del bloqueo con passkey (fila 9) para el cliente. */
 export interface EstadoBloqueo {
@@ -59,7 +74,16 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-async function tokenDeCookie(): Promise<string | null> {
+/** Token del header `Authorization: Bearer` (app nativa), o null. */
+async function tokenDeBearer(): Promise<string | null> {
+  const valor = (await headers()).get("authorization")?.match(/^Bearer ([A-Za-z0-9_-]{43})$/)?.[1];
+  return valor ?? null;
+}
+
+/** Token de la petición: el Bearer de la app nativa o, si no viene, la cookie del browser. */
+async function tokenDeSolicitud(): Promise<string | null> {
+  const bearer = await tokenDeBearer();
+  if (bearer) return bearer;
   const valor = (await cookies()).get(COOKIE_SESION)?.value;
   return valor && TOKEN_RE.test(valor) ? valor : null;
 }
@@ -82,7 +106,7 @@ async function borrarCookie(): Promise<void> {
 
 /** uid de la sesión vigente, o null. Solo lee: sirve en cualquier contexto de servidor. */
 export async function uidDeSesion(): Promise<string | null> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) return null;
   const { rows } = await pool.query<{ uid: string | null }>(
     "select pulso_resolver_sesion($1) as uid",
@@ -91,9 +115,15 @@ export async function uidDeSesion(): Promise<string | null> {
   return rows[0]?.uid ?? null;
 }
 
-/** Estado de la sesión de la cookie, sin modificarla. */
-export async function estadoSesion(): Promise<{ estado: "sin_sesion" | "bloqueada" | "activa"; bloqueo: EstadoBloqueo }> {
-  const token = await tokenDeCookie();
+type Estado = { estado: "sin_sesion" | "bloqueada" | "activa"; bloqueo: EstadoBloqueo };
+
+/** Estado de la sesión de la petición, sin modificarla. */
+export async function estadoSesion(): Promise<Estado> {
+  return estadoSesionDeToken(await tokenDeSolicitud());
+}
+
+/** Estado de un token dado: el que la app nativa va a usar después de crear o rotar la sesión. */
+export async function estadoSesionDeToken(token: string | null): Promise<Estado> {
   if (!token) return { estado: "sin_sesion", bloqueo: { activo: false, bloqueada: false } };
   const { rows } = await pool.query<{ estado: "sin_sesion" | "bloqueada" | "activa"; bloqueo: boolean }>(
     "select * from pulso_estado_sesion($1)",
@@ -120,7 +150,7 @@ export async function requerirUid(): Promise<string> {
 
 /** uid de la sesión de la cookie, ignorando el bloqueo, o null. */
 export async function uidIgnorandoBloqueo(): Promise<string | null> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) return null;
   const { rows } = await pool.query<{ uid: string | null }>(
     "select pulso_uid_de_token($1) as uid",
@@ -130,14 +160,14 @@ export async function uidIgnorandoBloqueo(): Promise<string | null> {
 }
 
 export async function fijarDesafio(tipo: "registro" | "desbloqueo", desafio: string): Promise<void> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) throw new SinSesion();
   await pool.query("select pulso_fijar_desafio($1, $2, $3)", [hashToken(token), tipo, desafio]);
 }
 
 /** Devuelve el desafío pendiente y lo borra: no se puede usar dos veces. */
 export async function consumirDesafio(tipo: "registro" | "desbloqueo"): Promise<string | null> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) return null;
   const { rows } = await pool.query<{ d: string | null }>(
     "select pulso_consumir_desafio($1, $2) as d",
@@ -148,7 +178,7 @@ export async function consumirDesafio(tipo: "registro" | "desbloqueo"): Promise<
 
 /** Abre la ventana de uso. Solo después de verificar la passkey. */
 export async function desbloquearSesion(): Promise<boolean> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) return false;
   const { rows } = await pool.query<{ ok: boolean | null }>(
     "select pulso_desbloquear($1) as ok",
@@ -159,7 +189,7 @@ export async function desbloquearSesion(): Promise<boolean> {
 
 /** "Bloquear ahora". */
 export async function bloquearSesion(): Promise<void> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (token) await pool.query("select pulso_bloquear($1)", [hashToken(token)]);
 }
 
@@ -169,7 +199,7 @@ export async function bloquearSesion(): Promise<void> {
  * datos NO se borran; quedan accesibles solo con una sesión desbloqueada.
  */
 export async function cerrarSesionEnEsteEquipo(): Promise<void> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (token) await pool.query("select pulso_revocar_sesion($1)", [hashToken(token)]);
   await borrarCookie();
 }
@@ -188,7 +218,35 @@ export async function cerrarSesionEnEsteEquipo(): Promise<void> {
 export async function asegurarSesion(
   legado?: string | null
 ): Promise<{ uid: string; origen: OrigenSesion }> {
-  const actual = await tokenDeCookie();
+  const { uid, origen, token } = await renovarOCrear(await tokenDeSolicitud(), legado);
+  if (token) await fijarCookie(token);
+  return { uid, origen };
+}
+
+/**
+ * Lo mismo para la app nativa: toma el token del Bearer (nunca de una cookie)
+ * y devuelve en el cuerpo el que hay que guardar. `token` es null cuando el
+ * cliente tiene que seguir con el que ya tiene.
+ */
+export async function asegurarSesionMovil(): Promise<{ uid: string; origen: OrigenSesion; token: string | null }> {
+  return renovarOCrear(await tokenDeBearer(), null);
+}
+
+/** uid del Bearer ignorando el bloqueo, o null. Para decidir si `asegurarSesionMovil` va a crear una sesión. */
+export async function uidDeBearerIgnorandoBloqueo(): Promise<string | null> {
+  const token = await tokenDeBearer();
+  if (!token) return null;
+  const { rows } = await pool.query<{ uid: string | null }>(
+    "select pulso_uid_de_token($1) as uid",
+    [hashToken(token)]
+  );
+  return rows[0]?.uid ?? null;
+}
+
+async function renovarOCrear(
+  actual: string | null,
+  legado: string | null | undefined
+): Promise<{ uid: string; origen: OrigenSesion; token: string | null }> {
   if (actual) {
     const candidato = randomBytes(32).toString("base64url");
     const { rows } = await pool.query<{ uid: string; rotada: boolean }>(
@@ -196,15 +254,19 @@ export async function asegurarSesion(
       [hashToken(actual), hashToken(candidato), DIAS_SESION]
     );
     if (rows[0]) {
-      await fijarCookie(rows[0].rotada ? candidato : actual);
-      return { uid: rows[0].uid, origen: rows[0].rotada ? "rotada" : "existente" };
+      const rotada = rows[0].rotada;
+      return { uid: rows[0].uid, origen: rotada ? "rotada" : "existente", token: rotada ? candidato : actual };
     }
 
     // Token ya rotado pero dentro de los 2 minutos de gracia: es una petición
     // que salió antes de que llegara la cookie nueva. Es la misma persona: no
     // se crea otra identidad ni se toca la cookie (el browser ya tiene la nueva).
-    const uid = await uidIgnorandoBloqueo();
-    if (uid) return { uid, origen: "existente" };
+    const { rows: gracia } = await pool.query<{ uid: string | null }>(
+      "select pulso_uid_de_token($1) as uid",
+      [hashToken(actual)]
+    );
+    const uid = gracia[0]?.uid;
+    if (uid) return { uid, origen: "existente", token: null };
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -216,18 +278,14 @@ export async function asegurarSesion(
       [hash, legado, DIAS_SESION]
     );
     const uid = rows[0]?.uid;
-    if (uid) {
-      await fijarCookie(token);
-      return { uid, origen: "legado" };
-    }
+    if (uid) return { uid, origen: "legado", token };
   }
 
   const { rows } = await pool.query<{ uid: string }>(
     "select pulso_crear_sesion($1, $2) as uid",
     [hash, DIAS_SESION]
   );
-  await fijarCookie(token);
-  return { uid: rows[0].uid, origen: "nueva" };
+  return { uid: rows[0].uid, origen: "nueva", token };
 }
 
 /**
@@ -236,7 +294,7 @@ export async function asegurarSesion(
  * había sesión.
  */
 export async function eliminarDatosDeLaSesion(): Promise<string | null> {
-  const token = await tokenDeCookie();
+  const token = await tokenDeSolicitud();
   if (!token) return null;
   const { rows } = await pool.query<{ uid: string | null }>(
     "select pulso_eliminar_datos($1) as uid",

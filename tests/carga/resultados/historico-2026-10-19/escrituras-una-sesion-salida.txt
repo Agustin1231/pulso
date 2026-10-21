@@ -1,0 +1,32 @@
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1476   49.168679/s
+    checks_succeeded...: 20.32% 300 out of 1476
+    checks_failed......: 79.67% 1176 out of 1476
+
+
+    CUSTOM
+    escrituras_429_413.............: 1176   39.175045/s
+    escrituras_aceptadas...........: 300    9.993634/s
+
+    HTTP
+    http_req_duration..............: avg=154.57ms min=7.72ms  med=43.2ms   p(90)=460.85ms p(95)=669.3ms  p(99)=1.13s max=1.52s count=1476
+      { expected_response:true }...: avg=499.36ms min=56.79ms med=442.71ms p(90)=1.02s    p(95)=1.13s    p(99)=1.35s max=1.52s count=300 
+    http_req_failed................: 79.67% 1176 out of 1476
+    http_reqs......................: 1476   49.168679/s
+
+    EXECUTION
+    dropped_iterations.............: 25     0.832803/s
+    iteration_duration.............: avg=155.08ms min=8.16ms  med=43.73ms  p(90)=461.38ms p(95)=670.41ms p(99)=1.14s max=1.52s count=1476
+    iterations.....................: 1476   49.168679/s
+    vus............................: 1      min=1            max=40
+    vus_max........................: 45     min=23           max=45
+
+    NETWORK
+    data_received..................: 1.1 MB 35 kB/s
+    data_sent......................: 400 kB 13 kB/s
+
+
+

@@ -1,9 +1,10 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { respuestaStreamIA } from "@/lib/ai/stream";
 import { conUsuario } from "@/lib/db/pool";
 import { rutinasActivas, ultimasMetricas } from "@/lib/db/consultas";
 import { auditar } from "@/lib/seguridad/auditoria";
-import { rutaProtegida } from "@/lib/seguridad/ruta";
+import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
 import { limite } from "@/lib/seguridad/tasa";
 import { cuerpoRutinaSchema } from "@/lib/seguridad/validacion";
 
@@ -53,7 +54,9 @@ REGLAS ESTRICTAS:
 - Los tiempos de cada bloque deben sumar el total indicado
 - El campo "Descanso" SIEMPRE en segundos como número entero (ej: Descanso: 60 seg)
 - Responde siempre en español
-- NUNCA menciones diagnósticos ni recetes para condiciones médicas`;
+- NUNCA menciones diagnósticos ni recetes para condiciones médicas
+
+${REGLA_DATOS_DEL_USUARIO}`;
 
 /**
  * El cliente solo manda las cuatro respuestas del cuestionario (valores
@@ -108,7 +111,11 @@ export const POST = rutaProtegida(
     if (estres !== undefined) contextoParts.push(`- Nivel de estrés hoy: ${estres}/10${estres > 5 ? " (elevado)" : ""}`);
     contextoParts.push(`- Rutinas completadas hasta hoy: ${historialCount} (semana ${semana} del plan)`);
     if (ejerciciosPrevios.length > 0) {
-      contextoParts.push(`- Ejercicios usados en rutinas anteriores (evitar repetir o variar significativamente): ${ejerciciosPrevios.join(", ")}`);
+      // Los nombres salen de rutinas que guardó el cliente (texto libre, hasta
+      // 120 caracteres): van etiquetados como datos del usuario, igual que en
+      // recetas y mercado. Sin esto, un nombre con instrucciones quedaba
+      // guardado y entraba al prompt en cada rutina nueva (AM-11, SAST-BE-20).
+      contextoParts.push(`- Ejercicios usados en rutinas anteriores (evitar repetir o variar significativamente): ${datosDelUsuario(ejerciciosPrevios.join(", "))}`);
     }
 
     const perfil = `
@@ -132,9 +139,9 @@ ${contextoParts.join("\n")}
         },
       ],
       onError: ({ error }) => console.error("[ai] rutina:", error instanceof Error ? error.message : error),
-      maxTokens: 950,
+      maxOutputTokens: 950,
     });
 
-    return result.toDataStreamResponse();
+    return respuestaStreamIA(result);
   }
 );

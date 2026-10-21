@@ -14,7 +14,6 @@ types.setTypeParser(types.builtins.TIMESTAMP, (v) => new Date(v).toISOString());
 types.setTypeParser(types.builtins.DATE, (v) => v);
 
 declare global {
-  // eslint-disable-next-line no-var
   var __pulsoPool: pg.Pool | undefined;
 }
 
@@ -27,8 +26,14 @@ declare global {
  *                      línea pueden venir como "\n"). Es lo que usa producción:
  *                      Coolify firma el certificado de la base con su CA, a
  *                      nombre del contenedor.
- *   PGSSL=require      cifra sin verificar (Postgres gestionado, Neon, RDS).
+ *   PGSSL=require      cifra y verifica contra las CA públicas que trae Node
+ *                      (Postgres gestionado con certificado público, p. ej. Neon).
  *   vacío              sin TLS (desarrollo con una base local).
+ *
+ * Antes `require` cifraba SIN verificar (`rejectUnauthorized: false`): quien se
+ * pusiera en el medio presentaba cualquier certificado y leía el tráfico, datos
+ * de salud incluidos (SAST-BE-08). Ya no hay modo sin verificación: una base con
+ * CA propia va con `verify-full` y su PGSSL_CA.
  */
 export function opcionesSsl(): pg.ConnectionConfig["ssl"] {
   const modo = process.env.PGSSL ?? "";
@@ -39,7 +44,8 @@ export function opcionesSsl(): pg.ConnectionConfig["ssl"] {
     }
     return { ca, rejectUnauthorized: true };
   }
-  if (modo === "require") return { rejectUnauthorized: false };
+  if (modo === "require") return { rejectUnauthorized: true };
+  if (modo !== "") throw new Error(`PGSSL="${modo}" no es válido: verify-full, require o vacío.`);
   return undefined;
 }
 

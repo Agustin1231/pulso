@@ -4,6 +4,7 @@ import { conUsuario, mensajeError, type Db } from "@/lib/db/pool";
 import { requerirUid, uidDeSesion, SesionBloqueada, SinSesion } from "@/lib/sesion";
 import { auditar, auditarEn, type Evento } from "./auditoria";
 import { ipCliente } from "./red";
+import { consumir, limite } from "./tasa";
 
 /**
  * Envoltorio de todas las server actions de `lib/db`.
@@ -16,6 +17,11 @@ import { ipCliente } from "./red";
  *   4. le da a la operación un `auditar` que ya conoce uid e IP;
  *   5. nunca devuelve un error interno: el detalle va al log, al cliente un
  *      mensaje genérico (antes llegaban los mensajes de Postgres).
+ *
+ * Las escrituras, además, consumen un límite de tasa por sesión e IP antes de
+ * validar (así también cuentan los intentos inválidos, que dejan una fila en
+ * la auditoría), y la base les impone una cuota de filas por usuario
+ * (`pulso_cuota_filas` en db/seguridad.sql). Ver AM-21 / SAST-BE-19.
  */
 
 export const ERROR_GENERICO = "No se pudo completar la operación. Intentá de nuevo.";
@@ -23,6 +29,8 @@ export const ERROR_SESION   = "Tu sesión no es válida. Recargá la página.";
 export const ERROR_DATOS    = "Los datos enviados no son válidos.";
 export const ERROR_NO_ENCONTRADO = "No se encontró el elemento.";
 export const ERROR_BLOQUEADA = "Pulso está bloqueado. Desbloquealo para continuar.";
+export const ERROR_LIMITE = "Hiciste demasiados cambios seguidos. Probá de nuevo en un rato.";
+export const ERROR_CUOTA = "Llegaste al máximo de elementos guardados. Borrá alguno para agregar otro.";
 
 export interface Ctx {
   db:  Db;
@@ -38,9 +46,19 @@ async function ejecutar<T, R>(
   nombre: string,
   schema: z.ZodType<T, z.ZodTypeDef, unknown> | null,
   entrada: unknown,
-  fn: (ctx: Ctx, datos: T) => Promise<R>
+  fn: (ctx: Ctx, datos: T) => Promise<R>,
+  limitar = false
 ): Promise<R> {
   const ip = await ipCliente();
+
+  if (limitar) {
+    // Sin sesión no se consume nada: más abajo `requerirUid` la rechaza.
+    const uid = await uidDeSesion();
+    if (uid) {
+      const r = await consumir([limite("escritura", uid), limite("escrituraIp", ip ?? "sin-ip")]);
+      if (!r.ok) throw new LimiteAlcanzado(uid, r.clave.split(":")[0]);
+    }
+  }
 
   let datos = entrada as T;
   if (schema) {
@@ -78,6 +96,19 @@ export class DatosInvalidos extends Error {
   }
 }
 
+class LimiteAlcanzado extends Error {
+  constructor(readonly uid: string, readonly limite: string) {
+    super("Límite de escrituras alcanzado");
+    this.name = "LimiteAlcanzado";
+  }
+}
+
+/** La base rechazó la fila por la cuota del usuario (trigger `pulso_cuota_filas`). */
+function esCuotaExcedida(err: unknown): boolean {
+  const e = err as { code?: unknown; message?: unknown } | null;
+  return e?.code === "P0001" && e?.message === "pulso_cuota_excedida";
+}
+
 /**
  * Escritura: `fn` devuelve null si salió bien o un mensaje para el usuario.
  * Siempre resuelve a `{ error }`, la forma que ya esperan los componentes.
@@ -89,9 +120,21 @@ export async function escritura<T>(
   fn: (ctx: Ctx, datos: T) => Promise<string | null>
 ): Promise<{ error: string | null }> {
   try {
-    return { error: await ejecutar(nombre, schema, entrada, fn) };
+    return { error: await ejecutar(nombre, schema, entrada, fn, true) };
   } catch (err) {
     if (err instanceof DatosInvalidos) return { error: ERROR_DATOS };
+    if (err instanceof LimiteAlcanzado) {
+      await auditar({ uid: err.uid, accion: nombre, resultado: "denegado", ip: await ipCliente(), detalle: { motivo: "demasiadas_peticiones", limite: err.limite } });
+      return { error: ERROR_LIMITE };
+    }
+    if (esCuotaExcedida(err)) {
+      const tabla = (err as { detail?: unknown }).detail;
+      await auditar({
+        uid: await uidDeSesion().catch(() => null), accion: nombre, resultado: "denegado", ip: await ipCliente(),
+        detalle: { motivo: "cuota_excedida", tabla: typeof tabla === "string" ? tabla : null },
+      });
+      return { error: ERROR_CUOTA };
+    }
     if (err instanceof SesionBloqueada) {
       await auditar({ accion: nombre, resultado: "denegado", ip: await ipCliente(), detalle: { motivo: "sesion_bloqueada" } });
       return { error: ERROR_BLOQUEADA };

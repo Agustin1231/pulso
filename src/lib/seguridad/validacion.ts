@@ -18,10 +18,18 @@ const textoOpcional = (max: number) =>
 
 export const idSchema = z.string().uuid();
 
+/**
+ * YYYY-MM-DD de un día que existe. `Date.parse` sola no alcanza: acepta el
+ * 30 de febrero (lo corre al 2 de marzo) y la fecha llegaba a Postgres, que la
+ * rechazaba con un 500. Se exige que vuelva igual y un año razonable.
+ */
 export const fechaSchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
-  .refine((f) => !Number.isNaN(Date.parse(`${f}T00:00:00Z`)), "fecha inválida");
+  .refine((f) => {
+    const t = Date.parse(`${f}T00:00:00Z`);
+    return !Number.isNaN(t) && new Date(t).toISOString().slice(0, 10) === f && f >= "1900-01-01" && f <= "2999-12-31";
+  }, "fecha inválida");
 
 export const diasSchema = z.number().int().min(1).max(365);
 
@@ -55,6 +63,8 @@ export const metricaSchema = z
     valor: z.number().finite(),
     notas: textoOpcional(500),
   })
+  // `refine` corre después de que el objeto pasó: `tipo` ya es uno de los valores de tipoMetricaSchema.
+  // eslint-disable-next-line security/detect-object-injection -- `tipo` validado por z.enum
   .refine(({ tipo, valor }) => valor >= RANGO_METRICA[tipo].min && valor <= RANGO_METRICA[tipo].max, {
     message: "valor fuera de rango",
   });
@@ -175,9 +185,39 @@ export const cuerpoRutinaSchema = z.object({
 
 const base64url = (max: number) => z.string().regex(/^[A-Za-z0-9_-]+={0,2}$/).max(max);
 
+/**
+ * Servicios de push de los navegadores: FCM (Chrome, Edge, Opera, Samsung),
+ * Mozilla (Firefox), Apple (Safari) y WNS (Edge viejo). El servidor le hace un
+ * POST al endpoint de cada suscripción, así que aceptar cualquier URL HTTPS
+ * era una SSRF ciega: una sesión cualquiera podía registrar
+ * `https://<servicio-interno>/...` y hacer que el servidor le pegara desde
+ * adentro de la red (SAST-BE-11).
+ */
+const SERVICIOS_PUSH = [
+  "fcm.googleapis.com",
+  "android.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "push.services.mozilla.com",
+  "push.apple.com",
+  "notify.windows.com",
+];
+
+/** true si la URL es un endpoint HTTPS de un servicio de push conocido (puerto por defecto, sin credenciales). */
+export function endpointPushPermitido(url: string): boolean {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" || u.port !== "" || u.username || u.password) return false;
+  const host = u.hostname.toLowerCase();
+  return SERVICIOS_PUSH.some((s) => host === s || host.endsWith(`.${s}`));
+}
+
 export const cuerpoSuscripcionSchema = z.object({
   subscription: z.object({
-    endpoint: z.string().url().max(1_000).refine((u) => u.startsWith("https://"), "endpoint no https"),
+    endpoint: z.string().url().max(1_000).refine(endpointPushPermitido, "endpoint de push no permitido"),
     keys:     z.object({ p256dh: base64url(200), auth: base64url(100) }),
   }),
 });

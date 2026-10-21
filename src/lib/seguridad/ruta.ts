@@ -17,7 +17,7 @@ import { consumir, type Limite } from "./tasa";
  *      desbloqueada (423: el cliente muestra la pantalla de bloqueo);
  *   3. si la ruta manda datos de salud a la IA, exige consentimiento (403);
  *   4. consume los límites de tasa por sesión e IP (429);
- *   5. valida el cuerpo con zod (400);
+ *   5. lee el cuerpo con un tope de tamaño (413) y lo valida con zod (400);
  *   6. ante un error interno responde un mensaje genérico (500): nada de
  *      stack ni mensajes de la base al cliente.
  * Todo rechazo queda en la auditoría.
@@ -48,6 +48,58 @@ interface Opciones<T> {
 
 export function json(cuerpo: unknown, status = 200, headers?: Record<string, string>): Response {
   return Response.json(cuerpo, { status, headers });
+}
+
+/**
+ * Tope del cuerpo JSON de los route handlers: 1 MB, el mismo que Next aplica
+ * por defecto a las server actions. El cuerpo válido más grande (una lista del
+ * mercado con su historial) queda muy por debajo.
+ */
+export const MAX_CUERPO = 1024 * 1024;
+
+export class CuerpoDemasiadoGrande extends Error {
+  constructor() {
+    super("Cuerpo demasiado grande");
+    this.name = "CuerpoDemasiadoGrande";
+  }
+}
+
+/**
+ * Lee el cuerpo JSON cortando apenas pasa `max` bytes (SAST-BE-10).
+ *
+ * `req.json()` no tiene límite en un route handler: junta en memoria todo lo
+ * que llegue y recién después zod lo rechaza (se probó con 40 MB). Con varias
+ * peticiones así en paralelo, una sesión gratuita alcanzaba para agotar la
+ * memoria del proceso. Acá se rechaza por `Content-Length` sin leer nada y,
+ * si no viene o miente, se corta la lectura en el primer byte de más.
+ *
+ * Devuelve `undefined` si el cuerpo no es JSON válido (como hacía
+ * `req.json().catch(() => undefined)`); tira `CuerpoDemasiadoGrande` si se pasa.
+ */
+export async function leerJson(req: Request, max = MAX_CUERPO): Promise<unknown> {
+  const declarado = Number(req.headers.get("content-length") ?? NaN);
+  if (Number.isFinite(declarado) && declarado > max) throw new CuerpoDemasiadoGrande();
+  if (!req.body) return undefined;
+
+  const lector = req.body.getReader();
+  const partes: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const { done, value } = await lector.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > max) {
+        await lector.cancel().catch(() => {});
+        throw new CuerpoDemasiadoGrande();
+      }
+      partes.push(value);
+    }
+    return JSON.parse(Buffer.concat(partes).toString("utf8"));
+  } catch (err) {
+    if (err instanceof CuerpoDemasiadoGrande) throw err;
+    return undefined; // JSON inválido o el cliente cortó la subida
+  }
 }
 
 export function rutaProtegida<T, X = unknown>(
@@ -88,7 +140,13 @@ export function rutaProtegida<T, X = unknown>(
 
       let cuerpo = undefined as T;
       if (op.cuerpo) {
-        const crudo = await req.json().catch(() => undefined);
+        let crudo: unknown;
+        try {
+          crudo = await leerJson(req);
+        } catch (err) {
+          if (err instanceof CuerpoDemasiadoGrande) return denegar(413, "cuerpo_demasiado_grande", uid);
+          throw err;
+        }
         const r = op.cuerpo.safeParse(crudo);
         if (!r.success) {
           return denegar(400, "datos_invalidos", uid, { campos: r.error.issues.map((i) => i.path.join(".")) });

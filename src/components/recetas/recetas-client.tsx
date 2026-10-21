@@ -390,6 +390,7 @@ export function RecetasClient() {
                   {(estado === "imagen" || estado === "completo") && (
                     <div className="rounded-lg overflow-hidden border border-border aspect-video">
                       {imagenUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- la imagen es privada (/api/img exige la sesión del dueño): el optimizador de next/image la pediría sin la cookie y la guardaría en su caché
                         <img src={imagenUrl} alt="Foto del plato" className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-surface-2 relative overflow-hidden">
@@ -592,6 +593,7 @@ function RecetaCard({ receta, onVerCompleta, onEliminar }: { receta: RecetaRow; 
     <button onClick={onVerCompleta} className="rounded-xl border border-border bg-surface overflow-hidden text-left hover:border-teal/30 hover:bg-surface-2 transition-all group w-full">
       {receta.imagen_url ? (
         <div className="aspect-video overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element -- la imagen es privada (/api/img exige la sesión del dueño): el optimizador de next/image la pediría sin la cookie y la guardaría en su caché */}
           <img src={receta.imagen_url} alt={receta.titulo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       ) : (
@@ -652,6 +654,7 @@ function RecetaDetalle({ receta, onCerrar, onEliminar, onCalificar }: { receta: 
       </div>
       {receta.imagen_url && (
         <div className="w-full aspect-video overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element -- la imagen es privada (/api/img exige la sesión del dueño): el optimizador de next/image la pediría sin la cookie y la guardaría en su caché */}
           <img src={receta.imagen_url} alt={receta.titulo} className="w-full h-full object-cover" />
         </div>
       )}
@@ -707,7 +710,7 @@ function MercadoView({ ingredientesRecetas }: { ingredientesRecetas: string[] })
   const [chatMsgs, setChatMsgs] = useState<{ role: "user" | "assistant"; content: string }[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatCargando, setChatCargando] = useState(false);
-  const [chatRespuesta, setChatRespuesta] = useState("");
+  const [, setChatRespuesta] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [guardada, setGuardada] = useState(false);
   const [errorGuardar, setErrorGuardar] = useState<string | null>(null);

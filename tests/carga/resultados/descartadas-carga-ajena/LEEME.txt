@@ -1,0 +1,1 @@
+Corridas de estrés del 2026-10-21 08:07–08:18 con la máquina ocupada por otros agentes (load 10–24: emulador + Gradle). Se repitieron en reposo; se conservan como referencia.

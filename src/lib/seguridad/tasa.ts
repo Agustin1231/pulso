@@ -40,11 +40,20 @@ export const LIMITES = {
   /** Intentos de desbloqueo: una passkey no se adivina, pero igual se acota. */
   desbloqueo:   { max: 30, ventana: HORA },
   desbloqueoIp: { max: 90, ventana: HORA },
+  /**
+   * Escrituras de datos (server actions y API móvil, AM-21): un uso normal son
+   * unas decenas por día. Sin esto, una sesión podía escribir sin freno y, con
+   * las cuotas de filas, el límite acota también cuánto crece la auditoría.
+   */
+  escritura:   { max: 300,  ventana: HORA },
+  escrituraIp: { max: 1200, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;
 
 export function limite(nombre: NombreLimite, sujeto: string): Limite {
+  // `nombre` es una clave literal de LIMITES en cada llamada (tipo NombreLimite): no viene del cliente.
+  // eslint-disable-next-line security/detect-object-injection -- clave constante tipada
   return { clave: `${nombre}:${sujeto}`, ...LIMITES[nombre] };
 }
 

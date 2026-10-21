@@ -1,0 +1,3 @@
+inicio 2026-10-21T08:20:37-05:00 load=24.75 17.74 9.87 PGPOOL_MAX=10 BASE_URL=http://127.0.0.1:3109 args=-e RATE=50 -e DUR=30s
+build del servidor: 2026-10-21 07:48:31 · rama feat/api-movil @ f46b062 (+ cambios sin commit)
+fin 2026-10-21T08:21:08-05:00 load=15.76 16.22 9.61 k6_exit=0

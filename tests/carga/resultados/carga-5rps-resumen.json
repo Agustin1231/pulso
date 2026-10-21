@@ -1,0 +1,458 @@
+{
+    "root_group": {
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {},
+        "name": "",
+        "path": ""
+    },
+    "metrics": {
+        "http_reqs": {
+            "count": 601,
+            "rate": 4.998765343345056
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 601,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "iteration_duration": {
+            "min": 2.641031,
+            "med": 5.182782,
+            "p(90)": 235.893386,
+            "p(95)": 404.791434,
+            "p(99)": 590.292239,
+            "max": 669.858872,
+            "count": 601,
+            "avg": 61.77365593843594
+        },
+        "data_sent": {
+            "count": 161229,
+            "rate": 1341.0082155443927
+        },
+        "http_req_duration{name:GET habitos/semana}": {
+            "p(99)": 210.40333457999992,
+            "max": 216.769771,
+            "count": 35,
+            "avg": 16.45502891428571,
+            "min": 2.895006,
+            "med": 4.688498,
+            "p(90)": 5.7286336,
+            "p(95)": 71.94911889999949,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_receiving": {
+            "min": 0.028364,
+            "med": 0.076163,
+            "p(90)": 0.103907,
+            "p(95)": 0.123843,
+            "p(99)": 0.231803,
+            "max": 0.34907,
+            "count": 601,
+            "avg": 0.08146457237936772
+        },
+        "vus_max": {
+            "value": 20,
+            "min": 20,
+            "max": 20
+        },
+        "http_req_failed{name:GET habitos/semana}": {
+            "passes": 0,
+            "fails": 35,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_tls_handshaking": {
+            "p(99)": 0,
+            "max": 0,
+            "count": 601,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_failed{name:POST metricas}": {
+            "passes": 0,
+            "fails": 37,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_failed{name:GET metricas/ultimas}": {
+            "passes": 0,
+            "fails": 85,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_failed{name:GET habitos/fecha}": {
+            "passes": 0,
+            "fails": 56,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{expected_response:true}": {
+            "max": 669.542733,
+            "count": 601,
+            "avg": 61.452253599001736,
+            "min": 2.442903,
+            "med": 4.839389,
+            "p(90)": 235.605482,
+            "p(95)": 404.505259,
+            "p(99)": 589.993286
+        },
+        "http_req_failed{name:GET informe}": {
+            "passes": 0,
+            "fails": 52,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "vus": {
+            "max": 2,
+            "value": 1,
+            "min": 0
+        },
+        "http_req_duration{name:GET mercado}": {
+            "p(90)": 35.679882300000045,
+            "p(95)": 70.28705189999997,
+            "p(99)": 178.14634654999986,
+            "max": 206.362061,
+            "count": 22,
+            "avg": 19.003071818181816,
+            "min": 2.895696,
+            "med": 4.456301,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_failed{name:GET metricas/historial}": {
+            "passes": 0,
+            "fails": 94,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:POST metricas}": {
+            "max": 643.47103,
+            "count": 37,
+            "avg": 42.771189162162166,
+            "min": 4.127425,
+            "med": 16.539272,
+            "p(90)": 46.275292799999974,
+            "p(95)": 138.56985339999943,
+            "p(99)": 499.49914348000027,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_sending": {
+            "med": 0.019039,
+            "p(90)": 0.025298,
+            "p(95)": 0.032624,
+            "p(99)": 0.064338,
+            "max": 0.117295,
+            "count": 601,
+            "avg": 0.020568697171381024,
+            "min": 0.010954
+        },
+        "data_received": {
+            "count": 3201374,
+            "rate": 26627.15041977693
+        },
+        "http_req_duration{name:GET informe}": {
+            "count": 52,
+            "avg": 433.1424744038463,
+            "min": 383.683953,
+            "med": 407.13804849999997,
+            "p(90)": 575.3227026999998,
+            "p(95)": 612.8602803499999,
+            "p(99)": 662.96327349,
+            "max": 669.542733,
+            "thresholds": {
+                "p(95)<2500": false
+            }
+        },
+        "http_req_duration{name:GET recetas}": {
+            "count": 39,
+            "avg": 19.72320520512821,
+            "min": 2.861728,
+            "med": 4.358533,
+            "p(90)": 6.308820600000012,
+            "p(95)": 196.854443,
+            "p(99)": 209.59982863999997,
+            "max": 213.172388,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_connecting": {
+            "p(99)": 0.215943,
+            "max": 0.24848,
+            "count": 601,
+            "avg": 0.00672605657237937,
+            "min": 0,
+            "med": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "http_req_duration{name:POST sesion}": {
+            "p(99)": 40.26979700999996,
+            "max": 46.011601,
+            "count": 20,
+            "avg": 14.743742099999997,
+            "min": 4.172478,
+            "med": 13.456219,
+            "p(90)": 15.7604193,
+            "p(95)": 17.302581050000022,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_duration{name:GET consentimiento}": {
+            "min": 2.962212,
+            "med": 4.0819505,
+            "p(90)": 4.4873124,
+            "p(95)": 4.600192999999999,
+            "p(99)": 5.046300199999999,
+            "max": 5.157827,
+            "count": 18,
+            "avg": 3.9815552222222212,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_failed{name:PUT habitos/fijos}": {
+            "fails": 30,
+            "passes": 0,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_failed{name:PUT perfil}": {
+            "passes": 0,
+            "fails": 11,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:PUT habitos/fijos}": {
+            "med": 16.03073,
+            "p(90)": 17.7298347,
+            "p(95)": 20.075347899999997,
+            "p(99)": 178.95620800000017,
+            "max": 243.600427,
+            "count": 30,
+            "avg": 21.766543833333333,
+            "min": 6.130622,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_duration{name:GET habitos/definiciones}": {
+            "max": 272.613308,
+            "count": 35,
+            "avg": 25.379210628571435,
+            "min": 2.766151,
+            "med": 4.223431,
+            "p(90)": 21.62539660000002,
+            "p(95)": 217.9558826999999,
+            "p(99)": 263.19657449999994,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "iterations": {
+            "count": 601,
+            "rate": 4.998765343345056
+        },
+        "http_req_failed{name:GET habitos/definiciones}": {
+            "passes": 0,
+            "fails": 35,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:PUT perfil}": {
+            "avg": 37.923052727272726,
+            "min": 8.70911,
+            "med": 16.479324,
+            "p(90)": 52.175769,
+            "p(95)": 130.660618,
+            "p(99)": 193.44849720000005,
+            "max": 209.145467,
+            "count": 11,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_failed{name:GET rutinas}": {
+            "passes": 0,
+            "fails": 32,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_failed{name:GET consentimiento}": {
+            "passes": 0,
+            "fails": 18,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:GET rutinas}": {
+            "avg": 37.71521028125,
+            "min": 2.442903,
+            "med": 4.324599,
+            "p(90)": 210.58803170000004,
+            "p(95)": 219.99835205,
+            "p(99)": 236.22091949000003,
+            "max": 240.13232,
+            "count": 32,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_duration": {
+            "p(99)": 589.993286,
+            "max": 669.542733,
+            "count": 601,
+            "avg": 61.452253599001736,
+            "min": 2.442903,
+            "med": 4.839389,
+            "p(90)": 235.605482,
+            "p(95)": 404.505259,
+            "thresholds": {
+                "p(95)<800": false
+            }
+        },
+        "http_req_waiting": {
+            "count": 601,
+            "avg": 61.350220329450984,
+            "min": 2.383826,
+            "med": 4.741721,
+            "p(90)": 235.521016,
+            "p(95)": 404.412687,
+            "p(99)": 589.865863,
+            "max": 669.405812
+        },
+        "http_req_duration{name:GET perfil}": {
+            "p(95)": 208.3624436,
+            "p(99)": 210.44447019999998,
+            "max": 211.468931,
+            "count": 35,
+            "avg": 32.641802371428575,
+            "min": 2.734269,
+            "med": 4.052823,
+            "p(90)": 199.07781880000002,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_failed{name:POST sesion}": {
+            "passes": 0,
+            "fails": 20,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:GET metricas/ultimas}": {
+            "avg": 34.591164141176456,
+            "min": 3.078341,
+            "med": 4.807399,
+            "p(90)": 203.35905100000002,
+            "p(95)": 226.80447339999998,
+            "p(99)": 279.27571759999955,
+            "max": 392.272169,
+            "count": 85,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_failed{name:GET recetas}": {
+            "passes": 0,
+            "fails": 39,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_duration{name:GET habitos/fecha}": {
+            "max": 202.739305,
+            "count": 56,
+            "avg": 20.150072589285724,
+            "min": 3.117479,
+            "med": 4.8826015,
+            "p(90)": 22.4589315,
+            "p(95)": 192.5293995,
+            "p(99)": 199.94370065,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_blocked": {
+            "avg": 0.01429560565723793,
+            "min": 0.003564,
+            "med": 0.005658,
+            "p(90)": 0.007207,
+            "p(95)": 0.008352,
+            "p(99)": 0.27252,
+            "max": 0.345903,
+            "count": 601
+        },
+        "checks": {
+            "passes": 601,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_duration{name:GET metricas/historial}": {
+            "min": 3.045702,
+            "med": 4.5664035,
+            "p(90)": 33.06676640000001,
+            "p(95)": 205.89293515,
+            "p(99)": 214.2459030399999,
+            "max": 228.350443,
+            "count": 94,
+            "avg": 24.688246999999997,
+            "thresholds": {
+                "p(95)<500": false
+            }
+        },
+        "http_req_failed{name:GET mercado}": {
+            "passes": 0,
+            "fails": 22,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        },
+        "http_req_failed{name:GET perfil}": {
+            "passes": 0,
+            "fails": 35,
+            "thresholds": {
+                "rate<0.01": false
+            },
+            "value": 0
+        }
+    }
+}

@@ -38,10 +38,12 @@ async function resolverConnectionString() {
     } catch {
       continue; // el archivo no existe: seguimos con el siguiente
     }
+    // `CLAVE=valor` por línea. Se compara el nombre en vez de armar una
+    // RegExp con él: no hace falta escapar nada.
     for (const clave of claves) {
       for (const linea of texto.split("\n")) {
-        const m = linea.match(new RegExp(`^\\s*${clave}\\s*=\\s*(.*)\\s*$`));
-        if (m) return m[1].trim().replace(/^["']|["']$/g, "");
+        const m = linea.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+        if (m && m[1] === clave) return m[2].replace(/^["']|["']$/g, "");
       }
     }
   }
@@ -74,7 +76,10 @@ function opcionesSsl() {
     }
     return { ca, rejectUnauthorized: true };
   }
-  if (modo === "require") return { rejectUnauthorized: false };
+  // `require` verifica contra las CA públicas de Node: cifrar sin verificar no
+  // protege de un intermediario (SAST-BE-08).
+  if (modo === "require") return { rejectUnauthorized: true };
+  if (modo !== "") throw new Error(`PGSSL="${modo}" no es válido: verify-full, require o vacío.`);
   return undefined;
 }
 

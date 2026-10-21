@@ -154,7 +154,7 @@ Lo que queda abierto, a propósito o por alcance:
 
 - **Inyección de prompt**: se acota (roles filtrados, datos etiquetados, valores cerrados en rutinas), pero no hay forma de eliminarla del todo con un LLM. El impacto queda limitado al propio usuario: el modelo no tiene herramientas ni acceso a datos de otros.
 - **El bloqueo es opcional** (fila 9): protege a quien lo activa. Hacerlo obligatorio implicaría que todo usuario tenga un teléfono con passkeys.
-- **Dependencias con fix mayor pendiente**: `postcss` dentro de Next (solo build, procesa nuestro propio CSS) pide Next 16; `jsondiffpatch` y `@ai-sdk/*` piden AI SDK 7; `uuid` dentro de `gaxios` (dependencia de Google) no usa la función afectada. Ninguna se ejecuta con entrada del usuario.
+- **Dependencias**: tras la remediación del SAST (Proyecto Integrador, `SAST-BE-*`), `npm audit --omit=dev` da 0. Queda un aviso en una dependencia **solo de desarrollo** (`braces`) sin parche publicado, aceptado y justificado en `docs/integrador/03-implementacion/sast-backend.md` del repo de la app (SAST-BE-07). El AI SDK pasó a la v5 y Next a 15.5.28.
 - **Reclamo de UUID viejos**: durante 90 días, quien conozca un UUID viejo **todavía no reclamado** puede reclamarlo antes que su dueño. El dueño lo reclama solo al abrir la app por primera vez después del deploy.
 - **El dueño de la base** sigue teniendo acceso total. Queda auditado lo que hace la app, no lo que haga un operador con el superusuario.
 - **El proxy de Claude del servidor** (un servicio del host, en la red interna) sigue alcanzable por cualquier contenedor, con su token como único límite. Ya no es un riesgo de Pulso, que no lo usa ni guarda su token, pero sí del servidor.

@@ -1,0 +1,5 @@
+RTO medido (desastre → API 200 con la sesión previa): 6314 ms
+Antigüedad del respaldo al momento del desastre (RPO efectivo de esta corrida): 284 ms
+Métricas escritas después del respaldo: 1 · presentes tras restaurar: 0
+Conteos por tabla: IDÉNTICOS al respaldo
+Tamaños (bytes): 3778137 pulso_carga.dump 1078 roles.sql 

@@ -1,0 +1,3 @@
+# GET /perfil solo y con 4 informes en curso — 2026-10-21T08:21:20-05:00
+solo: n=5 mediana=2.9 ms mín=2.6 máx=4.0
+con_4_informes: n=5 mediana=1243.6 ms mín=1227.2 máx=1322.7

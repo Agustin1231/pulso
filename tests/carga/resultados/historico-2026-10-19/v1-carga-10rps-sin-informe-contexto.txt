@@ -1,0 +1,2 @@
+inicio 2026-10-19T20:35:24-05:00 load=10.30 9.08 8.94 PGPOOL_MAX=10 BASE_URL=http://127.0.0.1:3109 args=-e RATE=10 -e DUR=2m -e EXCLUIR=GET informe
+fin 2026-10-19T20:37:25-05:00 load=9.45 9.77 9.25 k6_exit=0

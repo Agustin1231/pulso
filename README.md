@@ -319,6 +319,24 @@ Las imágenes se guardan en `MEDIA_DIR` y se sirven por `src/app/api/img/[...pat
 
 ---
 
+## API móvil (app Android)
+
+La app nativa (Kotlin + Jetpack Compose, repo aparte en `../Pulso - celular`) usa este mismo backend. No puede llamar server actions (su id cambia en cada build y viajan por el protocolo interno de Next), así que tiene su propia entrada:
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/movil/v1/sesion` | Crea, renueva o rota la sesión. El token va y vuelve en el cuerpo/Bearer; nunca pone cookies |
+| `GET` / `DELETE /api/movil/v1/sesion` | Estado de la sesión / cerrar sesión en ese teléfono |
+| `/api/movil/v1/[...ruta]` | REST sobre las **mismas** server actions de `lib/db` (métricas, informe, perfil, consentimiento, recetas, mercado, rutinas, hábitos) |
+
+- **La sesión acepta `Authorization: Bearer <token>`** además de la cookie (`tokenDeSolicitud` en `lib/sesion.ts`). Es el mismo token de 256 bits, con el mismo hash, rotación y vencimiento. Un sitio ajeno no puede poner ese header sin CORS (y no hay), así que no abre CSRF.
+- Por eso las rutas de IA (`/api/recetas`, `/api/tips`, …), `/api/mis-datos` y `/api/img/...` la app las usa **tal cual**.
+- El router REST no reimplementa nada: valida con los zod de cada acción, corre con RLS y audita igual. Solo agrega el mapeo a HTTP (400 datos inválidos, 401 sin sesión, 404, 423 bloqueada) y responde 401 cuando no hay sesión en vez del `[]` que esperan los componentes web.
+
+Pruebas: los tests `app nativa: …` de `tests/seguridad/http.test.mjs`.
+
+---
+
 ## Deploy (Coolify)
 
 1. Crear un recurso **PostgreSQL** y anotar su hostname interno

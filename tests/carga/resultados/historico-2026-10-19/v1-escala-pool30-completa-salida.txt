@@ -1,0 +1,71 @@
+time="2026-10-20T01:57:58Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": read tcp 127.0.0.1:58902->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:57:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": read tcp 127.0.0.1:59004->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:57:58Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": read tcp 127.0.0.1:58940->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:57:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": read tcp 127.0.0.1:58846->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:57:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": read tcp 127.0.0.1:58810->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=peso&dias=30\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=horas_sueno&dias=30\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/recetas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=peso&dias=30\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=peso&dias=30\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=nivel_estres&dias=30\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/rutinas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/consentimiento\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/informe\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-20T01:58:26Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/informe\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/consentimiento\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T01:58:28Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+
+
+  █ THRESHOLDS 
+
+    http_req_failed
+    ✗ 'rate<0.01' rate=7.56%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 489    5.697763/s
+    checks_succeeded...: 92.43% 452 out of 489
+    checks_failed......: 7.56%  37 out of 489
+
+
+    HTTP
+    http_req_duration..............: avg=5.48s min=63.9ms  med=3.4s  p(90)=8.73s p(95)=30.02s p(99)=45.99s max=46.11s count=489
+      { expected_response:true }...: avg=3.25s min=63.9ms  med=3.22s p(90)=6.16s p(95)=7.18s  p(99)=14.24s max=17.77s count=452
+    http_req_failed................: 7.56%  37 out of 489
+    http_reqs......................: 489    5.697763/s
+
+    EXECUTION
+    iteration_duration.............: avg=5.51s min=76.61ms med=3.4s  p(90)=8.73s p(95)=30.31s p(99)=46.11s max=46.15s count=489
+    iterations.....................: 489    5.697763/s
+    vus............................: 7      min=7         max=32
+    vus_max........................: 32     min=32        max=32
+
+    NETWORK
+    data_received..................: 2.3 MB 27 kB/s
+    data_sent......................: 118 kB 1.4 kB/s
+
+
+
+time="2026-10-20T01:58:30Z" level=error msg="thresholds on metrics 'http_req_failed' have been crossed"

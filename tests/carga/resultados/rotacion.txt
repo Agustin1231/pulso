@@ -1,0 +1,10 @@
+# Rotación concurrente de la sesión — 2026-10-21T08:21:20-05:00
+sesión envejecida 2 días (created_at); identidades antes: 242
+20 POST /sesion concurrentes → estados {'200': 20} · origen {'existente': 19, 'rotada': 1}
+respuestas con token nuevo: 1 (distintos: 1); con token null (seguir con el actual): 19
+sesiones del uid: 2 (rotadas: 1)
+token viejo en la gracia → GET /metricas/ultimas: 200
+token nuevo → GET /metricas/ultimas: 200
+gracia vencida → token viejo: 401 (esperado 401) · token nuevo: 200
+POST /sesion con el viejo vencido → origen nueva · token nuevo: sí (identidad nueva: la app pierde el historial si su token quedó vencido)
+identidades creadas durante la rotación concurrente: 0 (la última línea crea 1 a propósito)

@@ -1,0 +1,18 @@
+2026-10-21T07:55:33-05:00 ▶ línea base (1 VU, 12 s por endpoint) (load 1.12 1.19 0.83)
+2026-10-21T07:59:02-05:00 ■ linea-base → código 0
+2026-10-21T07:59:22-05:00 ▶ carga 10 req/s, mezcla completa, 3 min (load 1.69 1.66 1.11)
+2026-10-21T08:02:23-05:00 ■ carga-10rps → código 99
+2026-10-21T08:02:43-05:00 ▶ carga 10 req/s sin informe, 2 min (load 1.26 1.53 1.17)
+2026-10-21T08:04:43-05:00 ■ carga-10rps-sin-informe → código 0
+2026-10-21T08:05:03-05:00 ▶ carga 5 req/s, mezcla completa, 2 min (load 0.89 1.27 1.12)
+2026-10-21T08:07:04-05:00 ■ carga-5rps → código 0
+2026-10-21T08:07:24-05:00 ▶ estrés mezcla completa 2→30 req/s (load 1.12 1.19 1.10)
+2026-10-21T08:13:11-05:00 ■ estres-mezcla → código 99
+2026-10-21T08:13:31-05:00 ▶ estrés sin informe 25→500 req/s (load 12.18 9.46 4.95)
+2026-10-21T08:18:27-05:00 ■ estres-sin-informe → código 99
+2026-10-21T08:18:47-05:00 ▶ límites de tasa (429) (load 24.37 14.26 7.88)
+2026-10-21T08:20:32-05:00 ■ limites → código 0
+2026-10-21T08:20:32-05:00 ▶ tope de cuerpo (413) y cuota de filas (409) (load 26.02 17.72 9.77)
+2026-10-21T08:20:37-05:00 ■ cuotas → código 0
+2026-10-21T08:20:37-05:00 ▶ volumen de escritura de una sesión (RS-19) (load 24.75 17.74 9.87)
+2026-10-21T08:21:08-05:00 ■ escrituras → código 0

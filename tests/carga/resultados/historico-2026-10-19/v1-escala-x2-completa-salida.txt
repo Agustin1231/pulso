@@ -1,0 +1,88 @@
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/informe\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3119/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3119/api/movil/v1/metricas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/recetas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3119/api/movil/v1/sesion\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/informe\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:06Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/historial?tipo=nivel_estres&dias=30\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T02:01:06Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/mercado\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/mercado\": request timeout"
+time="2026-10-20T02:01:06Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3119/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T02:01:06Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3119/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:08Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3119/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3119/api/movil/v1/sesion\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3119/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3119/api/movil/v1/metricas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/historial?tipo=nivel_estres&dias=30\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/mercado\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/rutinas\": request timeout"
+time="2026-10-20T02:01:05Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/informe\": request timeout"
+time="2026-10-20T02:01:23Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/recetas\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/recetas\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/historial?tipo=nivel_estres&dias=30\": request timeout"
+time="2026-10-20T02:01:52Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=frecuencia_cardiaca&dias=30\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/mercado\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/historial?tipo=peso&dias=30\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/fecha?fecha=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/mercado\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/informe\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/perfil\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=horas_sueno&dias=30\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/definiciones\": request timeout"
+time="2026-10-20T02:01:46Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3119/api/movil/v1/metricas/historial?tipo=frecuencia_cardiaca&dias=30\": request timeout"
+time="2026-10-20T02:01:45Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/mercado\": request timeout"
+
+
+  █ THRESHOLDS 
+
+    http_req_failed
+    ✗ 'rate<0.01' rate=13.88%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 367    3.346584/s
+    checks_succeeded...: 91.28% 335 out of 367
+    checks_failed......: 8.71%  32 out of 367
+
+
+    HTTP
+    http_req_duration..............: avg=5.98s min=4.96ms med=950.94ms p(90)=31.91s p(95)=39.13s p(99)=40.59s max=41.59s count=389
+      { expected_response:true }...: avg=1.11s min=4.96ms med=816.24ms p(90)=2.49s  p(95)=3.69s  p(99)=4.78s  max=14.21s count=335
+    http_req_failed................: 13.88% 54 out of 389
+    http_reqs......................: 389    3.547197/s
+
+    EXECUTION
+    iteration_duration.............: avg=5.04s min=5.22ms med=910.57ms p(90)=4.73s  p(95)=45.54s p(99)=46.38s max=53.02s count=367
+    iterations.....................: 367    3.346584/s
+    vus............................: 30     min=30        max=32
+    vus_max........................: 32     min=32        max=32
+
+    NETWORK
+    data_received..................: 1.8 MB 16 kB/s
+    data_sent......................: 94 kB  853 B/s
+
+
+
+time="2026-10-20T02:02:07Z" level=error msg="thresholds on metrics 'http_req_failed' have been crossed"

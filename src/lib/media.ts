@@ -68,7 +68,11 @@ export async function guardarImagenReceta(uid: string, bytes: Buffer): Promise<s
   const destino = rutaDentroDeMedia([RECETAS_SUBDIR, carpeta, nombre]);
   if (!destino) return null;
 
+  // La ruta la arma el servidor (hash del uid + nombre aleatorio) y pasa por
+  // rutaDentroDeMedia: nada del cliente llega acá.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta generada por el servidor y validada
   await mkdir(path.dirname(destino), { recursive: true });
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ídem
   await writeFile(destino, bytes, { mode: 0o600 });
   return `/api/img/${RECETAS_SUBDIR}/${carpeta}/${nombre}`;
 }
@@ -76,18 +80,32 @@ export async function guardarImagenReceta(uid: string, bytes: Buffer): Promise<s
 /** Supresión: borra las carpetas de imágenes del usuario (la vieja y la nueva). */
 export async function borrarImagenesDe(uid: string): Promise<void> {
   for (const carpeta of carpetasPermitidas(uid)) {
-    if (!/^[A-Za-z0-9_-]{1,64}$/.test(carpeta)) continue;
+    if (!CARPETA_RE.test(carpeta)) continue;
     const dir = rutaDentroDeMedia([RECETAS_SUBDIR, carpeta]);
     if (dir) await rm(dir, { recursive: true, force: true });
   }
 }
 
 /**
+ * Nombres válidos de carpeta y de archivo de imagen: los mismos que acepta
+ * `imagenRecetaSchema` al guardar una receta. Una sola componente de ruta, sin
+ * separadores ni puntos sueltos.
+ */
+export const CARPETA_RE = /^[A-Za-z0-9_-]{1,64}$/;
+export const ARCHIVO_IMAGEN_RE = /^[A-Za-z0-9_-]{1,64}\.(png|jpe?g|webp)$/;
+
+/**
  * Resuelve segmentos de ruta dentro de MEDIA_DIR y devuelve null si el
  * resultado escapa del directorio base (`..`, rutas absolutas, etc.).
+ *
+ * Cada segmento tiene que ser UNA componente: Next decodifica `%2F` dentro de
+ * un segmento del catch-all, así que `..%2Fotra-carpeta%2Ffoto.png` llegaba
+ * como un solo segmento con barras, `path.resolve` lo interpretaba como ruta y
+ * salía de la carpeta del dueño sin salir de MEDIA_DIR (SAST-BE-09). Se
+ * rechaza cualquier separador (también `\`) y el byte nulo.
  */
 export function rutaDentroDeMedia(segmentos: string[]): string | null {
-  if (segmentos.some((s) => !s || s === "." || s === "..")) return null;
+  if (segmentos.some((s) => !s || s === "." || s === ".." || /[/\\\0]/.test(s))) return null;
   const destino = path.resolve(MEDIA_DIR, ...segmentos);
   if (destino !== MEDIA_DIR && !destino.startsWith(MEDIA_DIR + path.sep)) return null;
   return destino;

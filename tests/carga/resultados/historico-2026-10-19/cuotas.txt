@@ -1,0 +1,6 @@
+# Tope de cuerpo (413) y cuota de filas por usuario (409) — 2026-10-19T21:20:43-05:00
+POST /metricas con cuerpo de 300043 bytes → {"error":"cuerpo_demasiado_grande"} HTTP 413
+Recetas previas del usuario: 3 (semilla). Cuota: 200 filas en recetas_guardadas.
+200 POST /recetas → 409×3 200×197  · primer 409 en la petición 198
+Cuerpo del 409: {"error":"cuota_excedida","mensaje":"Llegaste al máximo de elementos guardados. Borrá alguno para agregar otro."}
+Filas del usuario: 200

@@ -1,0 +1,7 @@
+# Falsos positivos de gitleaks revisados (docs/integrador, SAST-BE-14).
+#
+# .env.example del commit inicial: NEXT_PUBLIC_SUPABASE_ANON_KEY tenía como
+# ejemplo "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." = el encabezado genérico
+# {"alg":"HS256","typ":"JWT"} de cualquier JWT, seguido de "...". No tiene
+# payload ni firma: no es una credencial. El archivo ya no la contiene.
+06d87b337a034daf1ed9c5e805f3b198a6e627ca:.env.example:generic-api-key:3

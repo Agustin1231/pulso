@@ -1,0 +1,187 @@
+time="2026-10-21T13:26:53Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:53Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:55Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:55Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:56Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:56Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:26:56Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:56Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:57Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:57Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:57Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:58Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:59Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:26:59Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:59Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:26:59Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:00Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:00Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:00Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:00Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:01Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:01Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:01Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:02Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:02Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:03Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:04Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:04Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:04Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:04Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:04Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:05Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:05Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:05Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:06Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:06Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:06Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:06Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:07Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:07Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:07Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:08Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:09Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:09Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:10Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:11Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:11Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:11Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:11Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:11Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:12Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:12Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:12Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:12Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:13Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:13Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:13Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:14Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:15Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:16Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:16Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:16Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:17Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:17Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:17Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:17Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:18Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:18Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:19Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:19Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:19Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:20Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:20Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:20Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:20Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:21Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:22Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:22Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:22Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:22Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:23Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:23Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:23Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:23Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:24Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:24Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:24Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:25Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:25Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:25Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:25Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:25Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:26Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:26Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:27Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:28Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:28Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:29Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:29Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:30Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:30Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:30Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:30Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:31Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:31Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:31Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+time="2026-10-21T13:27:32Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/metricas\": request timeout"
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✗ 'p(95)<2000' p(95)=12.12s
+
+    http_req_failed
+    ✓ 'rate<0.05' rate=3.65%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 4081   11.955978/s
+    checks_succeeded...: 96.34% 3932 out of 4081
+    checks_failed......: 3.65%  149 out of 4081
+
+
+    HTTP
+    http_req_duration..............: avg=4.16s min=2.58ms med=1.7s  p(90)=10.97s p(95)=12.12s p(99)=15s    max=15s    count=4081
+      { expected_response:true }...: avg=3.75s min=2.58ms med=1.46s p(90)=10.44s p(95)=11.29s p(99)=12.39s max=14.89s count=3932
+    http_req_failed................: 3.65%  149 out of 4081
+    http_reqs......................: 4081   11.955978/s
+
+    EXECUTION
+    dropped_iterations.............: 289    0.846674/s
+    iteration_duration.............: avg=4.16s min=2.85ms med=1.7s  p(90)=10.97s p(95)=12.12s p(99)=15s    max=15s    count=4081
+    iterations.....................: 4081   11.955978/s
+    vus............................: 36     min=0           max=335
+    vus_max........................: 339    min=50          max=339
+
+    NETWORK
+    data_received..................: 20 MB  60 kB/s
+    data_sent......................: 1.1 MB 3.2 kB/s
+
+
+
+time="2026-10-21T13:27:33Z" level=error msg="thresholds on metrics 'http_req_duration' have been crossed"

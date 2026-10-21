@@ -447,6 +447,73 @@ begin
   return v_uid;
 end $$;
 
+-- ─── Purga de identidades inactivas (RP-10 / RL-09, Ley 1581 art. 4 y 11) ──
+-- Una identidad anónima sin ninguna sesión utilizable ya no tiene quien vuelva
+-- a entrar: no hay cuenta ni forma de recuperarla. Sus datos de salud
+-- quedarían para siempre sin finalidad. Esta función borra:
+--   * las identidades cuya última sesión dejó de servir (venció a los 180 días
+--     sin uso, o se revocó) hace más de `p_dias` días;
+--   * los uids legado que ya no se pueden reclamar (90 días) más `p_dias`;
+--   * datos huérfanos: filas cuyo uid no es ni una identidad ni un legado.
+-- Es idempotente (correrla dos veces no borra nada más) y deja una fila en la
+-- auditoría por uid. La corre el DUEÑO desde un cron (ver
+-- scripts/purgar-inactivos.mjs); la app no tiene permiso. Devuelve los uids
+-- borrados, para que el script borre también sus imágenes del disco.
+-- La lista de tablas es la misma que la de pulso_eliminar_datos.
+create or replace function pulso_purgar_inactivos(p_dias int default 30)
+returns setof text
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_gracia interval := make_interval(days => greatest(coalesce(p_dias, 30), 0));
+  v_uid    text;
+begin
+  for v_uid in
+    select i.uid
+      from identidades i
+      left join sesiones s on s.uid = i.uid
+     group by i.uid, i.created_at
+    having coalesce(max(least(s.expira_at, coalesce(s.revocada_at, s.expira_at))), i.created_at)
+           < now() - v_gracia
+    union
+    select l.uid
+      from uids_legado l
+     where l.created_at < now() - interval '90 days' - v_gracia
+    union
+    select d.uid
+      from (select uid from metricas
+            union select uid from habitos
+            union select uid from habitos_definicion
+            union select uid from habitos_registro
+            union select uid from recetas_guardadas
+            union select uid from listas_mercado
+            union select uid from rutinas
+            union select uid from suscripciones_push
+            union select uid from perfil) d
+     where not exists (select 1 from identidades i where i.uid = d.uid)
+       and not exists (select 1 from uids_legado l where l.uid = d.uid)
+  loop
+    delete from metricas           where uid = v_uid;
+    delete from habitos            where uid = v_uid;
+    delete from habitos_definicion where uid = v_uid;
+    delete from habitos_registro   where uid = v_uid;
+    delete from recetas_guardadas  where uid = v_uid;
+    delete from listas_mercado     where uid = v_uid;
+    delete from rutinas            where uid = v_uid;
+    delete from suscripciones_push where uid = v_uid;
+    delete from perfil             where uid = v_uid;
+    delete from uids_legado        where uid = v_uid;
+    -- en cascada: sesiones, consentimientos y passkeys
+    delete from identidades        where uid = v_uid;
+
+    insert into auditoria (uid, accion, resultado, detalle)
+    values (v_uid, 'datos.purgar', 'ok', jsonb_build_object('motivo', 'inactividad', 'gracia_dias', extract(day from v_gracia)));
+    return next v_uid;
+  end loop;
+end $$;
+
+-- Solo el dueño: ni la app ni el auditor la pueden ejecutar.
+revoke execute on function pulso_purgar_inactivos(int) from public;
+
 -- Ventana fija: true si todavía hay cupo para `p_clave` en la ventana actual.
 create or replace function pulso_consumir_tasa(p_clave text, p_max int, p_ventana_seg int)
 returns boolean
@@ -545,6 +612,55 @@ begin
          using (uid = current_setting(''app.uid'', true))
          with check (uid = current_setting(''app.uid'', true))',
       t
+    );
+  end loop;
+end $$;
+
+-- ─── Cuotas de filas por usuario (AM-21) ─────────────────────────────────────
+-- Sin tope, una sesión válida podía guardar recetas o listas de 20 000
+-- caracteres sin límite de cantidad y llenar el disco. El trigger rechaza la
+-- fila nueva cuando el usuario ya llegó al máximo de esa tabla; la app traduce
+-- el error a un mensaje para el usuario (409 en la API móvil).
+--
+-- Cuenta TODAS las filas del usuario, también las dadas de baja lógica
+-- (rutinas, hábitos): ocupan disco igual. El lock por usuario y tabla evita
+-- que dos altas en paralelo cuenten N-1 y terminen en N+1. Corre con los
+-- permisos de quien inserta: para `pulso_app`, RLS ya limita el conteo a sus
+-- propias filas.
+create or replace function pulso_cuota_filas() returns trigger
+language plpgsql set search_path = public, pg_temp as $$
+declare
+  v_max   int := TG_ARGV[0]::int;
+  v_filas int;
+begin
+  perform pg_advisory_xact_lock(hashtextextended(TG_TABLE_NAME || ':' || NEW.uid, 0));
+  execute format('select count(*) from %I where uid = $1', TG_TABLE_NAME) into v_filas using NEW.uid;
+  if v_filas >= v_max then
+    raise exception using errcode = 'P0001', message = 'pulso_cuota_excedida', detail = TG_TABLE_NAME;
+  end if;
+  return NEW;
+end $$;
+
+-- Máximos holgados para un uso real (años de registros diarios) y chicos para
+-- un abuso: con el límite de escrituras (300 por hora) tampoco se llega rápido.
+do $$
+declare
+  c record;
+begin
+  for c in select * from (values
+    ('recetas_guardadas',   200),
+    ('listas_mercado',      100),
+    ('rutinas',             300),
+    ('habitos_definicion',  100),
+    ('habitos',           10000),
+    ('habitos_registro',  20000)
+  ) as t(tabla, maximo)
+  loop
+    execute format('drop trigger if exists cuota_por_usuario on %I', c.tabla);
+    execute format(
+      'create trigger cuota_por_usuario before insert on %I
+         for each row execute function pulso_cuota_filas(%L)',
+      c.tabla, c.maximo::text
     );
   end loop;
 end $$;

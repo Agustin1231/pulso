@@ -3,7 +3,7 @@ import { conUsuario } from "@/lib/db/pool";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { json, rutaProtegida } from "@/lib/seguridad/ruta";
 import { limite } from "@/lib/seguridad/tasa";
-import { cuerpoPushSchema } from "@/lib/seguridad/validacion";
+import { cuerpoPushSchema, endpointPushPermitido } from "@/lib/seguridad/validacion";
 
 export const runtime = "nodejs";
 
@@ -34,12 +34,14 @@ export const POST = rutaProtegida(
     }
     webpush.setVapidDetails(VAPID_EMAIL, NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
+    // Las suscripciones guardadas antes de la lista blanca de servicios de push
+    // (SAST-BE-11) pueden apuntar a cualquier host: se filtran también al enviar.
     const suscripciones = await conUsuario(uid, async (db) => {
       const { rows } = await db.query<SuscripcionRow>(
         `select endpoint, keys from suscripciones_push where uid = $1`,
         [uid]
       );
-      return rows;
+      return rows.filter((s) => endpointPushPermitido(s.endpoint));
     });
 
     if (!suscripciones.length) {
@@ -52,18 +54,21 @@ export const POST = rutaProtegida(
       url:   cuerpo.url || "/dashboard",
     });
 
-    const resultados = await Promise.allSettled(
-      suscripciones.map((s) =>
-        webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload)
-      )
+    // Cada envío resuelve siempre (nunca rechaza) a su endpoint y su resultado.
+    // Con timeout: un servicio de push colgado no debe retener la petición.
+    const envios = await Promise.all(
+      suscripciones.map(async ({ endpoint, keys }) => {
+        try {
+          await webpush.sendNotification({ endpoint, keys }, payload, { timeout: 10_000 });
+          return { endpoint, ok: true, status: 201 };
+        } catch (err) {
+          return { endpoint, ok: false, status: (err as { statusCode?: number })?.statusCode };
+        }
+      })
     );
 
     // 404/410: el navegador dio de baja la suscripción; se borra para no reintentarla.
-    const vencidas = suscripciones.filter((_, i) => {
-      const r = resultados[i];
-      const status = r.status === "rejected" ? (r.reason as { statusCode?: number })?.statusCode : undefined;
-      return status === 404 || status === 410;
-    });
+    const vencidas = envios.filter((e) => e.status === 404 || e.status === 410);
     if (vencidas.length) {
       await conUsuario(uid, (db) =>
         db.query(`delete from suscripciones_push where uid = $1 and endpoint = any($2)`, [
@@ -73,7 +78,7 @@ export const POST = rutaProtegida(
       ).catch((err) => console.error("[push] no se pudieron borrar suscripciones vencidas:", err));
     }
 
-    const enviados = resultados.filter((r) => r.status === "fulfilled").length;
+    const enviados = envios.filter((e) => e.ok).length;
     await auditar({ uid, accion: "push.enviar", resultado: "ok", ip, detalle: { enviados, vencidas: vencidas.length } });
     return json({ ok: true, enviados, vencidas: vencidas.length });
   }

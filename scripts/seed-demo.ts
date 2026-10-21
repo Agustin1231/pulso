@@ -65,10 +65,21 @@ function mediodia(dia: string): Date {
 
 const HABITOS_FIJOS = ["hidratacion", "alimentacion", "sueno", "medicamento"];
 
-const client = new pg.Client({
-  connectionString,
-  ssl: process.env.PGSSL === "require" ? { rejectUnauthorized: false } : undefined,
-});
+// Mismos modos que src/lib/db/pool.ts (opcionesSsl): siempre verificando el
+// certificado, nunca cifrar a ciegas (SAST-BE-08).
+function opcionesSsl(): pg.ConnectionConfig["ssl"] {
+  const modo = process.env.PGSSL ?? "";
+  if (modo === "verify-full") {
+    const ca = process.env.PGSSL_CA?.replace(/\\n/g, "\n");
+    if (!ca?.includes("BEGIN CERTIFICATE")) throw new Error("PGSSL=verify-full necesita PGSSL_CA en PEM.");
+    return { ca, rejectUnauthorized: true };
+  }
+  if (modo === "require") return { rejectUnauthorized: true };
+  if (modo !== "") throw new Error(`PGSSL="${modo}" no es válido: verify-full, require o vacío.`);
+  return undefined;
+}
+
+const client = new pg.Client({ connectionString, ssl: opcionesSsl() });
 
 async function main() {
   await client.connect();

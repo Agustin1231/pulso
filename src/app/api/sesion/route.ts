@@ -1,8 +1,8 @@
 import { mensajeError } from "@/lib/db/pool";
-import { asegurarSesion, cerrarSesionEnEsteEquipo, estadoSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
+import { asegurarSesion, cerrarSesionEnEsteEquipo, estadoSesion, eventoSesion, uidIgnorandoBloqueo } from "@/lib/sesion";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { ipCliente, origenValido } from "@/lib/seguridad/red";
-import { json } from "@/lib/seguridad/ruta";
+import { CuerpoDemasiadoGrande, json, leerJson } from "@/lib/seguridad/ruta";
 import { consumir, limite } from "@/lib/seguridad/tasa";
 import { cuerpoSesionSchema } from "@/lib/seguridad/validacion";
 
@@ -27,7 +27,17 @@ export async function POST(req: Request) {
     return json({ error: "origen_no_permitido" }, 403);
   }
 
-  const r = cuerpoSesionSchema.safeParse(await req.json().catch(() => ({})));
+  // El cuerpo solo trae el UUID viejo: 4 KB sobran. Se lee con tope porque
+  // esta ruta no exige sesión (SAST-BE-10).
+  let crudo: unknown;
+  try {
+    crudo = await leerJson(req, 4 * 1024);
+  } catch (err) {
+    if (!(err instanceof CuerpoDemasiadoGrande)) throw err;
+    await auditar({ accion: "sesion.asegurar", resultado: "denegado", ip, detalle: { motivo: "cuerpo_demasiado_grande" } });
+    return json({ error: "cuerpo_demasiado_grande" }, 413);
+  }
+  const r = cuerpoSesionSchema.safeParse(crudo ?? {});
   const legado = r.success ? r.data.legado : undefined;
 
   try {
@@ -44,8 +54,7 @@ export async function POST(req: Request) {
     const { uid, origen } = await asegurarSesion(legado);
 
     if (origen !== "existente") {
-      const accion = { legado: "reclamar", nueva: "crear", rotada: "rotar" }[origen];
-      await auditar({ uid, accion: `sesion.${accion}`, resultado: "ok", ip });
+      await auditar({ uid, accion: eventoSesion(origen), resultado: "ok", ip });
     }
     if (legado && origen === "nueva") {
       // Trajo un UUID viejo que no se pudo reclamar: ya reclamado, vencido o inventado.

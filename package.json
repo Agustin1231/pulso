@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "setup-db": "node scripts/setup-db.mjs",
+    "purgar-inactivos": "node scripts/purgar-inactivos.mjs",
     "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs",
     "test:ml": "tsc -p tsconfig.ml.json && node --test \".tmp-test/ml/tests/ml/**/*.test.js\"",
     "test:seguridad": "node --test tests/seguridad/",
@@ -21,8 +22,8 @@
     "figuras": "tsc -p tsconfig.ml.json && node .tmp-test/ml/scripts/exportar-figuras.js docs/figuras/datos-figuras.json && python3 scripts/figuras.py"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.2.12",
-    "@google/genai": "^0.7.0",
+    "@ai-sdk/anthropic": "^2.0.109",
+    "@google/genai": "^1.52.0",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-dropdown-menu": "^2.1.6",
     "@radix-ui/react-progress": "^1.1.2",
@@ -33,12 +34,12 @@
     "@radix-ui/react-tooltip": "^1.2.0",
     "@simplewebauthn/browser": "^14.0.0",
     "@simplewebauthn/server": "^14.0.3",
-    "ai": "^4.3.16",
+    "ai": "^5.0.278",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.503.0",
-    "next": "^15.3.0",
+    "next": "^15.5.28",
     "pg": "^8.13.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -54,9 +55,16 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
-    "eslint": "^9",
-    "eslint-config-next": "^15.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^15.5.28",
+    "eslint-plugin-security": "^4.2.0",
     "tailwindcss": "^4",
     "typescript": "5.8.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.31",
+    "@ai-sdk/provider-utils": {
+      "undici": "^6.29.1"
+    }
   }
 }

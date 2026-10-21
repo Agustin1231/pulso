@@ -357,7 +357,7 @@ export function HabitosClient() {
     const key = `fijo-${tipo}`;
     if (toggling.has(key)) return;
     const done = !fijosDone.has(tipo);
-    setFijosDone((prev) => { const n = new Set(prev); done ? n.add(tipo) : n.delete(tipo); return n; });
+    setFijosDone((prev) => { const n = new Set(prev); if (done) n.add(tipo); else n.delete(tipo); return n; });
     setToggling((prev) => new Set(prev).add(key));
     await toggleHabitoFijo(fecha, tipo, done);
     setToggling((prev) => { const n = new Set(prev); n.delete(key); return n; });
@@ -367,7 +367,7 @@ export function HabitosClient() {
     const key = `reg-${refId}`;
     if (toggling.has(key)) return;
     const done = !registroDone.has(refId);
-    setRegistroDone((prev) => { const n = new Set(prev); done ? n.add(refId) : n.delete(refId); return n; });
+    setRegistroDone((prev) => { const n = new Set(prev); if (done) n.add(refId); else n.delete(refId); return n; });
     setToggling((prev) => new Set(prev).add(key));
     await toggleHabitoRegistro(fecha, tipo, refId, done);
     setToggling((prev) => { const n = new Set(prev); n.delete(key); return n; });

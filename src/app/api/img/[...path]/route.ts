@@ -1,6 +1,13 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
-import { carpetasPermitidas, MIME_POR_EXT, RECETAS_SUBDIR, rutaDentroDeMedia } from "@/lib/media";
+import {
+  ARCHIVO_IMAGEN_RE,
+  CARPETA_RE,
+  carpetasPermitidas,
+  MIME_POR_EXT,
+  RECETAS_SUBDIR,
+  rutaDentroDeMedia,
+} from "@/lib/media";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { rutaProtegida } from "@/lib/seguridad/ruta";
 
@@ -25,6 +32,13 @@ export const GET = rutaProtegida<undefined, { params: Promise<{ path: string[] }
     const [subdir, carpeta, archivo, ...resto] = segmentos;
 
     if (subdir !== RECETAS_SUBDIR || !carpeta || !archivo || resto.length) return NO_ENCONTRADO();
+    // Lista blanca de la forma antes de tocar el disco. Next ya decodificó cada
+    // segmento: sin esto, `..%2Fotra-carpeta%2Ffoto.png` pasaba como archivo y
+    // leía la imagen de otro usuario (SAST-BE-09).
+    if (!CARPETA_RE.test(carpeta) || !ARCHIVO_IMAGEN_RE.test(archivo)) {
+      await auditar({ uid, accion: "imagen.ver", resultado: "denegado", ip, detalle: { motivo: "ruta_invalida" } });
+      return NO_ENCONTRADO();
+    }
     if (!carpetasPermitidas(uid).includes(carpeta)) {
       await auditar({ uid, accion: "imagen.ver", resultado: "denegado", ip, detalle: { motivo: "carpeta_ajena" } });
       return NO_ENCONTRADO();
@@ -35,6 +49,7 @@ export const GET = rutaProtegida<undefined, { params: Promise<{ path: string[] }
     if (!destino || !mime) return NO_ENCONTRADO();
 
     try {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta validada arriba (lista blanca + rutaDentroDeMedia)
       const bytes = await readFile(destino);
       return new Response(new Uint8Array(bytes), {
         headers: {

@@ -66,6 +66,8 @@ export const METRICA_MAP = Object.fromEntries(
 ) as Record<MetricaType, MetricaConfig>;
 
 export function getEstado(tipo: MetricaType, valor: number): Estado {
+  // `tipo` es MetricaType: sale de filas validadas con zod al guardarse, nunca de un nombre libre.
+  // eslint-disable-next-line security/detect-object-injection -- clave de una unión cerrada
   const cfg = METRICA_MAP[tipo];
   if (!cfg) return "sin-datos";
   // Peso no tiene rangos de riesgo definidos

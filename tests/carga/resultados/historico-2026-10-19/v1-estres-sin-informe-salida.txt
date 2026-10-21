@@ -1,0 +1,39 @@
+time="2026-10-20T01:47:16Z" level=warning msg="Insufficient VUs, reached 800 active VUs and cannot initialize more" executor=ramping-arrival-rate scenario=estres
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✗ 'p(95)<2000' p(95)=3.1s
+
+    http_req_failed
+    ✓ 'rate<0.05' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 38026   157.665978/s
+    checks_succeeded...: 100.00% 38026 out of 38026
+    checks_failed......: 0.00%   0 out of 38026
+
+
+    HTTP
+    http_req_duration..............: avg=771.55ms min=1.64ms med=10.45ms p(90)=2.87s p(95)=3.1s p(99)=3.51s max=3.68s count=38026
+      { expected_response:true }...: avg=771.55ms min=1.64ms med=10.45ms p(90)=2.87s p(95)=3.1s p(99)=3.51s max=3.68s count=38026
+    http_req_failed................: 0.00%  0 out of 38026
+    http_reqs......................: 38026  157.665978/s
+
+    EXECUTION
+    dropped_iterations.............: 3099   12.849284/s
+    iteration_duration.............: avg=771.91ms min=1.79ms med=10.77ms p(90)=2.87s p(95)=3.1s p(99)=3.51s max=3.69s count=38026
+    iterations.....................: 38026  157.665978/s
+    vus............................: 140    min=0          max=800
+    vus_max........................: 800    min=50         max=800
+
+    NETWORK
+    data_received..................: 99 MB  410 kB/s
+    data_sent......................: 9.1 MB 38 kB/s
+
+
+
+time="2026-10-20T01:48:06Z" level=error msg="thresholds on metrics 'http_req_duration' have been crossed"

@@ -1,0 +1,43 @@
+# Tope de cuerpo (413) y cuota de filas por usuario (409) — 2026-10-21T08:20:33-05:00
+Servidor: http://127.0.0.1:3109 (build 2026-10-21 07:48:31); identidad de prueba 01f450cf…
+
+## 1. Tope de tamaño del cuerpo (API móvil: 256 KiB)
+POST /metricas con cuerpo de 261120 bytes (255 KiB) → {"error":"datos_invalidos","mensaje":"Los datos enviados no son válidos."} HTTP 400 0.036795s
+POST /metricas con cuerpo de 263168 bytes (257 KiB) → {"error":"cuerpo_demasiado_grande"} HTTP 413 0.012829s
+POST /metricas con cuerpo de 1048576 bytes (1024 KiB) → {"error":"cuerpo_demasiado_grande"} HTTP 413 0.007939s
+POST /metricas con 300 KiB sin Content-Length (chunked) → {"error":"cuerpo_demasiado_grande"} HTTP 413
+
+## 2. Cuota de filas (recetas_guardadas: 200 por usuario)
+Recetas previas del usuario: 3 (semilla).
+200 POST /recetas → 200×197 409×3  · primer 409 en la petición 198
+Cuerpo del 409: {"error":"cuota_excedida","mensaje":"Llegaste al máximo de elementos guardados. Borrá alguno para agregar otro."}
+Filas del usuario después: 200
+
+## 3. Rechazos auditados (tabla auditoria, últimos 5 minutos)
+             accion             | resultado |         motivo          | count 
+--------------------------------+-----------+-------------------------+-------
+ datos.eliminar                 | denegado  | demasiadas_peticiones   |     2
+ habito_fijo.marcar             | error     |                         |    44
+ ia.receta                      | denegado  | demasiadas_peticiones   |     5
+ metrica.guardar                | denegado  | datos_invalidos         |     1
+ metrica.guardar                | denegado  | demasiadas_peticiones   |    10
+ metrica.guardar                | error     |                         |    55
+ movil.get.consentimiento       | error     |                         |     6
+ movil.get.habitos.definiciones | error     |                         |     8
+ movil.get.habitos.fecha        | error     |                         |    12
+ movil.get.habitos.semana       | error     |                         |     8
+ movil.get.mercado              | error     |                         |     7
+ movil.get.metricas.historial   | error     |                         |    29
+ movil.get.metricas.ultimas     | error     |                         |    23
+ movil.get.perfil               | error     |                         |     9
+ movil.get.recetas              | error     |                         |     6
+ movil.get.rutinas              | error     |                         |     9
+ movil.post.metricas            | denegado  | cuerpo_demasiado_grande |     3
+ movil.post.metricas            | error     |                         |    12
+ movil.put.habitos.fijos        | error     |                         |    12
+ movil.put.perfil               | error     |                         |     3
+ perfil.guardar                 | error     |                         |    23
+ receta.guardar                 | denegado  | cuota_excedida          |     3
+ sesion.crear                   | denegado  | demasiadas_peticiones   |     5
+(23 rows)
+

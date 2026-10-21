@@ -1,0 +1,13 @@
+epoch_ms,evento
+1792462407570,inicio_k6
+1792462447607,db_stop_inicio
+1792462448418,db_detenida
+1792462478595,db_start_inicio
+1792462479561,db_lista
+1792462479748,api_recuperada_tras_db
+1792462554780,srv_parar
+1792462554890,srv_detenido
+1792462554897,srv_iniciar
+1792462560336,srv_listo
+1792462561990,api_recuperada_tras_reinicio
+1792462649665,fin

@@ -1,0 +1,1 @@
+inicio 2026-10-19T20:32:08-05:00 load=3.75 8.77 8.89 PGPOOL_MAX=10 BASE_URL=http://127.0.0.1:3109 args=-e RATE=10 -e DUR=3m

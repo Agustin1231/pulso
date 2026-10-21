@@ -1,0 +1,174 @@
+time="2026-10-20T02:15:54Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/recetas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=frecuencia_cardiaca&dias=30\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/mercado\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/historial?tipo=nivel_estres&dias=30\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/definiciones\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/semana?desde=2026-10-14&hasta=2026-10-20\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:55Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/habitos/fecha?fecha=2026-10-20\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/recetas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/rutinas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/recetas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/metricas/ultimas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": dial tcp 127.0.0.1:3109: connect: connection refused"
+time="2026-10-20T02:15:56Z" level=warning msg="Request Failed" error="Get \"http://127.0.0.1:3109/api/movil/v1/rutinas\": dial tcp 127.0.0.1:3109: connect: connection refused"
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(95)<800' p(95)=150.85ms
+
+      {name:GET consentimiento}
+      ✓ 'p(95)<500' p(95)=63.96ms
+
+      {name:GET habitos/definiciones}
+      ✓ 'p(95)<500' p(95)=107.45ms
+
+      {name:GET habitos/fecha}
+      ✓ 'p(95)<500' p(95)=137.37ms
+
+      {name:GET habitos/semana}
+      ✓ 'p(95)<500' p(95)=305.3ms
+
+      {name:GET informe}
+      ✓ 'p(95)<2500' p(95)=0s
+
+      {name:GET mercado}
+      ✓ 'p(95)<500' p(95)=213.54ms
+
+      {name:GET metricas/historial}
+      ✓ 'p(95)<500' p(95)=136.48ms
+
+      {name:GET metricas/ultimas}
+      ✓ 'p(95)<500' p(95)=128.96ms
+
+      {name:GET perfil}
+      ✓ 'p(95)<500' p(95)=147.13ms
+
+      {name:GET recetas}
+      ✓ 'p(95)<500' p(95)=102.94ms
+
+      {name:GET rutinas}
+      ✓ 'p(95)<500' p(95)=139.45ms
+
+      {name:POST metricas}
+      ✓ 'p(95)<800' p(95)=133.53ms
+
+      {name:POST sesion}
+      ✓ 'p(95)<800' p(95)=120.33ms
+
+      {name:PUT habitos/fijos}
+      ✓ 'p(95)<800' p(95)=250.26ms
+
+      {name:PUT perfil}
+      ✓ 'p(95)<800' p(95)=237.26ms
+
+    http_req_failed
+    ✗ 'rate<0.01' rate=13.86%
+
+      {name:GET consentimiento}
+      ✗ 'rate<0.01' rate=10.00%
+
+      {name:GET habitos/definiciones}
+      ✗ 'rate<0.01' rate=16.02%
+
+      {name:GET habitos/fecha}
+      ✗ 'rate<0.01' rate=13.43%
+
+      {name:GET habitos/semana}
+      ✗ 'rate<0.01' rate=16.80%
+
+      {name:GET informe}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET mercado}
+      ✗ 'rate<0.01' rate=20.49%
+
+      {name:GET metricas/historial}
+      ✗ 'rate<0.01' rate=16.62%
+
+      {name:GET metricas/ultimas}
+      ✗ 'rate<0.01' rate=10.96%
+
+      {name:GET perfil}
+      ✗ 'rate<0.01' rate=10.79%
+
+      {name:GET recetas}
+      ✗ 'rate<0.01' rate=15.92%
+
+      {name:GET rutinas}
+      ✗ 'rate<0.01' rate=12.19%
+
+      {name:POST metricas}
+      ✗ 'rate<0.01' rate=10.34%
+
+      {name:POST sesion}
+      ✗ 'rate<0.01' rate=14.59%
+
+      {name:PUT habitos/fijos}
+      ✗ 'rate<0.01' rate=14.38%
+
+      {name:PUT perfil}
+      ✗ 'rate<0.01' rate=10.52%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 2401   10.003733/s
+    checks_succeeded...: 86.13% 2068 out of 2401
+    checks_failed......: 13.86% 333 out of 2401
+
+
+    HTTP
+    http_req_duration.....................: avg=71.37ms  min=0s       med=20.57ms p(90)=68.66ms  p(95)=150.85ms p(99)=600.53ms max=5.43s    count=2401
+      { expected_response:true }..........: avg=77.78ms  min=3.72ms   med=21.16ms p(90)=71.52ms  p(95)=158.01ms p(99)=706.78ms max=5.43s    count=2068
+      { name:GET consentimiento }.........: avg=35.76ms  min=3.86ms   med=17.47ms p(90)=51.24ms  p(95)=63.96ms  p(99)=444.95ms max=646.49ms count=80  
+      { name:GET habitos/definiciones }...: avg=93.49ms  min=0s       med=19.36ms p(90)=55.67ms  p(95)=107.45ms p(99)=2.49s    max=4.79s    count=156 
+      { name:GET habitos/fecha }..........: avg=74.86ms  min=0s       med=20.7ms  p(90)=61.92ms  p(95)=137.37ms p(99)=335.33ms max=4.78s    count=201 
+      { name:GET habitos/semana }.........: avg=151.11ms min=0s       med=21.38ms p(90)=82.51ms  p(95)=305.3ms  p(99)=4.44s    max=5.16s    count=125 
+      { name:GET informe }................: avg=0s       min=0s       med=0s      p(90)=0s       p(95)=0s       p(99)=0s       max=0s       count=0   
+      { name:GET mercado }................: avg=121.2ms  min=0s       med=14.51ms p(90)=52.35ms  p(95)=213.54ms p(99)=3.71s    max=3.74s    count=122 
+      { name:GET metricas/historial }.....: avg=36.07ms  min=0s       med=19.82ms p(90)=58.64ms  p(95)=136.48ms p(99)=290.61ms max=695.55ms count=367 
+      { name:GET metricas/ultimas }.......: avg=53.4ms   min=0s       med=20.44ms p(90)=57.59ms  p(95)=128.96ms p(99)=377.17ms max=3.81s    count=383 
+      { name:GET perfil }.................: avg=89.21ms  min=4.42ms   med=15.58ms p(90)=52.21ms  p(95)=147.13ms p(99)=2.71s    max=4.47s    count=139 
+      { name:GET recetas }................: avg=60.88ms  min=0s       med=18.77ms p(90)=59.18ms  p(95)=102.94ms p(99)=525.87ms max=4s       count=157 
+      { name:GET rutinas }................: avg=58.07ms  min=0s       med=16.94ms p(90)=62.85ms  p(95)=139.45ms p(99)=309.15ms max=4.41s    count=164 
+      { name:POST metricas }..............: avg=53.39ms  min=4.27ms   med=35.74ms p(90)=85.07ms  p(95)=133.53ms p(99)=352.35ms max=729.57ms count=174 
+      { name:POST sesion }................: avg=28.48ms  min=0s       med=15.81ms p(90)=48.03ms  p(95)=120.33ms p(99)=206.16ms max=255.67ms count=137 
+      { name:PUT habitos/fijos }..........: avg=132.13ms min=4.88ms   med=36.18ms p(90)=99.57ms  p(95)=250.26ms p(99)=3.21s    max=5.15s    count=139 
+      { name:PUT perfil }.................: avg=148.36ms min=0s       med=31.75ms p(90)=150.03ms p(95)=237.26ms p(99)=2.65s    max=5.43s    count=57  
+    http_req_failed.......................: 13.86% 333 out of 2401
+      { name:GET consentimiento }.........: 10.00% 8 out of 80
+      { name:GET habitos/definiciones }...: 16.02% 25 out of 156
+      { name:GET habitos/fecha }..........: 13.43% 27 out of 201
+      { name:GET habitos/semana }.........: 16.80% 21 out of 125
+      { name:GET informe }................: 0.00%  0 out of 0
+      { name:GET mercado }................: 20.49% 25 out of 122
+      { name:GET metricas/historial }.....: 16.62% 61 out of 367
+      { name:GET metricas/ultimas }.......: 10.96% 42 out of 383
+      { name:GET perfil }.................: 10.79% 15 out of 139
+      { name:GET recetas }................: 15.92% 25 out of 157
+      { name:GET rutinas }................: 12.19% 20 out of 164
+      { name:POST metricas }..............: 10.34% 18 out of 174
+      { name:POST sesion }................: 14.59% 20 out of 137
+      { name:PUT habitos/fijos }..........: 14.38% 20 out of 139
+      { name:PUT perfil }.................: 10.52% 6 out of 57
+    http_reqs.............................: 2401   10.003733/s
+
+    EXECUTION
+    iteration_duration....................: avg=71.93ms  min=804.09µs med=21.15ms p(90)=69.22ms  p(95)=151.31ms p(99)=601ms    max=5.44s    count=2401
+    iterations............................: 2401   10.003733/s
+    vus...................................: 0      min=0           max=19
+    vus_max...............................: 20     min=20          max=20
+
+    NETWORK
+    data_received.........................: 5.4 MB 23 kB/s
+    data_sent.............................: 644 kB 2.7 kB/s
+
+
+
+time="2026-10-20T02:17:28Z" level=error msg="thresholds on metrics 'http_req_failed, http_req_failed{name:GET consentimiento}, http_req_failed{name:GET habitos/definiciones}, http_req_failed{name:GET habitos/fecha}, http_req_failed{name:GET habitos/semana}, http_req_failed{name:GET mercado}, http_req_failed{name:GET metricas/historial}, http_req_failed{name:GET metricas/ultimas}, http_req_failed{name:GET perfil}, http_req_failed{name:GET recetas}, http_req_failed{name:GET rutinas}, http_req_failed{name:POST metricas}, http_req_failed{name:POST sesion}, http_req_failed{name:PUT habitos/fijos}, http_req_failed{name:PUT perfil}' have been crossed"

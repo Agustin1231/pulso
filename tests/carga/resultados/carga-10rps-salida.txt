@@ -1,0 +1,157 @@
+
+
+  █ THRESHOLDS 
+
+    http_req_duration
+    ✓ 'p(95)<800' p(95)=671.91ms
+
+      {name:GET consentimiento}
+      ✓ 'p(95)<500' p(95)=358.1ms
+
+      {name:GET habitos/definiciones}
+      ✓ 'p(95)<500' p(95)=373.8ms
+
+      {name:GET habitos/fecha}
+      ✓ 'p(95)<500' p(95)=327.42ms
+
+      {name:GET habitos/semana}
+      ✓ 'p(95)<500' p(95)=343.24ms
+
+      {name:GET informe}
+      ✓ 'p(95)<2500' p(95)=1.22s
+
+      {name:GET mercado}
+      ✓ 'p(95)<500' p(95)=350.54ms
+
+      {name:GET metricas/historial}
+      ✓ 'p(95)<500' p(95)=401.76ms
+
+      {name:GET metricas/ultimas}
+      ✓ 'p(95)<500' p(95)=399.2ms
+
+      {name:GET perfil}
+      ✓ 'p(95)<500' p(95)=400.54ms
+
+      {name:GET recetas}
+      ✓ 'p(95)<500' p(95)=352.55ms
+
+      {name:GET rutinas}
+      ✓ 'p(95)<500' p(95)=340.33ms
+
+      {name:POST metricas}
+      ✗ 'p(95)<800' p(95)=1.23s
+
+      {name:POST sesion}
+      ✗ 'p(95)<800' p(95)=876.49ms
+
+      {name:PUT habitos/fijos}
+      ✗ 'p(95)<800' p(95)=1.08s
+
+      {name:PUT perfil}
+      ✓ 'p(95)<800' p(95)=671.76ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET consentimiento}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET habitos/definiciones}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET habitos/fecha}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET habitos/semana}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET informe}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET mercado}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET metricas/historial}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET metricas/ultimas}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET perfil}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET recetas}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:GET rutinas}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:POST metricas}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:POST sesion}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:PUT habitos/fijos}
+      ✓ 'rate<0.01' rate=0.00%
+
+      {name:PUT perfil}
+      ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1801    10.005274/s
+    checks_succeeded...: 100.00% 1801 out of 1801
+    checks_failed......: 0.00%   0 out of 1801
+
+
+    HTTP
+    http_req_duration.....................: avg=154.25ms min=2.31ms   med=6.77ms  p(90)=441.87ms p(95)=671.91ms p(99)=1.32s    max=2.39s    count=1801
+      { expected_response:true }..........: avg=154.25ms min=2.31ms   med=6.77ms  p(90)=441.87ms p(95)=671.91ms p(99)=1.32s    max=2.39s    count=1801
+      { name:GET consentimiento }.........: avg=79.36ms  min=2.71ms   med=4.34ms  p(90)=330.4ms  p(95)=358.1ms  p(99)=403.8ms  max=423.97ms count=62  
+      { name:GET habitos/definiciones }...: avg=98.16ms  min=2.88ms   med=4.55ms  p(90)=328.26ms p(95)=373.8ms  p(99)=839.82ms max=1.26s    count=93  
+      { name:GET habitos/fecha }..........: avg=69.86ms  min=2.37ms   med=4.82ms  p(90)=255.41ms p(95)=327.42ms p(99)=731.25ms max=976.68ms count=141 
+      { name:GET habitos/semana }.........: avg=78.5ms   min=2.96ms   med=4.81ms  p(90)=319.07ms p(95)=343.24ms p(99)=455.83ms max=799.28ms count=97  
+      { name:GET informe }................: avg=598.55ms min=412.53ms med=454.7ms p(90)=1.02s    p(95)=1.22s    p(99)=1.52s    max=1.94s    count=155 
+      { name:GET mercado }................: avg=82.43ms  min=2.31ms   med=4.39ms  p(90)=323.05ms p(95)=350.54ms p(99)=547.03ms max=624.33ms count=61  
+      { name:GET metricas/historial }.....: avg=103.1ms  min=2.75ms   med=4.75ms  p(90)=334.34ms p(95)=401.76ms p(99)=809.48ms max=1.59s    count=245 
+      { name:GET metricas/ultimas }.......: avg=95.64ms  min=2.64ms   med=4.97ms  p(90)=332.52ms p(95)=399.2ms  p(99)=751.13ms max=968.4ms  count=269 
+      { name:GET perfil }.................: avg=104.94ms min=2.67ms   med=4.54ms  p(90)=338.43ms p(95)=400.54ms p(99)=726.32ms max=841.57ms count=114 
+      { name:GET recetas }................: avg=89.62ms  min=2.67ms   med=4.41ms  p(90)=321.7ms  p(95)=352.55ms p(99)=764.46ms max=792.28ms count=102 
+      { name:GET rutinas }................: avg=86.28ms  min=2.82ms   med=4.61ms  p(90)=330.84ms p(95)=340.33ms p(99)=444.69ms max=518.75ms count=102 
+      { name:POST metricas }..............: avg=221.2ms  min=4.68ms   med=16.21ms p(90)=779.44ms p(95)=1.23s    p(99)=2.27s    max=2.39s    count=132 
+      { name:POST sesion }................: avg=180.23ms min=3.08ms   med=13.18ms p(90)=678.14ms p(95)=876.49ms p(99)=1.68s    max=1.72s    count=99  
+      { name:PUT habitos/fijos }..........: avg=167.44ms min=4.12ms   med=15.73ms p(90)=536.01ms p(95)=1.08s    p(99)=1.52s    max=1.61s    count=95  
+      { name:PUT perfil }.................: avg=136.75ms min=4.9ms    med=16.14ms p(90)=535.8ms  p(95)=671.76ms p(99)=808.88ms max=854.76ms count=34  
+    http_req_failed.......................: 0.00%  0 out of 1801
+      { name:GET consentimiento }.........: 0.00%  0 out of 62
+      { name:GET habitos/definiciones }...: 0.00%  0 out of 93
+      { name:GET habitos/fecha }..........: 0.00%  0 out of 141
+      { name:GET habitos/semana }.........: 0.00%  0 out of 97
+      { name:GET informe }................: 0.00%  0 out of 155
+      { name:GET mercado }................: 0.00%  0 out of 61
+      { name:GET metricas/historial }.....: 0.00%  0 out of 245
+      { name:GET metricas/ultimas }.......: 0.00%  0 out of 269
+      { name:GET perfil }.................: 0.00%  0 out of 114
+      { name:GET recetas }................: 0.00%  0 out of 102
+      { name:GET rutinas }................: 0.00%  0 out of 102
+      { name:POST metricas }..............: 0.00%  0 out of 132
+      { name:POST sesion }................: 0.00%  0 out of 99
+      { name:PUT habitos/fijos }..........: 0.00%  0 out of 95
+      { name:PUT perfil }.................: 0.00%  0 out of 34
+    http_reqs.............................: 1801   10.005274/s
+
+    EXECUTION
+    iteration_duration....................: avg=154.57ms min=2.52ms   med=7.12ms  p(90)=442.13ms p(95)=672.43ms p(99)=1.32s    max=2.39s    count=1801
+    iterations............................: 1801   10.005274/s
+    vus...................................: 0      min=0         max=15
+    vus_max...............................: 20     min=20        max=20
+
+    NETWORK
+    data_received.........................: 9.2 MB 51 kB/s
+    data_sent.............................: 484 kB 2.7 kB/s
+
+
+
+time="2026-10-21T13:02:23Z" level=error msg="thresholds on metrics 'http_req_duration{name:POST metricas}, http_req_duration{name:POST sesion}, http_req_duration{name:PUT habitos/fijos}' have been crossed"

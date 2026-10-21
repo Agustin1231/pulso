@@ -10,7 +10,7 @@ function Portal({ children }: { children: React.ReactNode }) {
   return createPortal(children, document.body);
 }
 import {
-  Dumbbell, Sparkles, RefreshCw, Loader2, ChevronRight,
+  Dumbbell, RefreshCw, Loader2, ChevronRight,
   Bookmark, BookOpen, Trash2, ArrowLeft, Moon, Brain,
   Play, CheckCircle, SkipForward, Timer,
 } from "lucide-react";

@@ -1,0 +1,49 @@
+time="2026-10-20T02:19:54Z" level=info msg="sesionIp: max=30 primer 429 en la petición 31 · 200×30 429×5 · estados=[200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,429,429,429,429,429]" source=console
+time="2026-10-20T02:20:09Z" level=info msg="ia: max=40 primer 429 en la petición 41 · 200×40 429×5 · estados=[200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,429,429,429,429,429]" source=console
+time="2026-10-20T02:20:14Z" level=info msg="supresion: max=3 primer 429 en la petición 4 · 200×3 429×2 · estados=[200,200,200,429,429]" source=console
+time="2026-10-20T02:20:27Z" level=info msg="escritura: max=300 primer 429 en la petición 301 · 200×300 429×5 · estados=[200,200,200,200,200,429,429,429,429,429]" source=console
+
+
+  █ THRESHOLDS 
+
+    checks{limite:escritura}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:ia}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:sesionIp}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:supresion}
+    ✓ 'rate==1' rate=100.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 12      0.368273/s
+    checks_succeeded...: 100.00% 12 out of 12
+    checks_failed......: 0.00%   0 out of 12
+
+
+    CUSTOM
+    primer_429_en..................: 377    11.569917/s
+
+    HTTP
+    http_req_duration..............: avg=21.5ms  min=4.63ms  med=20.27ms  max=62.65ms p(90)=35.81ms p(95)=39.15ms
+      { expected_response:true }...: avg=22.07ms min=6.73ms  med=20.83ms  max=62.65ms p(90)=35.88ms p(95)=39.61ms
+    http_req_failed................: 4.35%  17 out of 390
+    http_reqs......................: 390    11.96888/s
+
+    EXECUTION
+    iteration_duration.............: avg=2.11s   min=71.19ms med=409.98ms max=7.58s   p(90)=5.46s   p(95)=6.52s  
+    iterations.....................: 4      0.122758/s
+    vus............................: 1      min=0         max=1
+    vus_max........................: 4      min=4         max=4
+
+    NETWORK
+    data_received..................: 245 kB 7.5 kB/s
+    data_sent......................: 100 kB 3.1 kB/s
+
+
+

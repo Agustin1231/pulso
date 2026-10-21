@@ -1,5 +1,6 @@
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { respuestaStreamIA } from "@/lib/ai/stream";
 import { auditar } from "@/lib/seguridad/auditoria";
 import { datosDelUsuario, REGLA_DATOS_DEL_USUARIO, rutaProtegida } from "@/lib/seguridad/ruta";
 import { limite } from "@/lib/seguridad/tasa";
@@ -46,9 +47,9 @@ export const POST = rutaProtegida(
       system: SYSTEM,
       messages,
       onError: ({ error }) => console.error("[ai] receta_chat:", error instanceof Error ? error.message : error),
-      maxTokens: 900,
+      maxOutputTokens: 900,
     });
 
-    return result.toDataStreamResponse();
+    return respuestaStreamIA(result);
   }
 );

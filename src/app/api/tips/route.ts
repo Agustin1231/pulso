@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { streamText } from "ai";
 import { modeloClaude } from "@/lib/ai/provider";
+import { respuestaStreamIA } from "@/lib/ai/stream";
 import { calcularInforme } from "@/lib/db/calculo-informe";
 import { conUsuario } from "@/lib/db/pool";
 import { resumirInforme } from "@/lib/ml/resumen";
@@ -65,9 +66,9 @@ export const POST = rutaProtegida(
       // El SDK convierte los errores del modelo en una parte `3:` del stream sin
       // loguearlos; sin esto un fallo de API/proxy es invisible en el servidor.
       onError: ({ error }) => console.error("[ai] tips:", error instanceof Error ? error.message : error),
-      maxTokens: 450,
+      maxOutputTokens: 450,
     });
 
-    return result.toDataStreamResponse();
+    return respuestaStreamIA(result);
   }
 );

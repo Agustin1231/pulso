@@ -72,12 +72,15 @@ export async function adherenciaDiaria(
 }
 
 export async function rutinasActivas(db: Db, uid: string, limite?: number): Promise<RutinaRow[]> {
+  // El límite va como parámetro, no concatenado al SQL (SAST-BE-12): `limit
+  // null` en Postgres es "sin límite", así que sirve para los dos casos.
+  const tope = limite && Number.isFinite(limite) ? Math.max(1, Math.floor(limite)) : null;
   const { rows } = await db.query<RutinaRow>(
     `select * from rutinas
       where uid = $1 and activa = true
       order by created_at desc
-      ${limite ? "limit " + Math.max(1, Math.floor(limite)) : ""}`,
-    [uid]
+      limit $2`,
+    [uid, tope]
   );
   return rows;
 }

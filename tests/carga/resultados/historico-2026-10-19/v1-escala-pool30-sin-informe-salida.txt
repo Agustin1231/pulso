@@ -1,0 +1,37 @@
+time="2026-10-20T01:56:55Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": read tcp 127.0.0.1:58708->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:56:55Z" level=warning msg="Request Failed" error="Post \"http://127.0.0.1:3109/api/movil/v1/sesion\": read tcp 127.0.0.1:58690->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:56:55Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/perfil\": read tcp 127.0.0.1:58766->127.0.0.1:3109: read: connection reset by peer"
+time="2026-10-20T01:56:55Z" level=warning msg="Request Failed" error="Put \"http://127.0.0.1:3109/api/movil/v1/habitos/fijos\": read tcp 127.0.0.1:58906->127.0.0.1:3109: read: connection reset by peer"
+
+
+  █ THRESHOLDS 
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.02%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 16788  228.144733/s
+    checks_succeeded...: 99.97% 16784 out of 16788
+    checks_failed......: 0.02%  4 out of 16788
+
+
+    HTTP
+    http_req_duration..............: avg=135.67ms min=18.11ms med=89.79ms p(90)=159.86ms p(95)=191.55ms p(99)=344.18ms max=14.65s count=16788
+      { expected_response:true }...: avg=133.76ms min=18.11ms med=89.77ms p(90)=159.73ms p(95)=191.38ms p(99)=331.49ms max=14.65s count=16784
+    http_req_failed................: 0.02%  4 out of 16788
+    http_reqs......................: 16788  228.144733/s
+
+    EXECUTION
+    iteration_duration.............: avg=137.63ms min=18.28ms med=90.09ms p(90)=160.72ms p(95)=193.45ms p(99)=395.46ms max=14.65s count=16788
+    iterations.....................: 16788  228.144733/s
+    vus............................: 25     min=25         max=32
+    vus_max........................: 32     min=32         max=32
+
+    NETWORK
+    data_received..................: 44 MB  600 kB/s
+    data_sent......................: 4.0 MB 55 kB/s
+
+
+

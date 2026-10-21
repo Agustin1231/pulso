@@ -1,0 +1,744 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+     execution: local
+        script: /carga/escenarios/limites.js
+ web dashboard: http://127.0.0.1:5665
+        output: csv (/resultados/limites-crudo.csv.gz)
+
+     scenarios: (100.00%) 5 scenarios, 5 max VUs, 11m10s max duration (incl. graceful stop):
+              * sesion: 1 iterations for each of 1 VUs (maxDuration: 10m0s, exec: sesionIp, gracefulStop: 30s)
+              * ia: 1 iterations for each of 1 VUs (maxDuration: 5m0s, exec: ia, startTime: 15s, gracefulStop: 30s)
+              * supresion: 1 iterations for each of 1 VUs (maxDuration: 10m0s, exec: supresion, startTime: 20s, gracefulStop: 30s)
+              * escritura: 1 iterations for each of 1 VUs (maxDuration: 5m0s, exec: escritura, startTime: 25s, gracefulStop: 30s)
+              * escrituraIp: 1 iterations for each of 1 VUs (maxDuration: 10m0s, exec: escrituraIp, startTime: 40s, gracefulStop: 30s)
+
+
+running (00m01.0s), 1/5 VUs, 0 complete and 0 interrupted iterations
+sesion        [   0% ] 1 VUs    00m01.0s/10m0s  0/1 iters, 1 per VU
+ia          • [   0% ] waiting  14.0s          
+supresion   • [   0% ] waiting  19.0s          
+escritura   • [   0% ] waiting  24.0s          
+escrituraIp • [   0% ] waiting  39.0s          
+time="2026-10-21T13:18:58Z" level=info msg="sesionIp: max=30 primer 429 en la petición 31 · 200×30 429×5 · estados=[200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,429,429,429,429,429]" source=console
+
+running (00m02.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  13.0s          
+supresion   • [   0% ] waiting  18.0s          
+escritura   • [   0% ] waiting  23.0s          
+escrituraIp • [   0% ] waiting  38.0s          
+
+running (00m03.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  12.0s          
+supresion   • [   0% ] waiting  17.0s          
+escritura   • [   0% ] waiting  22.0s          
+escrituraIp • [   0% ] waiting  37.0s          
+
+running (00m04.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  11.0s          
+supresion   • [   0% ] waiting  16.0s          
+escritura   • [   0% ] waiting  21.0s          
+escrituraIp • [   0% ] waiting  36.0s          
+
+running (00m05.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  10.0s          
+supresion   • [   0% ] waiting  15.0s          
+escritura   • [   0% ] waiting  20.0s          
+escrituraIp • [   0% ] waiting  35.0s          
+
+running (00m06.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  09.0s          
+supresion   • [   0% ] waiting  14.0s          
+escritura   • [   0% ] waiting  19.0s          
+escrituraIp • [   0% ] waiting  34.0s          
+
+running (00m07.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  08.0s          
+supresion   • [   0% ] waiting  13.0s          
+escritura   • [   0% ] waiting  18.0s          
+escrituraIp • [   0% ] waiting  33.0s          
+
+running (00m08.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  07.0s          
+supresion   • [   0% ] waiting  12.0s          
+escritura   • [   0% ] waiting  17.0s          
+escrituraIp • [   0% ] waiting  32.0s          
+
+running (00m09.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  06.0s          
+supresion   • [   0% ] waiting  11.0s          
+escritura   • [   0% ] waiting  16.0s          
+escrituraIp • [   0% ] waiting  31.0s          
+
+running (00m10.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  05.0s          
+supresion   • [   0% ] waiting  10.0s          
+escritura   • [   0% ] waiting  15.0s          
+escrituraIp • [   0% ] waiting  30.0s          
+
+running (00m11.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  04.0s          
+supresion   • [   0% ] waiting  09.0s          
+escritura   • [   0% ] waiting  14.0s          
+escrituraIp • [   0% ] waiting  29.0s          
+
+running (00m12.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  03.0s          
+supresion   • [   0% ] waiting  08.0s          
+escritura   • [   0% ] waiting  13.0s          
+escrituraIp • [   0% ] waiting  28.0s          
+
+running (00m13.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  02.0s          
+supresion   • [   0% ] waiting  07.0s          
+escritura   • [   0% ] waiting  12.0s          
+escrituraIp • [   0% ] waiting  27.0s          
+
+running (00m14.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  01.0s          
+supresion   • [   0% ] waiting  06.0s          
+escritura   • [   0% ] waiting  11.0s          
+escrituraIp • [   0% ] waiting  26.0s          
+
+running (00m15.0s), 0/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          • [   0% ] waiting  00.0s          
+supresion   • [   0% ] waiting  05.0s          
+escritura   • [   0% ] waiting  10.0s          
+escrituraIp • [   0% ] waiting  25.0s          
+
+running (00m16.0s), 1/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia            [   0% ] 1 VUs    0m01.0s/5m0s    0/1 iters, 1 per VU
+supresion   • [   0% ] waiting  04.0s          
+escritura   • [   0% ] waiting  09.0s          
+escrituraIp • [   0% ] waiting  24.0s          
+
+running (00m17.0s), 1/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia            [   0% ] 1 VUs    0m02.0s/5m0s    0/1 iters, 1 per VU
+supresion   • [   0% ] waiting  03.0s          
+escritura   • [   0% ] waiting  08.0s          
+escrituraIp • [   0% ] waiting  23.0s          
+
+running (00m18.0s), 1/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia            [   0% ] 1 VUs    0m03.0s/5m0s    0/1 iters, 1 per VU
+supresion   • [   0% ] waiting  02.0s          
+escritura   • [   0% ] waiting  07.0s          
+escrituraIp • [   0% ] waiting  22.0s          
+
+running (00m19.0s), 1/5 VUs, 1 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia            [   0% ] 1 VUs    0m04.0s/5m0s    0/1 iters, 1 per VU
+supresion   • [   0% ] waiting  01.0s          
+escritura   • [   0% ] waiting  06.0s          
+escrituraIp • [   0% ] waiting  21.0s          
+time="2026-10-21T13:19:16Z" level=info msg="ia: max=40 primer 429 en la petición 41 · 200×40 429×5 · estados=[200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,200,429,429,429,429,429]" source=console
+
+running (00m20.0s), 0/5 VUs, 2 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   • [   0% ] waiting  00.0s          
+escritura   • [   0% ] waiting  05.0s          
+escrituraIp • [   0% ] waiting  20.0s          
+time="2026-10-21T13:19:17Z" level=info msg="supresion: max=3 primer 429 en la petición 4 · 200×3 429×2 · estados=[200,200,200,429,429]" source=console
+
+running (00m21.0s), 0/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   • [   0% ] waiting  04.0s          
+escrituraIp • [   0% ] waiting  19.0s          
+
+running (00m22.0s), 0/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   • [   0% ] waiting  03.0s          
+escrituraIp • [   0% ] waiting  18.0s          
+
+running (00m23.0s), 0/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   • [   0% ] waiting  02.0s          
+escrituraIp • [   0% ] waiting  17.0s          
+
+running (00m24.0s), 0/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   • [   0% ] waiting  01.0s          
+escrituraIp • [   0% ] waiting  16.0s          
+
+running (00m25.0s), 0/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   • [   0% ] waiting  00.0s          
+escrituraIp • [   0% ] waiting  15.0s          
+
+running (00m26.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m01.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  14.0s          
+
+running (00m27.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m02.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  13.0s          
+
+running (00m28.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m03.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  12.0s          
+
+running (00m29.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m04.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  11.0s          
+
+running (00m30.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m05.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  10.0s          
+
+running (00m31.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m06.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  09.0s          
+
+running (00m32.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m07.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  08.0s          
+
+running (00m33.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m08.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  07.0s          
+
+running (00m34.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m09.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  06.0s          
+
+running (00m35.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m10.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  05.0s          
+
+running (00m36.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m11.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  04.0s          
+
+running (00m37.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m12.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  03.0s          
+
+running (00m38.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m13.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  02.0s          
+
+running (00m39.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m14.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  01.0s          
+
+running (00m40.0s), 1/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs    00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs    0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs    00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs    0m15.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp • [   0% ] waiting  00.0s          
+
+running (00m41.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m16.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m01.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m42.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m17.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m02.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m43.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m18.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m03.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m44.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m19.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m04.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m45.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m20.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m05.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m46.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m21.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m06.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m47.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m22.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m07.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m48.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m23.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m08.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m49.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m24.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m09.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m50.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m25.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m10.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m51.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m26.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m11.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m52.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m27.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m12.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m53.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m28.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m13.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m54.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m29.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m14.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m55.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m30.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m15.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m56.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m31.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m16.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m57.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m32.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m17.0s/10m0s  0/1 iters, 1 per VU
+
+running (00m58.0s), 2/5 VUs, 3 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura     [   0% ] 1 VUs  0m33.0s/5m0s    0/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m18.0s/10m0s  0/1 iters, 1 per VU
+time="2026-10-21T13:19:55Z" level=info msg="escritura: max=300 primer 429 en la petición 301 · 200×300 429×5 · estados=[200,200,200,200,200,429,429,429,429,429]" source=console
+
+running (00m59.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m19.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m00.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m20.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m01.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m21.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m02.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m22.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m03.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m23.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m04.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m24.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m05.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m25.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m06.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m26.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m07.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m27.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m08.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m28.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m09.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m29.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m10.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m30.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m11.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m31.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m12.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m32.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m13.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m33.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m14.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m34.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m15.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m35.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m16.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m36.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m17.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m37.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m18.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m38.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m19.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m39.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m20.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m40.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m21.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m41.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m22.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m42.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m23.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m43.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m24.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m44.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m25.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m45.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m26.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m46.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m27.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m47.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m28.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m48.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m29.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m49.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m30.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m50.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m31.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m51.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m32.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m52.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m33.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m53.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m34.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m54.0s/10m0s  0/1 iters, 1 per VU
+
+running (01m35.0s), 1/5 VUs, 4 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp   [   0% ] 1 VUs  00m55.0s/10m0s  0/1 iters, 1 per VU
+time="2026-10-21T13:20:31Z" level=info msg="escrituraIp: max=1200 primer 429 en la petición 1201 · 200×1200 429×5 · estados=[200,200,200,200,200,429,429,429,429,429]" source=console
+
+
+  █ THRESHOLDS 
+
+    checks{limite:escritura}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:escrituraIp}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:ia}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:sesionIp}
+    ✓ 'rate==1' rate=100.00%
+
+    checks{limite:supresion}
+    ✓ 'rate==1' rate=100.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 15      0.157768/s
+    checks_succeeded...: 100.00% 15 out of 15
+    checks_failed......: 0.00%   0 out of 15
+
+
+    CUSTOM
+    primer_429_en..................: 1578   16.597153/s
+
+    HTTP
+    http_req_duration..............: avg=58.82ms min=6.64ms   med=33.59ms max=1.12s  p(90)=125.34ms p(95)=160.52ms
+      { expected_response:true }...: avg=59.16ms min=7.19ms   med=33.6ms  max=1.12s  p(90)=125.8ms  p(95)=161.66ms
+    http_req_failed................: 1.37%  22 out of 1595
+    http_reqs......................: 1595   16.775956/s
+
+    EXECUTION
+    iteration_duration.............: avg=18.95s  min=398.01ms med=4.35s   max=55.07s p(90)=46.37s   p(95)=50.72s  
+    iterations.....................: 5      0.052589/s
+    vus............................: 1      min=0          max=2
+    vus_max........................: 5      min=5          max=5
+
+    NETWORK
+    data_received..................: 979 kB 10 kB/s
+    data_sent......................: 427 kB 4.5 kB/s
+
+
+
+
+running (01m35.1s), 0/5 VUs, 5 complete and 0 interrupted iterations
+sesion      ✓ [ 100% ] 1 VUs  00m01.6s/10m0s  1/1 iters, 1 per VU
+ia          ✓ [ 100% ] 1 VUs  0m04.4s/5m0s    1/1 iters, 1 per VU
+supresion   ✓ [ 100% ] 1 VUs  00m00.4s/10m0s  1/1 iters, 1 per VU
+escritura   ✓ [ 100% ] 1 VUs  0m33.3s/5m0s    1/1 iters, 1 per VU
+escrituraIp ✓ [ 100% ] 1 VUs  00m55.1s/10m0s  1/1 iters, 1 per VU
