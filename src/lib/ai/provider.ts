@@ -1,6 +1,6 @@
 import { anthropic, createAnthropic } from "@ai-sdk/anthropic";
 
-const MODELO = "claude-sonnet-4-6";
+const MODELO = "claude-haiku-4-5";
 const API_ANTHROPIC = "https://api.anthropic.com";
 
 /**
