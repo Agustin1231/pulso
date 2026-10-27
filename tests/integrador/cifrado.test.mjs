@@ -136,8 +136,15 @@ describe("datos de salud cifrados en reposo", { skip: SIN_APP }, () => {
     assert.match(peso.valor_cifrado, FORMATO);
     assert.match(peso.notas_cifrado, FORMATO);
     assert.equal(peso.valor, undefined, "no hay columna `valor`");
-    const crudo = JSON.stringify(rows);
-    for (const dato of ["81.3", "64", "correr"]) assert.ok(!crudo.includes(dato), `"${dato}" aparece en claro en la base`);
+    // Se compara cada columna contra el dato exacto: buscar "64" como texto en
+    // la fila entera falla de vez en cuando, porque un uuid o el base64 del
+    // cifrado lo pueden contener por casualidad.
+    for (const r of rows) {
+      for (const [columna, v] of Object.entries(r)) {
+        assert.ok(![81.3, 64, "81.3", "64"].includes(v), `${columna} tiene el número en claro`);
+        assert.ok(!(typeof v === "string" && v.includes("correr")), `${columna} tiene las notas en claro`);
+      }
+    }
     // Con la clave de la app sí se lee.
     assert.equal(salud.abrir(CAMPOS_METRICA.valor, peso.valor_cifrado), 81.3);
     assert.equal(salud.abrir(CAMPOS_METRICA.notas, peso.notas_cifrado), "después de correr 5 km");
