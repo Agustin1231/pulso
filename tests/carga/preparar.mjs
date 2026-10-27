@@ -21,6 +21,11 @@
  *   node tests/carga/preparar.mjs --uid <uid>   → solo carga el historial a una
  *     identidad que ya existe (p. ej. la que creó la app en el emulador).
  *
+ * Las métricas y el perfil se guardan cifrados, como los guarda la app
+ * (integrador, punto 19): hace falta PULSO_CLAVE_DATOS, la misma del servidor
+ * de carga. Importa el módulo de cifrado (.ts): en Node 22 se corre con
+ * `node --experimental-strip-types`; desde Node 23.6 no hace falta.
+ *
  * Se niega a correr si la URL no apunta a 127.0.0.1/localhost.
  */
 import { createHash, randomBytes } from "node:crypto";
@@ -28,6 +33,8 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
+import { cifrar, descifrar } from "../../src/lib/seguridad/cifrado.ts";
+import { crearCifradoSalud } from "../../src/lib/db/salud-cifrada.ts";
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
 const arg = (n, d) => {
@@ -50,6 +57,11 @@ if (!["127.0.0.1", "localhost", "::1"].includes(host)) {
   console.error(`✗ La base ${host} no es local: este script solo corre contra la base descartable.`);
   process.exit(1);
 }
+if (!process.env.PULSO_CLAVE_DATOS) {
+  console.error("✗ Falta PULSO_CLAVE_DATOS: la misma clave que el servidor de carga (las métricas se guardan cifradas).");
+  process.exit(1);
+}
+const salud = crearCifradoSalud({ cifrar, descifrar });
 
 const sha256 = (t) => createHash("sha256").update(t).digest("hex");
 // Generador determinista (mulberry32) para que dos corridas den el mismo perfil de datos.
@@ -95,24 +107,35 @@ if (LIMPIAR) {
 async function sembrar(uid, r) {
   const fcBase = 60 + Math.round(r() * 25);
   const pesoBase = 55 + Math.round(r() * 45);
-  // Métricas: una por día y tipo durante DIAS días, al mediodía.
+  // Métricas: una por día y tipo durante DIAS días, al mediodía. Los valores
+  // se generan acá (antes los sorteaba la base) porque se guardan cifrados.
+  const filas = { tipo: [], unidad: [], dia: [], valor: [] };
+  for (let d = 0; d < DIAS; d++) {
+    for (const [tipo, unidad] of [["frecuencia_cardiaca", "bpm"], ["peso", "kg"], ["horas_sueno", "h"], ["nivel_estres", "/10"]]) {
+      const v =
+        tipo === "frecuencia_cardiaca" ? fcBase + 6 * Math.sin(d / 7) + r() * 4 :
+        tipo === "peso"                ? pesoBase - d * 0.01 + r() * 0.6 :
+        tipo === "horas_sueno"         ? 6 + r() * 2.5 :
+                                         3 + Math.floor(r() * 5);
+      filas.tipo.push(tipo);
+      filas.unidad.push(unidad);
+      filas.dia.push(d);
+      filas.valor.push(salud.cifrarMetrica(Math.round(v * 10) / 10, null).valor_cifrado);
+    }
+  }
   await client.query(
-    `insert into metricas (uid, tipo, valor, unidad, created_at)
-     select $1, t.tipo,
-            round((case t.tipo
-               when 'frecuencia_cardiaca' then $2 + 6 * sin(d / 7.0) + random() * 4
-               when 'peso'                then $3 - d * 0.01 + random() * 0.6
-               when 'horas_sueno'         then 6 + random() * 2.5
-               else                            3 + floor(random() * 5) end)::numeric, 1)::float8,
-            t.unidad,
-            date_trunc('day', now()) - make_interval(days => d) + interval '12 hours'
-       from generate_series(0, $4 - 1) d,
-            (values ('frecuencia_cardiaca','bpm'), ('peso','kg'), ('horas_sueno','h'), ('nivel_estres','/10')) t(tipo, unidad)`,
-    [uid, fcBase, pesoBase, DIAS]
+    `insert into metricas (uid, tipo, valor_cifrado, unidad, created_at)
+     select $1, u.tipo, u.valor, u.unidad, date_trunc('day', now()) - make_interval(days => u.dia) + interval '12 hours'
+       from unnest($2::text[], $3::text[], $4::text[], $5::int[]) as u(tipo, valor, unidad, dia)`,
+    [uid, filas.tipo, filas.valor, filas.unidad, filas.dia]
   );
+  const p = salud.cifrarPerfil({
+    edad: 25 + Math.floor(r() * 45), sexo: r() < 0.5 ? "f" : "m", altura_cm: 150 + Math.floor(r() * 40), fumador: r() < 0.2,
+  });
   await client.query(
-    "insert into perfil (uid, edad, sexo, altura_cm, fumador) values ($1, $2, $3, $4, $5) on conflict (uid) do nothing",
-    [uid, 25 + Math.floor(r() * 45), r() < 0.5 ? "f" : "m", 150 + Math.floor(r() * 40), r() < 0.2]
+    `insert into perfil (uid, edad_cifrado, sexo_cifrado, altura_cm_cifrado, fumador_cifrado)
+     values ($1, $2, $3, $4, $5) on conflict (uid) do nothing`,
+    [uid, p.edad_cifrado, p.sexo_cifrado, p.altura_cm_cifrado, p.fumador_cifrado]
   );
   await client.query(
     `insert into habitos (uid, fecha, tipo, completado)

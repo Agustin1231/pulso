@@ -9,6 +9,8 @@
 //   11111111-1111-4111-8111-111111111111 (métricas + perfil + receta)
 //   22222222-2222-4222-8222-222222222222 (métrica + receta "Receta B")
 // Las pruebas consumen los reclamos: para repetirlas, recrear la base.
+// Las métricas y el perfil van en las columnas cifradas (db/cifrado.sql); acá
+// no se leen los valores, así que alcanza con uno de formato válido ('v1.prueba').
 // Sin las variables, las pruebas se saltean.
 
 import { test, before, after } from "node:test";
@@ -142,7 +144,7 @@ test("RLS: cada usuario ve y toca solo lo suyo", { skip: saltear }, async () => 
   // escribir a nombre de otro usuario viola el WITH CHECK
   await comoUsuario(LEGADO_A, async (c) => {
     await fallaCon(
-      c.query("insert into metricas (uid, tipo, valor, unidad) values ($1, 'peso', 1, 'kg')", [LEGADO_B]),
+      c.query("insert into metricas (uid, tipo, valor_cifrado, unidad) values ($1, 'peso', 'v1.prueba', 'kg')", [LEGADO_B]),
       "42501"
     );
   });

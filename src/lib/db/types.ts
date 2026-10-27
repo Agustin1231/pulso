@@ -149,3 +149,27 @@ export interface PerfilFormData {
   altura_cm: number | null;
   fumador:   boolean | null;
 }
+
+// ─── Filas tal como están en la base (datos de salud cifrados) ────────────────
+// Solo las usa la capa de datos: lo que sale de ella son MetricaRow y
+// PerfilRow, ya descifradas (ver lib/db/salud-cifrada.ts).
+
+export interface MetricaCifradaRow {
+  id:            string;
+  uid:           string;
+  tipo:          MetricaType;
+  /** null solo en una fila vieja que todavía no pasó por la migración. */
+  valor_cifrado: string | null;
+  unidad:        string;
+  notas_cifrado: string | null;
+  created_at:    string;
+}
+
+export interface PerfilCifradoRow {
+  uid:               string;
+  edad_cifrado:      string | null;
+  sexo_cifrado:      string | null;
+  altura_cm_cifrado: string | null;
+  fumador_cifrado:   string | null;
+  actualizado_at:    string;
+}

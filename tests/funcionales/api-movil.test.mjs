@@ -20,6 +20,24 @@ import {
   nuevoToken, rechazo, registrar, sesionMovil, uidDe,
 } from "./comun.mjs";
 
+/**
+ * Un valor de métrica como lo guarda la app, cifrado (integrador, punto 19),
+ * para los casos que cargan historial directo en la base. Necesita la
+ * PULSO_CLAVE_DATOS del servidor; el import es dinámico para que el resto de
+ * la suite corra igual en un Node sin soporte de .ts.
+ */
+let salud = null;
+async function valorCifrado(valor) {
+  if (!salud) {
+    const [{ cifrar, descifrar }, { crearCifradoSalud }] = await Promise.all([
+      import("../../src/lib/seguridad/cifrado.ts"),
+      import("../../src/lib/db/salud-cifrada.ts"),
+    ]);
+    salud = crearCifradoSalud({ cifrar, descifrar });
+  }
+  return salud.cifrarMetrica(valor, null).valor_cifrado;
+}
+
 before(async () => {
   // Que la IP de esta corrida empiece con el cupo entero aunque se repita.
   await limpiarLimitesDe(IP_CORRIDA);
@@ -184,8 +202,8 @@ describe("M02 registro de métricas", { skip: SALTEAR }, () => {
     const uid = await uidDe(token);
     for (const dias of [20, 10, 3]) {
       await admin().query(
-        "insert into metricas (uid, tipo, valor, unidad, created_at) values ($1, 'peso', $2, 'kg', now() - make_interval(days => $3))",
-        [uid, 80 - dias / 10, dias]
+        "insert into metricas (uid, tipo, valor_cifrado, unidad, created_at) values ($1, 'peso', $2, 'kg', now() - make_interval(days => $3))",
+        [uid, await valorCifrado(80 - dias / 10), dias]
       );
     }
     await escribir("POST", "metricas", token, { tipo: "frecuencia_cardiaca", valor: 70 });
@@ -244,10 +262,10 @@ describe("M03 informe del motor de predicción", { skip: SALTEAR }, () => {
     const uid = await uidDe(token);
     for (let d = 21; d >= 1; d--) {
       await admin().query(
-        `insert into metricas (uid, tipo, valor, unidad, created_at) values
+        `insert into metricas (uid, tipo, valor_cifrado, unidad, created_at) values
            ($1, 'frecuencia_cardiaca', $2, 'bpm', now() - make_interval(days => $4)),
            ($1, 'horas_sueno', $3, 'h', now() - make_interval(days => $4))`,
-        [uid, 68 + (d % 5), 6.5 + (d % 3) * 0.5, d]
+        [uid, await valorCifrado(68 + (d % 5)), await valorCifrado(6.5 + (d % 3) * 0.5), d]
       );
     }
     const inf = await leer("informe", token);

@@ -210,7 +210,8 @@ test("uid legado: se reclama una vez y conserva el historial", { skip: sinAdmin 
 test("supresión: borra los datos y la sesión deja de valer", { skip: sinAdmin }, async () => {
   const { cookie } = await nuevaSesion();
   const uid = await uidDeCookie(cookie);
-  await admin.query("insert into metricas (uid, tipo, valor, unidad) values ($1, 'peso', 70, 'kg')", [uid]);
+  // El valor no importa (no se lee): solo que haya una fila que borrar.
+  await admin.query("insert into metricas (uid, tipo, valor_cifrado, unidad) values ($1, 'peso', 'v1.prueba', 'kg')", [uid]);
 
   const res = await fetch(`${BASE}/api/mis-datos`, { method: "DELETE", headers: { Cookie: cookie } });
   assert.equal(res.status, 200);

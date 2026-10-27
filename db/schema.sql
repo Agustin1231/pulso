@@ -4,8 +4,11 @@
 --   npm run setup-db
 --
 -- Notas de tipos (importan para que los tipos de fila de TS sigan valiendo):
---   * `valor` es double precision, NO numeric: node-postgres devuelve numeric
---     como string para no perder precisión, y los componentes esperan number.
+--   * Los datos de salud (valor y notas de las métricas, campos del perfil) se
+--     guardan cifrados en columnas `<columna>_cifrado` de tipo text (integrador,
+--     punto 19). La app los descifra al leer y devuelve el número de siempre:
+--     ver db/cifrado.sql y src/lib/db/salud-cifrada.ts. Una base creada antes
+--     tiene además las columnas en claro hasta que corre la migración.
 --   * `created_at` es timestamptz y el pool lo parsea a ISO string, que es lo
 --     que devolvía Supabase por JSON.
 --   * `fecha` es date y se deja como YYYY-MM-DD, tal como lo escribe el código.
@@ -14,15 +17,18 @@ create extension if not exists "pgcrypto";  -- gen_random_uuid()
 
 -- ─── Métricas ────────────────────────────────────────────────────────────────
 -- Un registro por usuario/tipo/día (el upsert diario lo resuelve la query).
+-- `valor_cifrado` y `notas_cifrado`: el número y las notas, cifrados por la
+-- app. El rango de cada tipo lo valida zod (`metricaSchema`): la base ya no ve
+-- el número.
 
 create table if not exists metricas (
-  id         uuid primary key default gen_random_uuid(),
-  uid        text not null,
-  tipo       text not null,
-  valor      double precision not null,
-  unidad     text not null,
-  notas      text,
-  created_at timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  uid           text not null,
+  tipo          text not null,
+  valor_cifrado text not null,
+  unidad        text not null,
+  notas_cifrado text,
+  created_at    timestamptz not null default now()
 );
 
 create index if not exists metricas_uid_created_idx
@@ -142,13 +148,15 @@ create index if not exists suscripciones_push_uid_idx on suscripciones_push (uid
 -- las tablas es solo la columna de propietario). Lo lee `lib/ml` para calcular
 -- IMC (peso / altura²), el factor tabaquismo y el contexto edad/sexo del índice
 -- de riesgo. Todo es opcional: el índice excluye lo que falte y lo reporta.
--- `fumador` admite null = "no respondió", distinto de false.
+-- null = "no respondió" (para `fumador`, distinto de false).
+-- Los cuatro campos van cifrados por la app; los rangos que antes controlaba la
+-- base (edad 18–120, altura 100–250, sexo m/f/otro) los valida `perfilSchema`.
 
 create table if not exists perfil (
-  uid            text primary key,
-  edad           int check (edad between 18 and 120),
-  sexo           text check (sexo in ('m', 'f', 'otro')),
-  altura_cm      int check (altura_cm between 100 and 250),
-  fumador        boolean,
-  actualizado_at timestamptz not null default now()
+  uid               text primary key,
+  edad_cifrado      text,
+  sexo_cifrado      text,
+  altura_cm_cifrado text,
+  fumador_cifrado   text,
+  actualizado_at    timestamptz not null default now()
 );

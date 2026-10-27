@@ -1,6 +1,8 @@
 import "server-only";
+import { cifrar, descifrar } from "@/lib/seguridad/cifrado";
 import type { Db } from "./pool";
-import type { MetricaRow, PerfilRow, RutinaRow } from "./types";
+import { crearCifradoSalud } from "./salud-cifrada";
+import type { MetricaCifradaRow, MetricaRow, PerfilCifradoRow, PerfilRow, RutinaRow } from "./types";
 
 // Lecturas que comparten varias server actions y los route handlers.
 //
@@ -10,6 +12,22 @@ import type { MetricaRow, PerfilRow, RutinaRow } from "./types";
 // transacción del usuario (con RLS activo). El `where uid = $1` es redundante
 // con RLS a propósito: defensa en profundidad, y además usa los índices.
 
+/**
+ * Cifrado de los datos de salud (integrador, punto 19): las métricas y el
+ * perfil se guardan cifrados y se descifran acá, al leer, así el motor, el
+ * informe, el dashboard, la IA y la API móvil reciben los mismos números de
+ * siempre. Ver lib/db/salud-cifrada.ts.
+ */
+export const salud = crearCifradoSalud({ cifrar, descifrar });
+
+/** Columnas de `metricas` que se leen; el valor y las notas vienen cifrados. */
+export const COLUMNAS_METRICA = "id, uid, tipo, valor_cifrado, unidad, notas_cifrado, created_at";
+
+/** Descifra las filas; las que no se pueden leer se descartan (y quedan en el log). */
+export function metricasLegibles(filas: MetricaCifradaRow[]): MetricaRow[] {
+  return filas.map(salud.descifrarMetrica).filter((m): m is MetricaRow => m !== null);
+}
+
 export interface AdherenciaDiaRow {
   fecha:       string;
   completados: number;
@@ -17,9 +35,9 @@ export interface AdherenciaDiaRow {
 
 /** Último registro de cada tipo para un usuario. */
 export async function ultimasMetricas(db: Db, uid: string): Promise<MetricaRow[]> {
-  const { rows } = await db.query<MetricaRow>(
+  const { rows } = await db.query<MetricaCifradaRow>(
     `select * from (
-       select distinct on (tipo) *
+       select distinct on (tipo) ${COLUMNAS_METRICA}
          from metricas
         where uid = $1
         order by tipo, created_at desc
@@ -27,30 +45,30 @@ export async function ultimasMetricas(db: Db, uid: string): Promise<MetricaRow[]
      order by created_at desc`,
     [uid]
   );
-  return rows;
+  return metricasLegibles(rows);
 }
 
 /** Historial de TODAS las métricas (últimos N días), para el motor de predicción. */
 export async function historialMetricas(db: Db, uid: string, dias: number): Promise<MetricaRow[]> {
   const desde = new Date();
   desde.setDate(desde.getDate() - dias);
-  const { rows } = await db.query<MetricaRow>(
-    `select * from metricas
+  const { rows } = await db.query<MetricaCifradaRow>(
+    `select ${COLUMNAS_METRICA} from metricas
       where uid = $1 and created_at >= $2
       order by tipo, created_at asc`,
     [uid, desde.toISOString()]
   );
-  return rows;
+  return metricasLegibles(rows);
 }
 
 export async function perfilDe(db: Db, uid: string): Promise<PerfilRow | null> {
-  const { rows } = await db.query<PerfilRow>(
-    `select uid, edad, sexo, altura_cm, fumador, actualizado_at
+  const { rows } = await db.query<PerfilCifradoRow>(
+    `select uid, edad_cifrado, sexo_cifrado, altura_cm_cifrado, fumador_cifrado, actualizado_at
        from perfil
       where uid = $1`,
     [uid]
   );
-  return rows[0] ?? null;
+  return rows[0] ? salud.descifrarPerfil(rows[0]) : null;
 }
 
 /** Cuántos hábitos fijos se completaron cada día del rango. */
