@@ -178,27 +178,37 @@ create table if not exists limites_tasa (
 -- Corren con los permisos del dueño. `search_path` fijo para que un objeto con
 -- el mismo nombre en otro schema no las secuestre.
 
-create or replace function pulso_dias_validos(p_dias int) returns int
-language sql immutable as $$
-  select least(greatest(coalesce(p_dias, 180), 1), 365)
-$$;
+-- Vencimiento y tiempos de inactividad (integrador, puntos 10 y 11): ya no
+-- llegan como parámetro (antes, 180 días fijos desde la app). Salen de la tabla
+-- `configuracion` en cada llamada, con `pulso_vigencia_token()` y
+-- `pulso_sesion_vigente()` (db/plataforma.sql, que se aplica después de este
+-- archivo: por eso las funciones que las usan son plpgsql, que resuelve los
+-- nombres al ejecutarse). Las firmas viejas, con `p_dias`, se borran.
+drop function if exists pulso_dias_validos(int);
+drop function if exists pulso_crear_sesion(text, int);
+drop function if exists pulso_reclamar_legado(text, text, int);
+drop function if exists pulso_renovar_sesion(text, int);
+drop function if exists pulso_renovar_o_rotar(text, text, int);
+drop function if exists pulso_revocar_sesion(text);
 
 -- Sesión para un usuario nuevo: el uid lo genera la base, no la app.
-create or replace function pulso_crear_sesion(p_token_hash text, p_dias int)
+-- `p_cliente`: 'web' (cookie) o 'movil' (Bearer de la app nativa).
+create or replace function pulso_crear_sesion(p_token_hash text, p_cliente text)
 returns text
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
   v_uid text := gen_random_uuid()::text;
 begin
   insert into identidades (uid, origen) values (v_uid, 'nueva');
-  insert into sesiones (token_hash, uid, expira_at)
-  values (p_token_hash, v_uid, now() + make_interval(days => pulso_dias_validos(p_dias)));
+  insert into sesiones (token_hash, uid, expira_at, cliente)
+  values (p_token_hash, v_uid, now() + pulso_vigencia_token(), coalesce(p_cliente, 'web'));
   return v_uid;
 end $$;
 
 -- Reclamo de un UUID viejo del localStorage. Una sola vez por uid: la fila de
 -- uids_legado se borra en el mismo statement. Devuelve null si no se puede.
-create or replace function pulso_reclamar_legado(p_token_hash text, p_uid text, p_dias int)
+-- Solo la web tenía localStorage: la sesión queda como 'web'.
+create or replace function pulso_reclamar_legado(p_token_hash text, p_uid text)
 returns text
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
@@ -215,7 +225,7 @@ begin
 
   insert into identidades (uid, origen) values (v_uid, 'legado');
   insert into sesiones (token_hash, uid, expira_at)
-  values (p_token_hash, v_uid, now() + make_interval(days => pulso_dias_validos(p_dias)));
+  values (p_token_hash, v_uid, now() + pulso_vigencia_token());
   return v_uid;
 end $$;
 
@@ -223,7 +233,10 @@ end $$;
 create or replace function pulso_minutos_desbloqueo() returns int
 language sql immutable as $$ select 15 $$;
 
--- uid de una sesión vigente y utilizable, o null.
+-- uid de una sesión vigente y utilizable, o null. Es la que usan todas las
+-- lecturas y escrituras de datos: cada una es una petición autenticada y corre
+-- el vencimiento del token (punto 10, con escrituras espaciadas: ver
+-- pulso_sesion_vigente).
 -- Si el usuario activó el bloqueo, además tiene que estar desbloqueada: sin
 -- eso devuelve null y el servidor no entrega datos (fila 9). La ventana es
 -- deslizante: mientras se usa, se corre, pero solo se escribe cuando le
@@ -232,15 +245,10 @@ create or replace function pulso_resolver_sesion(p_token_hash text)
 returns text
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
-  v_uid   text;
-  v_hasta timestamptz;
+  v_s     sesiones := pulso_sesion_vigente(p_token_hash, true);
+  v_uid   text := v_s.uid;
+  v_hasta timestamptz := v_s.desbloqueada_hasta;
 begin
-  select s.uid, s.desbloqueada_hasta into v_uid, v_hasta
-    from sesiones s
-   where s.token_hash = p_token_hash
-     and s.revocada_at is null
-     and s.expira_at > now();
-
   if v_uid is null then
     return null;
   end if;
@@ -259,21 +267,18 @@ begin
 end $$;
 
 -- Estado para el cliente: 'sin_sesion', 'bloqueada' o 'activa', y si el
--- usuario tiene el bloqueo activado. No desliza la ventana.
+-- usuario tiene el bloqueo activado. No desliza la ventana ni el token: el
+-- cliente lo consulta cada tanto y eso no es uso. (No es `stable`: si la
+-- sesión venció o quedó inactiva, pulso_sesion_vigente lo deja escrito.)
 create or replace function pulso_estado_sesion(p_token_hash text)
 returns table (estado text, bloqueo boolean)
-language plpgsql stable security definer set search_path = public, pg_temp as $$
+language plpgsql security definer set search_path = public, pg_temp as $$
 declare
-  v_uid   text;
-  v_hasta timestamptz;
+  v_s     sesiones := pulso_sesion_vigente(p_token_hash, false);
+  v_uid   text := v_s.uid;
+  v_hasta timestamptz := v_s.desbloqueada_hasta;
   v_bloq  boolean;
 begin
-  select s.uid, s.desbloqueada_hasta into v_uid, v_hasta
-    from sesiones s
-   where s.token_hash = p_token_hash
-     and s.revocada_at is null
-     and s.expira_at > now();
-
   if v_uid is null then
     return query select 'sin_sesion'::text, false;
     return;
@@ -287,43 +292,52 @@ begin
 end $$;
 
 -- uid de una sesión vigente IGNORANDO el bloqueo. Solo para el flujo de
--- desbloqueo, que necesita saber de quién son las passkeys a verificar.
+-- desbloqueo, que necesita saber de quién son las passkeys a verificar. Los
+-- dos vencimientos sí se aplican (pulso_sesion_vigente).
 create or replace function pulso_uid_de_token(p_token_hash text)
 returns text
-language sql stable security definer set search_path = public, pg_temp as $$
-  select uid
-    from sesiones
-   where token_hash = p_token_hash
-     and revocada_at is null
-     and expira_at > now()
-$$;
+language plpgsql security definer set search_path = public, pg_temp as $$
+begin
+  return (pulso_sesion_vigente(p_token_hash, false)).uid;
+end $$;
 
 -- Expiración deslizante: cada uso corre el vencimiento. Devuelve el uid o null.
-create or replace function pulso_renovar_sesion(p_token_hash text, p_dias int)
+create or replace function pulso_renovar_sesion(p_token_hash text)
 returns text
-language sql security definer set search_path = public, pg_temp as $$
-  update sesiones
-     set ultimo_uso = now(),
-         expira_at  = now() + make_interval(days => pulso_dias_validos(p_dias))
-   where token_hash = p_token_hash
-     and revocada_at is null
-     and rotada_at is null
-     and expira_at > now()
-  returning uid
-$$;
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_s sesiones := pulso_sesion_vigente(p_token_hash, false);
+begin
+  if v_s.uid is null or v_s.rotada_at is not null then
+    return null;
+  end if;
+  update sesiones s
+     set ultimo_uso = now(), expira_at = now() + pulso_vigencia_token()
+   where s.token_hash = p_token_hash;
+  return v_s.uid;
+end $$;
 
 -- Renueva la sesión y, si el token tiene más de un día, lo ROTA (fila 7):
 -- crea una sesión nueva con `p_hash_nuevo` para el mismo uid (conserva la
--- ventana de desbloqueo) y deja al viejo 2 minutos de gracia para las
--- peticiones que ya estaban en vuelo. Un token ya rotado no se vuelve a rotar
--- ni a renovar: así un token robado deja de servir al día siguiente.
-create or replace function pulso_renovar_o_rotar(p_hash_viejo text, p_hash_nuevo text, p_dias int)
+-- ventana de desbloqueo y el tipo de cliente) y deja al viejo 2 minutos de
+-- gracia para las peticiones que ya estaban en vuelo. Un token ya rotado no se
+-- vuelve a rotar ni a renovar: así un token robado deja de servir al día
+-- siguiente.
+-- La llama el cliente al abrir o recargar la página (y la app nativa al
+-- abrirse): eso es uso del usuario, así que también corre `actividad_at`
+-- (punto 11). Una sesión que ya estaba inactiva no llega a renovarse: la
+-- revoca pulso_sesion_vigente antes.
+create or replace function pulso_renovar_o_rotar(p_hash_viejo text, p_hash_nuevo text)
 returns table (uid text, rotada boolean)
 language plpgsql security definer set search_path = public, pg_temp as $$
 #variable_conflict use_column
 declare
   v_s sesiones%rowtype;
 begin
+  if (pulso_sesion_vigente(p_hash_viejo, false)).uid is null then
+    return;
+  end if;
+
   select * into v_s
     from sesiones s
    where s.token_hash = p_hash_viejo
@@ -338,17 +352,19 @@ begin
 
   if v_s.created_at > now() - interval '1 day' then
     update sesiones
-       set ultimo_uso = now(),
-           expira_at  = now() + make_interval(days => pulso_dias_validos(p_dias))
+       set ultimo_uso   = now(),
+           actividad_at = now(),
+           expira_at    = now() + pulso_vigencia_token()
      where token_hash = p_hash_viejo;
     return query select v_s.uid, false;
     return;
   end if;
 
-  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
+  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta, cliente)
   values (p_hash_nuevo, v_s.uid,
-          now() + make_interval(days => pulso_dias_validos(p_dias)),
-          v_s.desbloqueada_hasta);
+          now() + pulso_vigencia_token(),
+          v_s.desbloqueada_hasta,
+          v_s.cliente);
 
   update sesiones
      set rotada_at = now(),
@@ -414,11 +430,17 @@ begin
   return v_desafio;
 end $$;
 
-create or replace function pulso_revocar_sesion(p_token_hash text)
+-- Cerrar sesión en este equipo. `p_motivo` queda en `revocada_motivo` para
+-- explicárselo a las demás pestañas: 'cierre' (el usuario cerró sesión) o
+-- 'inactividad' (la cerró el vigía de inactividad del cliente). Los demás
+-- motivos los ponen las funciones de cuentas y de administración: el cliente
+-- no puede elegirlos.
+create or replace function pulso_revocar_sesion(p_token_hash text, p_motivo text default 'cierre')
 returns void
 language sql security definer set search_path = public, pg_temp as $$
   update sesiones
-     set revocada_at = now()
+     set revocada_at     = now(),
+         revocada_motivo = case when p_motivo = 'inactividad' then 'inactividad' else 'cierre' end
    where token_hash = p_token_hash
      and revocada_at is null
 $$;
@@ -551,16 +573,16 @@ end $$;
 -- Las funciones son ejecutables por PUBLIC por defecto: se cierra y se abre
 -- solo a la app.
 revoke execute on function
-  pulso_crear_sesion(text, int),
-  pulso_reclamar_legado(text, text, int),
+  pulso_crear_sesion(text, text),
+  pulso_reclamar_legado(text, text),
   pulso_resolver_sesion(text),
-  pulso_renovar_sesion(text, int),
-  pulso_revocar_sesion(text),
+  pulso_renovar_sesion(text),
+  pulso_revocar_sesion(text, text),
   pulso_eliminar_datos(text),
   pulso_consumir_tasa(text, int, int),
   pulso_estado_sesion(text),
   pulso_uid_de_token(text),
-  pulso_renovar_o_rotar(text, text, int),
+  pulso_renovar_o_rotar(text, text),
   pulso_desbloquear(text),
   pulso_bloquear(text),
   pulso_fijar_desafio(text, text, text),
@@ -568,16 +590,16 @@ revoke execute on function
 from public;
 
 grant execute on function
-  pulso_crear_sesion(text, int),
-  pulso_reclamar_legado(text, text, int),
+  pulso_crear_sesion(text, text),
+  pulso_reclamar_legado(text, text),
   pulso_resolver_sesion(text),
-  pulso_renovar_sesion(text, int),
-  pulso_revocar_sesion(text),
+  pulso_renovar_sesion(text),
+  pulso_revocar_sesion(text, text),
   pulso_eliminar_datos(text),
   pulso_consumir_tasa(text, int, int),
   pulso_estado_sesion(text),
   pulso_uid_de_token(text),
-  pulso_renovar_o_rotar(text, text, int),
+  pulso_renovar_o_rotar(text, text),
   pulso_desbloquear(text),
   pulso_bloquear(text),
   pulso_fijar_desafio(text, text, text),
@@ -1176,10 +1198,13 @@ end $$;
 --   * `intentos_restantes`: antes del bloqueo, tras un fallo.
 --   * `bloqueo_nuevo`: este fallo bloqueó el correo (la app avisa al dueño).
 --   * `sesiones_cerradas`: cuántas sesiones de la cuenta se cerraron.
+-- La firma vieja tenía `p_dias`: el vencimiento ahora sale de la configuración
+-- (punto 10). Se borran las dos para poder cambiar el tipo de retorno.
 drop function if exists pulso_iniciar_sesion_cuenta(text, text, text, int, text);
+drop function if exists pulso_iniciar_sesion_cuenta(text, text, text, text);
 
 create or replace function pulso_iniciar_sesion_cuenta(
-  p_email_hmac text, p_password text, p_nuevo_hash text, p_dias int, p_actual_hash text
+  p_email_hmac text, p_password text, p_nuevo_hash text, p_actual_hash text
 )
 returns table (resultado text, uid_cuenta text, uid_fusionado text, minutos int,
                intentos_restantes int, bloqueo_nuevo boolean, sesiones_cerradas int)
@@ -1246,7 +1271,7 @@ begin
 
   insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
   values (p_nuevo_hash, v_c.uid,
-          now() + make_interval(days => pulso_dias_validos(p_dias)),
+          now() + pulso_vigencia_token(),
           now() + make_interval(mins => pulso_minutos_desbloqueo()));
   return query select 'ok'::text, v_c.uid, v_actual, null::int, null::int, false, v_cerradas;
 end $$;
@@ -1521,7 +1546,7 @@ revoke execute on function
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
   pulso_fusionar_identidad(text, text),
-  pulso_iniciar_sesion_cuenta(text, text, text, int, text),
+  pulso_iniciar_sesion_cuenta(text, text, text, text),
   pulso_solicitar_recuperacion(text, text),
   pulso_correo_de_recuperacion(text),
   pulso_restablecer_contrasena(text, text, text),
@@ -1535,7 +1560,7 @@ grant execute on function
   pulso_activar_cuenta(text),
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
-  pulso_iniciar_sesion_cuenta(text, text, text, int, text),
+  pulso_iniciar_sesion_cuenta(text, text, text, text),
   pulso_solicitar_recuperacion(text, text),
   pulso_correo_de_recuperacion(text),
   pulso_restablecer_contrasena(text, text, text),
@@ -1561,10 +1586,11 @@ $$;
 
 -- Estado de la cuenta de la sesión para el cliente: 'ninguna', 'sin_activar' o
 -- 'activa'. Ignora el bloqueo con passkey: no entrega datos, solo dice a qué
--- pantalla ir.
+-- pantalla ir. (No es `stable`: pulso_uid_de_token puede dejar escrito que la
+-- sesión venció o quedó inactiva.)
 create or replace function pulso_estado_cuenta(p_token_hash text)
 returns text
-language sql stable security definer set search_path = public, pg_temp as $$
+language sql security definer set search_path = public, pg_temp as $$
   select case
            when c.uid is null           then 'ninguna'
            when c.verificada_at is null then 'sin_activar'

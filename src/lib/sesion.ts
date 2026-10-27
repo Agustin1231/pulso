@@ -24,6 +24,18 @@ import { pool } from "@/lib/db/pool";
  * Es la misma sesión, con el mismo hash, rotación y vencimiento. Un sitio
  * ajeno no puede poner ese header (haría falta CORS, y no hay), así que no
  * abre una puerta de CSRF.
+ *
+ * Vencimientos (integrador, puntos 10 y 11). Los dos tiempos están en la tabla
+ * `configuracion` y la base los lee en cada petición (`pulso_sesion_vigente`
+ * en db/plataforma.sql), así que un cambio del administrador rige enseguida:
+ *   - el TOKEN deja de servir tras `token_inactividad_minutos` sin ninguna
+ *     petición autenticada (cada una corre el vencimiento);
+ *   - la SESIÓN WEB se cierra tras `sesion_inactividad_minutos` sin que el
+ *     usuario toque la app. La actividad la informa el latido del cliente
+ *     (`latidoDeSesion`), no las peticiones de fondo. La app nativa no tiene
+ *     latido: sus sesiones son `cliente = 'movil'` y esa regla no les aplica.
+ * Cuando una sesión deja de servir, la base guarda por qué (`revocada_motivo`)
+ * y `motivoDeFin` se lo cuenta al navegador que la tenía.
  */
 
 const PRODUCCION = process.env.NODE_ENV === "production";
@@ -32,13 +44,43 @@ const PRODUCCION = process.env.NODE_ENV === "production";
 // pisar. En dev (http://localhost) el prefijo no aplica.
 export const COOKIE_SESION = PRODUCCION ? "__Host-pulso_sesion" : "pulso_sesion";
 
-/** Vencimiento por inactividad: cada visita lo vuelve a correr. */
-const DIAS_SESION = 180;
+/**
+ * Cuánto guarda el navegador la cookie: el máximo que admite la configuración
+ * (525 600 minutos). Quien decide si el token sirve es la base; que la cookie
+ * dure más permite, cuando ya no sirve, contarle al usuario por qué.
+ */
+const MAX_EDAD_COOKIE = 365 * 86_400;
+
+/**
+ * Aviso para el cliente web de que una server action no encontró la sesión
+ * (punto 18). Una server action no puede responder 401: el vigía de sesión del
+ * cliente mira esta cookie después de cada respuesta y, si está, lleva la
+ * pestaña a /acceso. No lleva ningún dato: solo "revisa la sesión".
+ */
+export const COOKIE_AVISO = "pulso_aviso_sesion";
 
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/; // 32 bytes en base64url
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 export type OrigenSesion = "existente" | "rotada" | "nueva" | "legado";
+
+/** Por qué dejó de servir una sesión con cuenta (`revocada_motivo`, o 'vencida' si venció el token). */
+export type MotivoFin = "cierre" | "otro_inicio" | "inactividad" | "contrasena" | "admin" | "vencida";
+
+const MOTIVOS: readonly MotivoFin[] = ["cierre", "otro_inicio", "inactividad", "contrasena", "admin", "vencida"];
+
+function motivoValido(m: unknown): MotivoFin | null {
+  return MOTIVOS.includes(m as MotivoFin) ? (m as MotivoFin) : null;
+}
+
+/** Los dos tiempos de inactividad vigentes y cuánto hace que el usuario no interactúa. */
+export interface InactividadSesion {
+  vigente:        boolean;
+  /** Segundos desde la última interacción registrada; null si la regla no aplica (app nativa, sin cuenta). */
+  inactivaSeg:    number | null;
+  tokenMinutos:   number;
+  sesionMinutos:  number;
+}
 
 /** Evento de auditoría de una sesión que cambió (todas menos la que solo se renovó). */
 export function eventoSesion(origen: Exclude<OrigenSesion, "existente">): string {
@@ -112,7 +154,7 @@ const opcionesCookie = {
 };
 
 async function fijarCookie(token: string): Promise<void> {
-  (await cookies()).set(COOKIE_SESION, token, { ...opcionesCookie, maxAge: DIAS_SESION * 86_400 });
+  (await cookies()).set(COOKIE_SESION, token, { ...opcionesCookie, maxAge: MAX_EDAD_COOKIE });
 }
 
 async function borrarCookie(): Promise<void> {
@@ -251,11 +293,86 @@ export async function bloquearSesion(): Promise<void> {
  * Cierra la sesión de este equipo (revoca el token y borra la cookie). Sirve
  * aunque esté bloqueada: es la salida si el usuario no puede desbloquear. Los
  * datos NO se borran; quedan accesibles solo con una sesión desbloqueada.
+ * `motivo`: 'cierre' si la cerró el usuario, 'inactividad' si la cerró el
+ * vigía de inactividad del cliente (punto 11).
  */
-export async function cerrarSesionEnEsteEquipo(): Promise<void> {
+export async function cerrarSesionEnEsteEquipo(motivo: "cierre" | "inactividad" = "cierre"): Promise<void> {
   const token = await tokenDeSolicitud();
-  if (token) await pool.query("select pulso_revocar_sesion($1)", [hashToken(token)]);
+  if (token) await pool.query("select pulso_revocar_sesion($1, $2)", [hashToken(token), motivo]);
   await borrarCookie();
+}
+
+// ─── Fin de la sesión e inactividad (integrador, puntos 10, 11, 16 y 18) ──────
+
+/** Por qué dejó de servir la sesión de un token, o null si sirve o no hay nada que explicar. */
+async function motivoDeToken(token: string): Promise<MotivoFin | null> {
+  const { rows } = await pool.query<{ m: string | null }>("select pulso_motivo_sesion($1) as m", [hashToken(token)]);
+  return motivoValido(rows[0]?.m);
+}
+
+/**
+ * Por qué dejó de servir la sesión que trae esta petición: 'otro_inicio',
+ * 'inactividad', 'cierre', 'contrasena', 'admin' o 'vencida'. null si sigue
+ * sirviendo, si no trae token o si era una sesión sin cuenta.
+ */
+export async function motivoDeFin(): Promise<MotivoFin | null> {
+  const token = await tokenDeSolicitud();
+  return token ? motivoDeToken(token) : null;
+}
+
+interface FilaInactividad {
+  vigente:        boolean;
+  inactiva_seg:   number | null;
+  token_minutos:  number;
+  sesion_minutos: number;
+}
+
+function inactividadDeFila(r: FilaInactividad | undefined): InactividadSesion {
+  return {
+    vigente:       r?.vigente === true,
+    inactivaSeg:   r?.inactiva_seg ?? null,
+    tokenMinutos:  r?.token_minutos ?? 259_200,
+    sesionMinutos: r?.sesion_minutos ?? 30,
+  };
+}
+
+/** Los tiempos de inactividad vigentes para la sesión de la petición, sin renovar nada. */
+export async function inactividadDeSesion(): Promise<InactividadSesion> {
+  const token = await tokenDeSolicitud();
+  const { rows } = await pool.query<FilaInactividad>(
+    "select * from pulso_inactividad_de_sesion($1)",
+    [token ? hashToken(token) : null]
+  );
+  return inactividadDeFila(rows[0]);
+}
+
+/**
+ * Latido del cliente web: el usuario interactuó hace `haceSeg` segundos. Corre
+ * la actividad de la sesión (punto 11) y el vencimiento del token (punto 10).
+ * Ninguna otra petición mueve la actividad.
+ */
+export async function latidoDeSesion(haceSeg: number): Promise<InactividadSesion> {
+  const token = await tokenDeSolicitud();
+  if (!token) return inactividadDeSesion();
+  const { rows } = await pool.query<FilaInactividad>("select * from pulso_latido($1, $2)", [hashToken(token), haceSeg]);
+  return inactividadDeFila(rows[0]);
+}
+
+/**
+ * Una server action del navegador no encontró la sesión: deja la cookie de
+ * aviso para que el vigía del cliente lleve la pestaña a /acceso (ver
+ * COOKIE_AVISO). Solo en server actions (traen el header `Next-Action`): la API
+ * de la app nativa usa las mismas acciones y ahí no se pone ninguna cookie.
+ * Nunca tira.
+ */
+export async function avisarFinDeSesion(): Promise<void> {
+  try {
+    if (!(await headers()).has("next-action")) return;
+    (await cookies()).set(COOKIE_AVISO, "1", { httpOnly: false, secure: PRODUCCION, sameSite: "strict", path: "/", maxAge: 60 });
+  } catch {
+    // Fuera de una server action (render de un Server Component) no se pueden
+    // escribir cookies; ahí el vigía se entera por su sondeo.
+  }
 }
 
 /**
@@ -267,23 +384,28 @@ export async function cerrarSesionEnEsteEquipo(): Promise<void> {
  * nuevo con la misma identidad y el viejo deja de servir en 2 minutos. Un token
  * robado sirve, como mucho, hasta la próxima vez que el dueño abre la app.
  *
+ * Si el navegador trae el token de una sesión que ya no sirve, `motivo` dice
+ * por qué (se cerró en otro navegador, por inactividad, venció…) ANTES de
+ * reemplazarla por una anónima nueva: es lo que /acceso le explica al usuario.
+ *
  * Escribe la cookie: solo se puede llamar desde un route handler o una server action.
  */
 export async function asegurarSesion(
   legado?: string | null
-): Promise<{ uid: string; origen: OrigenSesion }> {
-  const { uid, origen, token } = await renovarOCrear(await tokenDeSolicitud(), legado);
+): Promise<{ uid: string; origen: OrigenSesion; motivo: MotivoFin | null }> {
+  const { uid, origen, token, motivo } = await renovarOCrear(await tokenDeSolicitud(), legado, "web");
   if (token) await fijarCookie(token);
-  return { uid, origen };
+  return { uid, origen, motivo };
 }
 
 /**
  * Lo mismo para la app nativa: toma el token del Bearer (nunca de una cookie)
  * y devuelve en el cuerpo el que hay que guardar. `token` es null cuando el
- * cliente tiene que seguir con el que ya tiene.
+ * cliente tiene que seguir con el que ya tiene. Sus sesiones nuevas quedan
+ * marcadas como 'movil': sin latido, no se cierran por inactividad del usuario.
  */
-export async function asegurarSesionMovil(): Promise<{ uid: string; origen: OrigenSesion; token: string | null }> {
-  return renovarOCrear(await tokenDeBearer(), null);
+export async function asegurarSesionMovil(): Promise<{ uid: string; origen: OrigenSesion; token: string | null; motivo: MotivoFin | null }> {
+  return renovarOCrear(await tokenDeBearer(), null, "movil");
 }
 
 /** uid del Bearer ignorando el bloqueo, o null. Para decidir si `asegurarSesionMovil` va a crear una sesión. */
@@ -299,17 +421,19 @@ export async function uidDeBearerIgnorandoBloqueo(): Promise<string | null> {
 
 async function renovarOCrear(
   actual: string | null,
-  legado: string | null | undefined
-): Promise<{ uid: string; origen: OrigenSesion; token: string | null }> {
+  legado: string | null | undefined,
+  cliente: "web" | "movil"
+): Promise<{ uid: string; origen: OrigenSesion; token: string | null; motivo: MotivoFin | null }> {
+  let motivo: MotivoFin | null = null;
   if (actual) {
     const candidato = randomBytes(32).toString("base64url");
     const { rows } = await pool.query<{ uid: string; rotada: boolean }>(
-      "select * from pulso_renovar_o_rotar($1, $2, $3)",
-      [hashToken(actual), hashToken(candidato), DIAS_SESION]
+      "select * from pulso_renovar_o_rotar($1, $2)",
+      [hashToken(actual), hashToken(candidato)]
     );
     if (rows[0]) {
       const rotada = rows[0].rotada;
-      return { uid: rows[0].uid, origen: rotada ? "rotada" : "existente", token: rotada ? candidato : actual };
+      return { uid: rows[0].uid, origen: rotada ? "rotada" : "existente", token: rotada ? candidato : actual, motivo };
     }
 
     // Token ya rotado pero dentro de los 2 minutos de gracia: es una petición
@@ -320,7 +444,10 @@ async function renovarOCrear(
       [hashToken(actual)]
     );
     const uid = gracia[0]?.uid;
-    if (uid) return { uid, origen: "existente", token: null };
+    if (uid) return { uid, origen: "existente", token: null, motivo };
+
+    // Ya no sirve: antes de reemplazarla, por qué (punto 16 y los demás).
+    motivo = await motivoDeToken(actual);
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -328,18 +455,18 @@ async function renovarOCrear(
 
   if (legado && UUID_RE.test(legado)) {
     const { rows } = await pool.query<{ uid: string | null }>(
-      "select pulso_reclamar_legado($1, $2, $3) as uid",
-      [hash, legado, DIAS_SESION]
+      "select pulso_reclamar_legado($1, $2) as uid",
+      [hash, legado]
     );
     const uid = rows[0]?.uid;
-    if (uid) return { uid, origen: "legado", token };
+    if (uid) return { uid, origen: "legado", token, motivo };
   }
 
   const { rows } = await pool.query<{ uid: string }>(
     "select pulso_crear_sesion($1, $2) as uid",
-    [hash, DIAS_SESION]
+    [hash, cliente]
   );
-  return { uid: rows[0].uid, origen: "nueva", token };
+  return { uid: rows[0].uid, origen: "nueva", token, motivo };
 }
 
 /**
@@ -373,8 +500,8 @@ export async function iniciarSesionConCuenta(emailHmac: string, password: string
     resultado: string; uid_cuenta: string | null; uid_fusionado: string | null; minutos: number | null;
     intentos_restantes: number | null; bloqueo_nuevo: boolean | null; sesiones_cerradas: number | null;
   }>(
-    "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4, $5)",
-    [emailHmac, password, hashToken(token), DIAS_SESION, actual ? hashToken(actual) : null]
+    "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4)",
+    [emailHmac, password, hashToken(token), actual ? hashToken(actual) : null]
   );
   const r = rows[0];
   const uid = r?.uid_cuenta ?? null;

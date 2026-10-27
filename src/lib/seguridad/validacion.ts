@@ -242,6 +242,14 @@ export const cuerpoSesionSchema = z.object({
   legado: z.string().max(64).optional(),
 });
 
+/** Latido del vigía de sesión: hace cuántos segundos interactuó el usuario (integrador, punto 11). */
+export const latidoSchema = z.object({
+  hace: z.number().int().min(0).max(86_400),
+});
+
+/** Motivo que el cliente puede dar al cerrar su sesión: los demás los pone el servidor. */
+export const motivoCierreSchema = z.enum(["cierre", "inactividad"]).default("cierre");
+
 // ─── Respuestas WebAuthn (bloqueo con passkey) ────────────────────────────────
 // Solo se acota la forma y el tamaño: la verificación criptográfica la hace
 // @simplewebauthn/server. `passthrough` deja pasar los campos que la librería

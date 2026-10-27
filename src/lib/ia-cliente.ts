@@ -1,6 +1,6 @@
 "use client";
 
-import { asegurarSesion, marcarBloqueada } from "@/hooks/use-sesion";
+import { asegurarSesion, marcarBloqueada, verificarSesion } from "@/hooks/use-sesion";
 import { otorgarConsentimientoIA } from "@/lib/db/consentimiento";
 
 /**
@@ -51,6 +51,14 @@ export class LimiteAlcanzado extends Error {
   }
 }
 
+/** 401: la sesión terminó (se cerró en otro lado, venció o quedó inactiva). */
+export class SesionTerminada extends Error {
+  constructor() {
+    super("sesion_requerida");
+    this.name = "SesionTerminada";
+  }
+}
+
 async function codigoDeError(res: Response): Promise<string | null> {
   const data = await res.clone().json().catch(() => null);
   return typeof data?.error === "string" ? data.error : null;
@@ -76,6 +84,12 @@ export async function fetchIA(url: string, cuerpo: unknown = {}): Promise<Respon
   }
 
   if (res.status === 429) throw new LimiteAlcanzado();
+  if (res.status === 401) {
+    // Sin sesión con cuenta: el vigía lleva la pestaña a /acceso con el motivo
+    // (integrador, punto 18). El componente solo muestra el mensaje un instante.
+    void verificarSesion({ siNoHay: null });
+    throw new SesionTerminada();
+  }
   if (res.status === 423) {
     // La ventana de desbloqueo venció: la guardia muestra la pantalla de bloqueo.
     marcarBloqueada();
@@ -94,6 +108,9 @@ export function mensajeErrorIA(err: unknown, porDefecto: string): string {
   }
   if (err instanceof LimiteAlcanzado) {
     return "Llegaste al límite de consultas a la IA por esta hora. Probá de nuevo más tarde.";
+  }
+  if (err instanceof SesionTerminada) {
+    return "Tu sesión terminó. Vuelve a iniciar sesión para continuar.";
   }
   return porDefecto;
 }

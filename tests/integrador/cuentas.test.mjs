@@ -761,7 +761,7 @@ describe("19 — migración del correo de las cuentas existentes", { skip: SIN_A
 
       // 6. La cuenta vieja entra con su contraseña de siempre (el login no aplica la regla nueva)…
       const nuevaSesion = sha256(randomBytes(32).toString("base64url"));
-      const login = (await c.query("select * from pulso_iniciar_sesion_cuenta($1, $2, $3, 180, null)",
+      const login = (await c.query("select * from pulso_iniciar_sesion_cuenta($1, $2, $3, null)",
         [hmacCorreo(" cuenta.vieja@prueba.test"), "contrasena-vieja-10", nuevaSesion])).rows[0];
       assert.equal(login.resultado, "ok");
       assert.equal(login.uid_cuenta, uid);
