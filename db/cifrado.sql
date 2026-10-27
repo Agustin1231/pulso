@@ -1,0 +1,3 @@
+-- Pulso — columnas cifradas de los datos de salud
+--
+-- Se aplica al final (npm run setup-db). Es idempotente.

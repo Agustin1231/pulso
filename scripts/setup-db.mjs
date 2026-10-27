@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Aplica db/schema.sql y db/seguridad.sql contra la base.
+ * Aplica los archivos de db/ contra la base, en el orden de ARCHIVOS.
  *
  *   npm run setup-db
  *
@@ -60,8 +60,9 @@ if (!connectionString) {
   process.exit(1);
 }
 
-// El orden importa: seguridad.sql protege las tablas que crea schema.sql.
-const ARCHIVOS = ["schema.sql", "seguridad.sql"];
+// El orden importa: seguridad.sql protege las tablas que crea schema.sql, y
+// los demás se apoyan en las dos.
+const ARCHIVOS = ["schema.sql", "seguridad.sql", "plataforma.sql", "admin.sql", "examenes.sql", "cifrado.sql"];
 const sqls = await Promise.all(
   ARCHIVOS.map((a) => readFile(path.join(raiz, "db", a), "utf8"))
 );

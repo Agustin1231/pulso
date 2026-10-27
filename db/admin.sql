@@ -1,0 +1,3 @@
+-- Pulso — administración: roles, permisos, usuarios y registro de errores
+--
+-- Se aplica después de plataforma.sql (npm run setup-db). Es idempotente.

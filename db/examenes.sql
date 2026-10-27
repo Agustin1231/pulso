@@ -1,0 +1,3 @@
+-- Pulso — exámenes médicos subidos por el usuario
+--
+-- Se aplica después de admin.sql (npm run setup-db). Es idempotente.

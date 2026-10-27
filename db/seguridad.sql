@@ -94,12 +94,16 @@ create index if not exists sesiones_uid_idx on sesiones (uid);
 -- vencimiento se acorta a 2 minutos (gracia para peticiones en vuelo).
 -- Bloqueo (fila 9): `desbloqueada_hasta` es la ventana de uso tras desbloquear.
 -- Desafío WebAuthn: uno por sesión, de un solo uso y con vencimiento.
+-- `revocada_motivo` dice por qué se cerró, para que la app se lo explique al
+-- usuario: 'cierre' (cerró sesión), 'otro_inicio' (entró en otro navegador),
+-- 'inactividad', 'contrasena' (se cambió la contraseña) o 'admin'.
 alter table sesiones
   add column if not exists rotada_at          timestamptz,
   add column if not exists desbloqueada_hasta timestamptz,
   add column if not exists desafio            text,
   add column if not exists desafio_tipo       text,
-  add column if not exists desafio_expira     timestamptz;
+  add column if not exists desafio_expira     timestamptz,
+  add column if not exists revocada_motivo    text;
 
 -- ─── Consentimiento (Ley 1581 de 2012) ───────────────────────────────────────
 
