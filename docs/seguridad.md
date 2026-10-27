@@ -62,7 +62,11 @@ genera la base.
 ## Flujo de la sesión
 
 1. Al abrir la app, `useSesion` llama a `POST /api/sesion`.
-2. Con una cookie vigente, se renueva (vence a los 180 días sin uso).
+2. Con una cookie vigente, se renueva. El token vence tras
+   `token_inactividad_minutos` sin ninguna petición (180 días por defecto) y la
+   sesión web se cierra tras `sesion_inactividad_minutos` sin que el usuario
+   toque la app (30 minutos por defecto); los dos se cambian desde `/admin`
+   (ver docs/integrador/sesion.md).
 3. Sin cookie, se crea una identidad nueva. Si el navegador tiene el UUID de
    la versión anterior, se manda una vez para **reclamar** ese historial.
    Cada UUID viejo se reclama una sola vez y durante 90 días; después de
