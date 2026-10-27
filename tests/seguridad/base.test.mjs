@@ -87,21 +87,21 @@ test("sin app.uid no se ve ninguna fila (RLS cierra por defecto)", { skip: salte
 });
 
 test("un uid legado se reclama una sola vez", { skip: saltear }, async () => {
-  const { rows: r1 } = await app.query("select pulso_reclamar_legado($1, $2, 30) as uid", [nuevoHash(), LEGADO_A]);
+  const { rows: r1 } = await app.query("select pulso_reclamar_legado($1, $2) as uid", [nuevoHash(), LEGADO_A]);
   assert.equal(r1[0].uid, LEGADO_A);
-  const { rows: r2 } = await app.query("select pulso_reclamar_legado($1, $2, 30) as uid", [nuevoHash(), LEGADO_A]);
+  const { rows: r2 } = await app.query("select pulso_reclamar_legado($1, $2) as uid", [nuevoHash(), LEGADO_A]);
   assert.equal(r2[0].uid, null, "el segundo reclamo tiene que fallar");
 });
 
 test("no se puede reclamar un uid que nunca existió", { skip: saltear }, async () => {
   const inventado = "33333333-3333-4333-8333-333333333333";
-  const { rows } = await app.query("select pulso_reclamar_legado($1, $2, 30) as uid", [nuevoHash(), inventado]);
+  const { rows } = await app.query("select pulso_reclamar_legado($1, $2) as uid", [nuevoHash(), inventado]);
   assert.equal(rows[0].uid, null);
 });
 
 test("sesión nueva: el uid lo genera la base; se resuelve y se revoca", { skip: saltear }, async () => {
   const h = nuevoHash();
-  const { rows } = await app.query("select pulso_crear_sesion($1, 30) as uid", [h]);
+  const { rows } = await app.query("select pulso_crear_sesion($1, 'web') as uid", [h]);
   const uid = rows[0].uid;
   assert.match(uid, /^[0-9a-f-]{36}$/);
 
@@ -115,11 +115,11 @@ test("sesión nueva: el uid lo genera la base; se resuelve y se revoca", { skip:
 
 test("una sesión vencida no resuelve ni se renueva", { skip: saltear }, async () => {
   const h = nuevoHash();
-  await app.query("select pulso_crear_sesion($1, 30)", [h]);
+  await app.query("select pulso_crear_sesion($1, 'web')", [h]);
   await admin.query("update sesiones set expira_at = now() - interval '1 second' where token_hash = $1", [h]);
   const { rows: r1 } = await app.query("select pulso_resolver_sesion($1) as uid", [h]);
   assert.equal(r1[0].uid, null);
-  const { rows: r2 } = await app.query("select pulso_renovar_sesion($1, 30) as uid", [h]);
+  const { rows: r2 } = await app.query("select pulso_renovar_sesion($1) as uid", [h]);
   assert.equal(r2[0].uid, null);
 });
 
@@ -175,7 +175,7 @@ test("límite de tasa: corta al pasar el máximo", { skip: saltear }, async () =
 
 test("supresión: borra los datos del dueño de la sesión y nada más", { skip: saltear }, async () => {
   const h = nuevoHash();
-  const { rows } = await app.query("select pulso_reclamar_legado($1, $2, 30) as uid", [h, LEGADO_B]);
+  const { rows } = await app.query("select pulso_reclamar_legado($1, $2) as uid", [h, LEGADO_B]);
   assert.equal(rows[0].uid, LEGADO_B);
 
   const { rows: r } = await app.query("select pulso_eliminar_datos($1) as uid", [h]);
@@ -194,7 +194,7 @@ test("supresión: borra los datos del dueño de la sesión y nada más", { skip:
 
 test("las funciones de sesión no son ejecutables por otros roles", { skip: saltear }, async () => {
   const { rows } = await admin.query(
-    "select has_function_privilege('pulso_auditor', 'pulso_crear_sesion(text,int)', 'execute') as puede"
+    "select has_function_privilege('pulso_auditor', 'pulso_crear_sesion(text,text)', 'execute') as puede"
   );
   assert.equal(rows[0].puede, false);
 });
@@ -203,18 +203,18 @@ test("las funciones de sesión no son ejecutables por otros roles", { skip: salt
 
 test("rotación: un token de menos de un día solo se renueva", { skip: saltear }, async () => {
   const h = nuevoHash();
-  const { rows: c } = await app.query("select pulso_crear_sesion($1, 30) as uid", [h]);
-  const { rows } = await app.query("select * from pulso_renovar_o_rotar($1, $2, 30)", [h, nuevoHash()]);
+  const { rows: c } = await app.query("select pulso_crear_sesion($1, 'web') as uid", [h]);
+  const { rows } = await app.query("select * from pulso_renovar_o_rotar($1, $2)", [h, nuevoHash()]);
   assert.deepEqual(rows[0], { uid: c[0].uid, rotada: false });
 });
 
 test("rotación: un token viejo se reemplaza y deja de servir", { skip: saltear }, async () => {
   const viejo = nuevoHash();
   const nuevo = nuevoHash();
-  const { rows: c } = await app.query("select pulso_crear_sesion($1, 30) as uid", [viejo]);
+  const { rows: c } = await app.query("select pulso_crear_sesion($1, 'web') as uid", [viejo]);
   await admin.query("update sesiones set created_at = now() - interval '2 days' where token_hash = $1", [viejo]);
 
-  const { rows } = await app.query("select * from pulso_renovar_o_rotar($1, $2, 30)", [viejo, nuevo]);
+  const { rows } = await app.query("select * from pulso_renovar_o_rotar($1, $2)", [viejo, nuevo]);
   assert.deepEqual(rows[0], { uid: c[0].uid, rotada: true });
 
   // el nuevo resuelve al mismo usuario
@@ -222,9 +222,9 @@ test("rotación: un token viejo se reemplaza y deja de servir", { skip: saltear 
   assert.equal(r1[0].uid, c[0].uid);
 
   // el viejo: no se vuelve a rotar ni a renovar (un token robado no se "refresca")
-  const { rows: r2 } = await app.query("select * from pulso_renovar_o_rotar($1, $2, 30)", [viejo, nuevoHash()]);
+  const { rows: r2 } = await app.query("select * from pulso_renovar_o_rotar($1, $2)", [viejo, nuevoHash()]);
   assert.equal(r2.length, 0);
-  const { rows: r3 } = await app.query("select pulso_renovar_sesion($1, 30) as uid", [viejo]);
+  const { rows: r3 } = await app.query("select pulso_renovar_sesion($1) as uid", [viejo]);
   assert.equal(r3[0].uid, null);
 
   // gracia de 2 minutos para peticiones en vuelo; vencida, no resuelve
@@ -239,7 +239,7 @@ test("rotación: un token viejo se reemplaza y deja de servir", { skip: saltear 
 
 async function sesionConBloqueo() {
   const h = nuevoHash();
-  const { rows } = await app.query("select pulso_crear_sesion($1, 30) as uid", [h]);
+  const { rows } = await app.query("select pulso_crear_sesion($1, 'web') as uid", [h]);
   const uid = rows[0].uid;
   await comoUsuarioCommit(uid, (c) =>
     c.query("insert into credenciales_bloqueo (id, uid, clave_publica) values ($1, $2, '\\x00')", [nuevoHash().slice(0, 22), uid])
@@ -308,7 +308,7 @@ test("bloqueo: la ventana vencida vuelve a bloquear", { skip: saltear }, async (
 
 test("bloqueo: las passkeys de un usuario no las ve otro (RLS)", { skip: saltear }, async () => {
   await sesionConBloqueo();
-  const { rows: c } = await app.query("select pulso_crear_sesion($1, 30) as uid", [nuevoHash()]);
+  const { rows: c } = await app.query("select pulso_crear_sesion($1, 'web') as uid", [nuevoHash()]);
   await comoUsuario(c[0].uid, async (cx) => {
     const { rows } = await cx.query("select count(*)::int as n from credenciales_bloqueo");
     assert.equal(rows[0].n, 0);
@@ -317,7 +317,7 @@ test("bloqueo: las passkeys de un usuario no las ve otro (RLS)", { skip: saltear
 
 test("desafío WebAuthn: de un solo uso, por tipo y con vencimiento", { skip: saltear }, async () => {
   const h = nuevoHash();
-  await app.query("select pulso_crear_sesion($1, 30)", [h]);
+  await app.query("select pulso_crear_sesion($1, 'web')", [h]);
 
   await app.query("select pulso_fijar_desafio($1, 'registro', 'abc')", [h]);
   const { rows: otro } = await app.query("select pulso_consumir_desafio($1, 'desbloqueo') as d", [h]);

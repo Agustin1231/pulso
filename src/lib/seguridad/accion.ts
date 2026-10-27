@@ -1,7 +1,7 @@
 import "server-only";
 import type { z } from "zod";
 import { conUsuario, mensajeError, type Db } from "@/lib/db/pool";
-import { requerirUid, uidDeSesion, SesionBloqueada, SinSesion } from "@/lib/sesion";
+import { avisarFinDeSesion, requerirUid, uidDeSesion, SesionBloqueada, SinSesion } from "@/lib/sesion";
 import { auditar, auditarEn, type Evento } from "./auditoria";
 import { ipCliente } from "./red";
 import { consumir, limite } from "./tasa";
@@ -22,10 +22,15 @@ import { consumir, limite } from "./tasa";
  * validar (así también cuentan los intentos inválidos, que dejan una fila en
  * la auditoría), y la base les impone una cuota de filas por usuario
  * (`pulso_cuota_filas` en db/seguridad.sql). Ver AM-21 / SAST-BE-19.
+ *
+ * Sin sesión (integrador, punto 18): además de responder ERROR_SESION (o el
+ * valor vacío de una lectura), deja la cookie de aviso `avisarFinDeSesion`
+ * para que el navegador vaya enseguida a /acceso, sin mostrar una pantalla
+ * vacía como si el usuario no tuviera datos.
  */
 
 export const ERROR_GENERICO = "No se pudo completar la operación. Intentá de nuevo.";
-export const ERROR_SESION   = "Tu sesión no es válida. Recargá la página.";
+export const ERROR_SESION   = "Tu sesión terminó. Vuelve a iniciar sesión para continuar.";
 export const ERROR_DATOS    = "Los datos enviados no son válidos.";
 export const ERROR_NO_ENCONTRADO = "No se encontró el elemento.";
 export const ERROR_BLOQUEADA = "Pulso está bloqueado. Desbloquealo para continuar.";
@@ -141,6 +146,7 @@ export async function escritura<T>(
     }
     if (err instanceof SinSesion) {
       await auditar({ accion: nombre, resultado: "denegado", ip: await ipCliente(), detalle: { motivo: "sin_sesion" } });
+      await avisarFinDeSesion();
       return { error: ERROR_SESION };
     }
     console.error(`[accion] ${nombre}:`, mensajeError(err));
@@ -160,6 +166,7 @@ export async function lectura<T, R>(
   try {
     return await ejecutar(nombre, schema, entrada, fn);
   } catch (err) {
+    if (err instanceof SinSesion) await avisarFinDeSesion();
     if (!(err instanceof DatosInvalidos) && !(err instanceof SinSesion) && !(err instanceof SesionBloqueada)) {
       console.error(`[accion] ${nombre}:`, mensajeError(err));
     }
