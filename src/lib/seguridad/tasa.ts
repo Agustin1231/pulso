@@ -69,6 +69,13 @@ export const LIMITES = {
   cambioContrasena: { max: 10, ventana: HORA },
   cambioCorreo:     { max: 5,  ventana: HORA },
   cambioCuentaIp:   { max: 30, ventana: HORA },
+  /**
+   * Exámenes médicos (integrador, punto 15): subir y borrar. Cada subida
+   * puede traer 10 MB que el servidor lee, revisa y cifra; también cuentan las
+   * rechazadas, así que probar archivos en loop tiene un techo.
+   */
+  examen:         { max: 30, ventana: HORA },
+  examenIp:       { max: 90, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;

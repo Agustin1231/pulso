@@ -128,7 +128,7 @@ export function PrivacidadClient() {
           <h3 className="text-sm font-bold text-coral">Borrar todos mis datos</h3>
         </div>
         <p className="mb-3 text-xs text-muted-foreground leading-relaxed">
-          Elimina de forma definitiva todo lo que guardaste en Pulso, tus fotos de recetas y tu sesión, y limpia
+          Elimina de forma definitiva todo lo que guardaste en Pulso, tus fotos de recetas, tus exámenes y tu sesión, y limpia
           este equipo. Tu cuenta también se borra. <strong className="text-foreground">No se puede
           deshacer</strong>: no queda copia a la que volver.
         </p>

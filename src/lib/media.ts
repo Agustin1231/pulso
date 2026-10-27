@@ -1,7 +1,8 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
-import { mkdir, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { cifrarBytes, descifrarBytes } from "@/lib/seguridad/cifrado";
 
 /**
  * Directorio donde viven los archivos subidos (antes: Supabase Storage).
@@ -139,4 +140,64 @@ export function rutaDentroDeMedia(segmentos: string[]): string | null {
   const destino = path.resolve(MEDIA_DIR, ...segmentos);
   if (destino !== MEDIA_DIR && !destino.startsWith(MEDIA_DIR + path.sep)) return null;
   return destino;
+}
+
+// ─── Exámenes médicos (integrador, punto 15) ──────────────────────────────────
+// Cada examen es un archivo `examenes/<archivo>` con un nombre de 128 bits
+// aleatorios: la ruta no depende del uid (a diferencia de las recetas), así
+// que la fusión de identidad no mueve nada y nadie puede deducir de quién es
+// un archivo mirando el disco. El contenido va cifrado con AES-256-GCM
+// (lib/seguridad/cifrado.ts): un respaldo del volumen no alcanza para leer un
+// examen, y un archivo alterado o cambiado por otro no se descifra.
+
+export const EXAMENES_SUBDIR = "examenes";
+/** Nombre en disco de un examen: el mismo `check` tiene `examenes.archivo`. */
+export const ARCHIVO_EXAMEN_RE = /^[0-9a-f]{32}$/;
+const CONTEXTO_EXAMEN = "examenes.archivo";
+
+/** Nombre aleatorio para el archivo de un examen nuevo. */
+export function nuevoArchivoExamen(): string {
+  return randomBytes(16).toString("hex");
+}
+
+function rutaExamen(archivo: string): string | null {
+  return ARCHIVO_EXAMEN_RE.test(archivo) ? rutaDentroDeMedia([EXAMENES_SUBDIR, archivo]) : null;
+}
+
+/** Cifra y guarda un examen. Nunca pisa un archivo existente (`wx`). */
+export async function guardarArchivoExamen(archivo: string, bytes: Buffer): Promise<void> {
+  const destino = rutaExamen(archivo);
+  if (!destino) throw new Error("Nombre de archivo de examen inválido");
+  // La ruta la arma el servidor (nombre aleatorio validado por la regex) y
+  // pasa por rutaDentroDeMedia: nada del cliente llega acá.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta generada por el servidor y validada
+  await mkdir(path.dirname(destino), { recursive: true, mode: 0o700 });
+  // eslint-disable-next-line security/detect-non-literal-fs-filename -- ídem
+  await writeFile(destino, cifrarBytes(bytes, CONTEXTO_EXAMEN), { mode: 0o600, flag: "wx" });
+}
+
+/**
+ * Lee y descifra un examen. null si el archivo no está; tira si está
+ * alterado (la etiqueta de GCM no coincide).
+ */
+export async function leerArchivoExamen(archivo: string): Promise<Buffer | null> {
+  const origen = rutaExamen(archivo);
+  if (!origen) return null;
+  let cifrado: Buffer;
+  try {
+    // eslint-disable-next-line security/detect-non-literal-fs-filename -- ruta generada por el servidor y validada
+    cifrado = await readFile(origen);
+  } catch (err) {
+    if ((err as { code?: unknown }).code === "ENOENT") return null;
+    throw err;
+  }
+  return descifrarBytes(cifrado, CONTEXTO_EXAMEN);
+}
+
+/** Borra los archivos de estos exámenes (los que no existan se ignoran). */
+export async function borrarArchivosExamen(archivos: readonly string[]): Promise<void> {
+  for (const archivo of archivos) {
+    const ruta = rutaExamen(archivo);
+    if (ruta) await rm(ruta, { force: true });
+  }
 }
