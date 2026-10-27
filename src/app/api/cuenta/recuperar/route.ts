@@ -8,9 +8,11 @@ import { recuperarSchema } from "@/lib/seguridad/validacion";
 export const runtime = "nodejs";
 
 /**
- * Manda el enlace para crear una contraseña nueva. Responde lo mismo exista o
- * no la cuenta, y el correo sale después de responder: ni la respuesta ni su
- * tiempo dicen si el correo está registrado.
+ * Manda el enlace para crear una contraseña nueva ("Olvidé mi contraseña",
+ * integrador, punto 3). Responde lo mismo exista o no la cuenta, y el correo
+ * sale después de responder: ni la respuesta ni su tiempo dicen si el correo
+ * está registrado. Funciona aunque la cuenta esté bloqueada por intentos
+ * fallidos: restablecer es la forma de desbloquearla.
  */
 export const POST = rutaPublica(
   {

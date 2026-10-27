@@ -59,8 +59,16 @@ export const LIMITES = {
   recuperacion:   { max: 3,  ventana: HORA },
   recuperacionIp: { max: 10, ventana: HORA },
   reenvio:        { max: 3,  ventana: HORA },
-  /** Activar la cuenta o restablecer la contraseña con el token del correo. */
+  /** Activar la cuenta, restablecer la contraseña o confirmar un correo nuevo con el token del correo. */
   enlaceIp:       { max: 30, ventana: HORA },
+  /**
+   * Cambiar la contraseña o el correo desde el perfil (integrador, punto 20).
+   * Además, la contraseña actual equivocada cuenta para el bloqueo de 5
+   * intentos; esto acota también los correos que salen (aviso y confirmación).
+   */
+  cambioContrasena: { max: 10, ventana: HORA },
+  cambioCorreo:     { max: 5,  ventana: HORA },
+  cambioCuentaIp:   { max: 30, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;
