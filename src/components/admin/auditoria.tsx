@@ -238,12 +238,24 @@ function etiquetaAccion(accion: string): string {
     case "cuenta.recuperar":           return "Pidió recuperar la contraseña";
     case "cuenta.restablecer":         return "Restableció la contraseña";
     case "cuenta.fusionar":            return "Datos de este equipo sumados a la cuenta";
+    case "cuenta.bloquear":            return "Cuenta bloqueada por intentos fallidos";
+    case "cuenta.reenviar":            return "Pidió otro enlace de activación";
+    case "cuenta.cambiar_contrasena":  return "Cambió su contraseña desde el perfil";
+    case "cuenta.cambiar_correo":      return "Pidió cambiar su correo";
+    case "cuenta.confirmar_correo":    return "Confirmó su correo nuevo";
     case "sesion.crear":               return "Sesión nueva";
     case "sesion.rotar":               return "Rotación del token";
     case "sesion.reclamar":            return "Reclamo de identidad anterior";
     case "sesion.cerrar":              return "Cierre de sesión";
+    case "sesion.vencer":              return "Token vencido por inactividad";
+    case "sesion.revocar":             return "Sesión cerrada por inactividad";
+    case "examen.subir":               return "Subió un examen";
+    case "examen.descargar":           return "Abrió un examen";
+    case "examen.eliminar":            return "Borró un examen";
+    case "examen.listar":              return "Vio sus exámenes";
     case "datos.eliminar":             return "Borró todos sus datos";
     case "datos.purgar":               return "Purga por inactividad";
+    case "datos.cifrar":               return "Migración: datos de salud cifrados";
     default:                           return accion;
   }
 }
