@@ -255,7 +255,7 @@ describe("13 — regla de contraseñas (TS y base)", () => {
     // Sin sesión responde antes; con una sesión real, la regla.
     assert.equal(rows[0].r, "sin_sesion");
     const token = randomBytes(32).toString("base64url");
-    await db().query("select pulso_crear_sesion($1, 1)", [sha256(token)]);
+    await db().query("select pulso_crear_sesion($1, 'web')", [sha256(token)]);
     const { rows: r2 } = await db().query(
       "select pulso_registrar_cuenta($1, $2, $3, $4, $5, $6) as r",
       [sha256(token), "0".repeat(64), "v1.x", "x@prueba.test", "123456789012345", sha256(randomBytes(8).toString("hex"))]
@@ -680,7 +680,6 @@ describe("14 — campos de contraseña y páginas", () => {
       [`/acceso/restablecer?token=${token}`, "Contraseña nueva"],
       [`/acceso/activar?token=${token}`, "Activar cuenta"],
       [`/acceso/confirmar-correo?token=${token}`, "Confirmar correo nuevo"],
-      ["/cuenta", "Cuenta"],
     ]) {
       const r = await fetch(`${BASE}${ruta}`, { headers: { "X-Forwarded-For": nuevaIp() } });
       assert.equal(r.status, 200, ruta);
@@ -691,6 +690,10 @@ describe("14 — campos de contraseña y páginas", () => {
         assert.ok(html.includes("Al menos 10 caracteres"), "la lista de la regla");
       }
     }
+    // /cuenta es de la app: sin una sesión con cuenta, el servidor manda a /acceso (punto 1).
+    const r = await fetch(`${BASE}/cuenta`, { headers: { "X-Forwarded-For": nuevaIp() }, redirect: "manual" });
+    assert.equal(r.status, 307, "/cuenta sin sesión redirige");
+    assert.equal(new URL(r.headers.get("location"), BASE).pathname, "/acceso");
   });
 });
 
@@ -728,7 +731,7 @@ describe("19 — migración del correo de las cuentas existentes", { skip: SIN_A
       // 3. setup-db nuevo sobre el esquema viejo: corre, y una cuenta nueva ya se crea cifrada.
       correr(["scripts/setup-db.mjs"]);
       const sesion2 = sha256(randomBytes(32).toString("base64url"));
-      await c.query("select pulso_crear_sesion($1, 180)", [sesion2]);
+      await c.query("select pulso_crear_sesion($1, 'web')", [sesion2]);
       const nueva = "nueva@prueba.test";
       assert.equal((await c.query("select pulso_registrar_cuenta($1, $2, $3, $4, $5, $6) as r",
         [sesion2, hmacCorreo(nueva), cifrar(nueva, "cuentas.email"), nueva, BUENA, sha256("x" + nombre)])).rows[0].r, "ok");

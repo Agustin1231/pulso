@@ -3,7 +3,7 @@
  * Prepara la base de CARGA (nunca producción) para las pruebas no funcionales:
  *
  *   1. Crea N sesiones anónimas directamente en la base, con el rol dueño,
- *      llamando a `pulso_crear_sesion(sha256(token), 30)` (ver src/lib/sesion.ts
+ *      llamando a `pulso_crear_sesion(sha256(token), 'movil')` (ver src/lib/sesion.ts
  *      y db/seguridad.sql). Así la prueba de carga NO pasa por
  *      POST /api/movil/v1/sesion, cuyo límite de tasa (30 sesiones nuevas por IP
  *      y hora) es un control de seguridad que no se desactiva.
@@ -185,7 +185,7 @@ if (UID) {
   for (let i = 0; i < USUARIOS; i++) {
     const token = randomBytes(32).toString("base64url");
     await client.query("begin");
-    const { rows } = await client.query("select pulso_crear_sesion($1, 30) as uid", [sha256(token)]);
+    const { rows } = await client.query("select pulso_crear_sesion($1, 'movil') as uid", [sha256(token)]);
     await sembrar(rows[0].uid, azar(1000 + i));
     await client.query("commit");
     tokens.push(token);
