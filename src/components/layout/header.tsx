@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Heart, ShieldCheck, UserRound } from "lucide-react";
 import { BotonNotificaciones } from "@/components/notificaciones/boton-notificaciones";
+import { EnlaceAdminHeader } from "@/components/admin/permisos-admin";
 
 const titles: Record<string, { label: string; desc: string }> = {
   "/dashboard":  { label: "Métricas",  desc: "Tu salud cardiovascular hoy" },
@@ -14,6 +15,7 @@ const titles: Record<string, { label: string; desc: string }> = {
   "/tips":       { label: "Tips",      desc: "Consejos personalizados" },
   "/privacidad": { label: "Privacidad", desc: "Tus datos y tus derechos" },
   "/cuenta":     { label: "Cuenta",     desc: "Tu correo y tu acceso" },
+  "/admin":      { label: "Administración", desc: "Usuarios, roles, auditoría, errores y sesión" },
 };
 
 export function Header() {
@@ -48,6 +50,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-1">
+        <EnlaceAdminHeader />
         <Link
           href="/cuenta"
           title="Mi cuenta"

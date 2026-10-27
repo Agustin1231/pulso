@@ -3,6 +3,7 @@ import type { z } from "zod";
 import { conUsuario, mensajeError, type Db } from "@/lib/db/pool";
 import { requerirUid, uidDeSesion, SesionBloqueada, SinSesion } from "@/lib/sesion";
 import { auditar, auditarEn, type Evento } from "./auditoria";
+import { registrarError } from "./errores";
 import { ipCliente } from "./red";
 import { consumir, limite } from "./tasa";
 
@@ -145,6 +146,7 @@ export async function escritura<T>(
     }
     console.error(`[accion] ${nombre}:`, mensajeError(err));
     await auditar({ accion: nombre, resultado: "error", ip: await ipCliente() });
+    await registrarError(`accion:${nombre}`, err, { uid: await uidDeSesion().catch(() => null), ip: await ipCliente() });
     return { error: ERROR_GENERICO };
   }
 }
@@ -162,6 +164,7 @@ export async function lectura<T, R>(
   } catch (err) {
     if (!(err instanceof DatosInvalidos) && !(err instanceof SinSesion) && !(err instanceof SesionBloqueada)) {
       console.error(`[accion] ${nombre}:`, mensajeError(err));
+      await registrarError(`accion:${nombre}`, err, { uid: await uidDeSesion().catch(() => null), ip: await ipCliente() });
     }
     return vacio;
   }

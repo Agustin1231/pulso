@@ -4,6 +4,7 @@ import { conUsuario, mensajeError } from "@/lib/db/pool";
 import { estadoSesion, uidDeSesion, uidDeSesionSinCuenta, uidIgnorandoBloqueo } from "@/lib/sesion";
 import { auditar } from "./auditoria";
 import { tieneConsentimientoIA } from "./consentimiento";
+import { registrarError } from "./errores";
 import { ipCliente, origenValido } from "./red";
 import { consumir, type Limite } from "./tasa";
 
@@ -128,6 +129,7 @@ export function rutaProtegida<T, X = unknown>(
           : await uidDeSesion();
     } catch (err) {
       console.error(`[api] ${op.nombre}: no se pudo resolver la sesión:`, mensajeError(err));
+      await registrarError(`api:${op.nombre}`, err, { ip });
       return json({ error: "error_interno" }, 500);
     }
     if (!uid) {
@@ -168,6 +170,7 @@ export function rutaProtegida<T, X = unknown>(
     } catch (err) {
       console.error(`[api] ${op.nombre}:`, mensajeError(err));
       await auditar({ uid, accion: op.nombre, resultado: "error", ip });
+      await registrarError(`api:${op.nombre}`, err, { uid, ip });
       return json({ error: "error_interno" }, 500);
     }
   };
@@ -221,6 +224,7 @@ export function rutaPublica<T>(
     } catch (err) {
       console.error(`[api] ${op.nombre}:`, mensajeError(err));
       await auditar({ accion: op.nombre, resultado: "error", ip });
+      await registrarError(`api:${op.nombre}`, err, { ip });
       return json({ error: "error_interno" }, 500);
     }
   };

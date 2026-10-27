@@ -9,6 +9,7 @@
     "lint": "next lint",
     "setup-db": "node scripts/setup-db.mjs",
     "purgar-inactivos": "node scripts/purgar-inactivos.mjs",
+    "asignar-admin": "node --experimental-strip-types scripts/asignar-admin.mjs",
     "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs",
     "test:ml": "tsc -p tsconfig.ml.json && node --test \".tmp-test/ml/tests/ml/**/*.test.js\"",
     "test:seguridad": "node --test tests/seguridad/",
