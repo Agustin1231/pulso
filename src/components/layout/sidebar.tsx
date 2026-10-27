@@ -12,6 +12,7 @@ import {
   Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EnlaceAdminLateral } from "@/components/admin/permisos-admin";
 
 const nav = [
   {
@@ -115,6 +116,8 @@ export function Sidebar() {
             );
           })}
         </ul>
+        {/* Solo con algún permiso de administración (integrador, C6) */}
+        <EnlaceAdminLateral />
       </nav>
 
       {/* Footer */}

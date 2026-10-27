@@ -11,6 +11,7 @@
     "purgar-inactivos": "node scripts/purgar-inactivos.mjs",
     "migrar:cifrado-cuentas": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/migrar-cifrado-cuentas.mjs",
     "migrar:cifrado-salud": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/migrar-cifrado-salud.mjs",
+    "asignar-admin": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/asignar-admin.mjs",
     "test:fallback": "tsc src/lib/ai/provider.ts --outDir .tmp-test --module esnext --target es2022 --moduleResolution bundler --skipLibCheck && node tests/provider-fallback.mjs",
     "test:ml": "tsc -p tsconfig.ml.json && node --test \".tmp-test/ml/tests/ml/**/*.test.js\"",
     "test:seguridad": "node --test tests/seguridad/",
