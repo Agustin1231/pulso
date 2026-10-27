@@ -61,6 +61,13 @@ export const LIMITES = {
   reenvio:        { max: 3,  ventana: HORA },
   /** Activar la cuenta o restablecer la contraseña con el token del correo. */
   enlaceIp:       { max: 30, ventana: HORA },
+  /**
+   * Exámenes médicos (integrador, punto 15): subir y borrar. Cada subida
+   * puede traer 10 MB que el servidor lee, revisa y cifra; también cuentan las
+   * rechazadas, así que probar archivos en loop tiene un techo.
+   */
+  examen:         { max: 30, ventana: HORA },
+  examenIp:       { max: 90, ventana: HORA },
 } as const;
 
 export type NombreLimite = keyof typeof LIMITES;

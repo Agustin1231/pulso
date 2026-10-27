@@ -11,6 +11,7 @@ const titles: Record<string, { label: string; desc: string }> = {
   "/rutinas":    { label: "Rutinas",   desc: "Ejercicio adaptado a tu perfil" },
   "/calendario": { label: "Hábitos",   desc: "Tu seguimiento diario" },
   "/score":      { label: "Mi Score",  desc: "Análisis de riesgo cardiovascular" },
+  "/examenes":   { label: "Exámenes",  desc: "Tus resultados de laboratorio, cifrados" },
   "/tips":       { label: "Tips",      desc: "Consejos personalizados" },
   "/privacidad": { label: "Privacidad", desc: "Tus datos y tus derechos" },
   "/cuenta":     { label: "Cuenta",     desc: "Tu correo y tu acceso" },

@@ -9,6 +9,7 @@ import {
   CalendarDays,
   HeartPulse,
   Lightbulb,
+  FileHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +19,7 @@ const nav = [
   { href: "/rutinas",    label: "Rutinas",  icon: Dumbbell,     color: "text-blue" },
   { href: "/calendario", label: "Hábitos",  icon: CalendarDays, color: "text-purple" },
   { href: "/score",      label: "Score",    icon: HeartPulse,   color: "text-amber" },
+  { href: "/examenes",   label: "Exámenes", icon: FileHeart,    color: "text-teal" },
   { href: "/tips",       label: "Tips",     icon: Lightbulb,    color: "text-green" },
 ];
 

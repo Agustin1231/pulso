@@ -10,6 +10,7 @@ import {
   HeartPulse,
   Lightbulb,
   Heart,
+  FileHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,14 @@ const nav = [
     color: "text-amber",
     glow:  "group-hover:shadow-[0_0_12px_rgba(240,165,0,0.4)]",
     bg:    "bg-amber/10 group-hover:bg-amber/15",
+  },
+  {
+    href:  "/examenes",
+    label: "Exámenes",
+    icon:  FileHeart,
+    color: "text-teal",
+    glow:  "group-hover:shadow-[0_0_12px_rgba(0,212,170,0.4)]",
+    bg:    "bg-teal/10 group-hover:bg-teal/15",
   },
   {
     href:  "/tips",

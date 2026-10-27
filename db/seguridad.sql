@@ -861,6 +861,8 @@ $$;
 -- perfil, la misma suscripción push) gana lo que ya tenía la cuenta. Las
 -- imágenes de recetas pasan a la carpeta de la cuenta: acá se reescriben las
 -- URLs y la app mueve los archivos (ver `moverImagenes` en src/lib/media.ts).
+-- Los exámenes (db/examenes.sql) pasan con solo cambiar el dueño: su archivo
+-- cifrado no depende del uid.
 -- No se pasan el consentimiento ni las passkeys: son de quien los dio, y la
 -- cuenta tiene los suyos. Solo la llaman otras funciones: la app no la puede
 -- ejecutar.
@@ -898,6 +900,9 @@ begin
   update perfil set uid = p_a
    where uid = p_de
      and not exists (select 1 from perfil x where x.uid = p_a);
+  -- Exámenes (integrador, punto 15): sin choques posibles. La tabla la crea
+  -- examenes.sql, que setup-db aplica después; plpgsql la resuelve al correr.
+  update examenes set uid = p_a where uid = p_de;
 
   -- Lo que no se pudo pasar (los choques) se borra con la identidad.
   delete from metricas           where uid = p_de;
