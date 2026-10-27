@@ -2,6 +2,7 @@ import { z } from "zod";
 import { METRICAS } from "@/lib/metricas-config";
 import { valoresDe } from "@/lib/rutinas-opciones";
 import type { MetricaType } from "@/lib/db/types";
+import { fallasContrasena } from "./contrasena";
 
 /**
  * Validación de todo lo que entra desde el cliente (plantilla, fila 2).
@@ -285,20 +286,72 @@ export const respuestaAutenticacionSchema = z
 
 // ─── Cuentas ──────────────────────────────────────────────────────────────────
 
+/**
+ * Correo normalizado (sin espacios y en minúsculas, como lo guarda la base).
+ * Un texto que no es un correo, por ejemplo 15 caracteres especiales en el
+ * campo del login (integrador, punto 2), se rechaza con 400 antes de tocar la
+ * base.
+ */
 export const emailSchema = z.string().trim().toLowerCase().max(254).email();
 
-/** bcrypt solo mira los primeros 72 bytes: más largo no se acepta (la base tampoco). */
-export const contrasenaSchema = z
-  .string()
-  .min(10)
-  .max(72)
-  .refine((p) => new TextEncoder().encode(p).length <= 72, "contraseña demasiado larga");
+const sinNulos = (p: string) => !p.includes("\u0000"); // Postgres no guarda U+0000 en un text: sería un 500
+
+/**
+ * Regla de contraseñas (integrador, punto 13; ver contrasena.ts): cada regla
+ * que no se cumple es un issue con su texto en español. Con `email`, también
+ * "que no contenga tu correo". La base aplica la misma regla
+ * (`pulso_contrasena_valida`), así que saltearse este esquema no alcanza.
+ */
+export function contrasenaParaCorreo(email?: string | null) {
+  return z.string().superRefine((p, ctx) => {
+    if (!sinNulos(p)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Sin caracteres de control" });
+    for (const f of fallasContrasena(p, email)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: f.texto, params: { regla: f.id } });
+    }
+  });
+}
+
+/** La regla sin el correo (cuando no se sabe de qué cuenta es). */
+export const contrasenaSchema = contrasenaParaCorreo();
+
+/**
+ * Reglas que no cumple la contraseña (vacío = sirve). Las rutas devuelven los
+ * textos en `{ error: "contrasena_invalida", reglas }` para que el formulario
+ * explique qué falta, y a la auditoría van solo los ids.
+ */
+export function fallasDeContrasena(password: string, email?: string | null): { regla: string; texto: string }[] {
+  const r = contrasenaParaCorreo(email).safeParse(password);
+  if (r.success) return [];
+  return r.error.issues.map((i) => ({
+    regla: i.code === z.ZodIssueCode.custom && typeof i.params?.regla === "string" ? i.params.regla : "caracteres",
+    texto: i.message,
+  }));
+}
+
+/**
+ * Contraseña tal como llega a las rutas que la validan con la regla: el
+ * sobre solo acota el tamaño (bastante más que 72 bytes, para que el rechazo
+ * diga "como máximo 72 bytes" y no un "datos inválidos" genérico) y la regla
+ * la aplica el manejador con `fallasDeContrasena`, que explica qué falla.
+ */
+const contrasenaEntrada = z.string().min(1).max(256).refine(sinNulos);
 
 /** Token de un enlace del correo: 32 bytes en base64url. */
 export const tokenEnlaceSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/);
 
-export const registroSchema = z.object({ email: emailSchema, password: contrasenaSchema });
-export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(72) });
+export const registroSchema = z.object({ email: emailSchema, password: contrasenaEntrada });
+/** El login NO aplica la regla: las cuentas de antes tienen que poder entrar con su contraseña. */
+export const loginSchema = z.object({ email: emailSchema, password: z.string().min(1).max(72).refine(sinNulos) });
 export const recuperarSchema = z.object({ email: emailSchema });
 export const activarSchema = z.object({ token: tokenEnlaceSchema });
-export const restablecerSchema = z.object({ token: tokenEnlaceSchema, password: contrasenaSchema });
+export const restablecerSchema = z.object({ token: tokenEnlaceSchema, password: contrasenaEntrada });
+
+/** Perfil (punto 20): la contraseña actual es la prueba de que es el dueño. */
+export const cambioContrasenaSchema = z.object({
+  actual: z.string().min(1).max(256).refine(sinNulos),
+  nueva:  contrasenaEntrada,
+});
+export const cambioCorreoSchema = z.object({
+  password: z.string().min(1).max(256).refine(sinNulos),
+  email:    emailSchema,
+});

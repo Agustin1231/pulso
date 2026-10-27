@@ -719,36 +719,266 @@ end $$;
 --     sesión con ella.
 --   * Como las demás tablas de sistema, `cuentas` y `tokens_cuenta` no tienen
 --     grants para `pulso_app`: solo se tocan con las funciones de abajo.
+--
+-- Ronda de seguridad del integrador (oct-2026):
+--   * Punto 19 — el correo ya no se guarda en claro: `email_hmac` (índice
+--     ciego, HMAC-SHA256 con una clave que solo tiene la app) sirve para
+--     buscar y para exigir unicidad, y `email_cifrado` (AES-256-GCM) para
+--     mostrarlo y mandar correos. La base no tiene la clave: no puede leerlo.
+--     Ver src/lib/cuenta.ts (`hmacCorreo`, `cifrarCorreo`) y la migración
+--     scripts/migrar-cifrado-cuentas.mjs.
+--   * Punto 13 — regla de contraseñas (`pulso_contrasena_fallas`), la misma
+--     que src/lib/seguridad/contrasena.ts.
+--   * Punto 4 — bloqueo de 15 minutos a los 5 intentos fallidos seguidos,
+--     contado por correo (`intentos_acceso`), exista la cuenta o no.
+--   * Punto 16 — iniciar sesión cierra las demás sesiones de la cuenta.
+--   * Punto 20 — cambio de contraseña y de correo desde el perfil.
 
 create extension if not exists pgcrypto;
 
 create table if not exists cuentas (
   uid            text primary key references identidades (uid) on delete cascade,
-  email          text not null check (email = lower(email) and char_length(email) <= 254),
+  email_hmac     text not null check (email_hmac ~ '^[0-9a-f]{64}$'),
+  email_cifrado  text not null check (email_cifrado like 'v1.%'),
   password_hash  text not null,
   verificada_at  timestamptz,
   created_at     timestamptz not null default now(),
   actualizada_at timestamptz not null default now()
 );
 
-create unique index if not exists cuentas_email_idx on cuentas (email);
+-- Una base que viene del esquema con el correo en claro (`email`) recibe acá
+-- las columnas nuevas. Mientras no se corra la migración, `email` deja de ser
+-- obligatorio (las cuentas nuevas ya no lo llenan); la migración cifra las
+-- filas viejas, comprueba que se descifran y recién entonces borra `email`.
+-- Después de migrar (o en una base nueva), las dos columnas son obligatorias.
+alter table cuentas
+  add column if not exists email_hmac    text check (email_hmac ~ '^[0-9a-f]{64}$'),
+  add column if not exists email_cifrado text check (email_cifrado like 'v1.%');
 
+do $$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'cuentas' and column_name = 'email') then
+    alter table cuentas alter column email drop not null;
+  else
+    alter table cuentas alter column email_hmac set not null, alter column email_cifrado set not null;
+  end if;
+end $$;
+
+-- Duplicados (punto 6): el correo se normaliza (sin espacios y en minúsculas)
+-- antes del HMAC, así que "Ana@X.com " y "ana@x.com" chocan acá.
+create unique index if not exists cuentas_email_hmac_idx on cuentas (email_hmac);
+
+-- Enlaces de un solo uso. 'cambio_correo' (punto 20) lleva el correo nuevo,
+-- también cifrado, hasta que se confirma desde ese correo.
 create table if not exists tokens_cuenta (
-  token_hash text primary key check (token_hash ~ '^[0-9a-f]{64}$'),
-  uid        text not null references identidades (uid) on delete cascade,
-  tipo       text not null check (tipo in ('activacion', 'recuperacion')),
-  expira_at  timestamptz not null,
-  usado_at   timestamptz,
-  created_at timestamptz not null default now()
+  token_hash          text primary key check (token_hash ~ '^[0-9a-f]{64}$'),
+  uid                 text not null references identidades (uid) on delete cascade,
+  tipo                text not null,
+  expira_at           timestamptz not null,
+  usado_at            timestamptz,
+  created_at          timestamptz not null default now(),
+  nuevo_email_hmac    text check (nuevo_email_hmac ~ '^[0-9a-f]{64}$'),
+  nuevo_email_cifrado text check (nuevo_email_cifrado like 'v1.%')
 );
+
+alter table tokens_cuenta
+  add column if not exists nuevo_email_hmac    text check (nuevo_email_hmac ~ '^[0-9a-f]{64}$'),
+  add column if not exists nuevo_email_cifrado text check (nuevo_email_cifrado like 'v1.%');
+
+alter table tokens_cuenta drop constraint if exists tokens_cuenta_tipo_check;
+alter table tokens_cuenta add constraint tokens_cuenta_tipo_check
+  check (tipo in ('activacion', 'recuperacion', 'cambio_correo'));
+alter table tokens_cuenta drop constraint if exists tokens_cuenta_cambio_check;
+alter table tokens_cuenta add constraint tokens_cuenta_cambio_check
+  check ((tipo = 'cambio_correo') = (nuevo_email_hmac is not null and nuevo_email_cifrado is not null));
 
 create index if not exists tokens_cuenta_uid_idx on tokens_cuenta (uid);
 
--- bcrypt solo mira los primeros 72 bytes: más largo no se acepta, para que
--- dos contraseñas distintas no terminen siendo la misma.
-create or replace function pulso_contrasena_valida(p_password text) returns boolean
-language sql immutable as $$
-  select p_password is not null and char_length(p_password) >= 10 and octet_length(p_password) <= 72
+-- Intentos fallidos de acceso (punto 4), por correo y no por cuenta: un correo
+-- sin cuenta se bloquea igual, así el bloqueo no delata quién está registrado.
+-- La clave es el mismo índice ciego que `cuentas.email_hmac`.
+create table if not exists intentos_acceso (
+  email_hmac      text primary key check (email_hmac ~ '^[0-9a-f]{64}$'),
+  fallos          int not null default 0,
+  ultimo_fallo_at timestamptz not null default now(),
+  bloqueada_hasta timestamptz
+);
+
+-- ─── Regla de contraseñas (punto 13) ─────────────────────────────────────────
+-- La misma que src/lib/seguridad/contrasena.ts, con los mismos textos: mínimo
+-- 10 caracteres y máximo 72 bytes (bcrypt solo mira los primeros 72: más
+-- largo, dos contraseñas distintas serían la misma), mayúscula, minúscula,
+-- número y símbolo; sin secuencias de 4 (1234, abcd, 4321), sin 4 caracteres
+-- iguales seguidos, que no sea una contraseña común y que no contenga la parte
+-- local del correo. Las letras y las minúsculas salen de tablas fijas, no del
+-- locale, para que dé exactamente lo mismo que en la app.
+-- Devuelve una fila por regla que NO se cumple (vacía = la contraseña sirve).
+drop function if exists pulso_contrasena_valida(text);
+
+create or replace function pulso_contrasena_fallas(p_password text, p_email text default null)
+returns table (regla text, mensaje text)
+language plpgsql immutable set search_path = public, pg_temp as $$
+declare
+  c_may    constant text := 'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ';
+  c_min    constant text := 'abcdefghijklmnopqrstuvwxyzáéíóúüñ';
+  c_dig    constant text := '0123456789';
+  c_esp    constant text := E' \t\n\r';
+  c_alnum  constant text := '0123456789abcdefghijklmnopqrstuvwxyz';
+  c_comunes constant text[] := array[
+    'password', 'contrasena', 'contraseña', 'qwerty', 'qwertyuiop', 'asdfgh', 'asdfghjkl',
+    'zxcvbnm', 'qweasd', 'iloveyou', 'teamo', 'admin', 'administrador', 'usuario', 'pulso',
+    'colombia', 'bogota', 'welcome', 'bienvenido', 'letmein', 'monkey', 'dragon', 'football',
+    'futbol', 'superman', 'batman', 'princesa', 'sunshine', 'master', 'secreto', 'clave',
+    'miclave', 'hola', 'holamundo', 'abc', 'abcabc'];
+  v_p      text := coalesce(p_password, '');
+  v_bajas  text := translate(v_p, c_may, c_min);
+  v_n      int  := char_length(v_p);
+  v_local  text;
+  v_sec    boolean := false;
+  v_rep    boolean := false;
+  v_paso   int;
+  v_ok     boolean;
+  i        int;
+  j        int;
+begin
+  for i in 1 .. v_n - 3 loop
+    -- Repetidos: 4 iguales seguidos (en minúsculas: "aAaA" también cuenta).
+    if not v_rep and substr(v_bajas, i, 1) = substr(v_bajas, i + 1, 1)
+       and substr(v_bajas, i, 1) = substr(v_bajas, i + 2, 1)
+       and substr(v_bajas, i, 1) = substr(v_bajas, i + 3, 1) then
+      v_rep := true;
+    end if;
+    -- Secuencias: 4 letras sin tilde o dígitos que suben o bajan de a uno.
+    if not v_sec and strpos(c_alnum, substr(v_bajas, i, 1)) > 0 then
+      v_paso := ascii(substr(v_bajas, i + 1, 1)) - ascii(substr(v_bajas, i, 1));
+      if v_paso in (1, -1) then
+        v_ok := true;
+        for j in 1 .. 3 loop
+          if strpos(c_alnum, substr(v_bajas, i + j, 1)) = 0
+             or ascii(substr(v_bajas, i + j, 1)) - ascii(substr(v_bajas, i + j - 1, 1)) <> v_paso then
+            v_ok := false;
+          end if;
+        end loop;
+        v_sec := v_ok;
+      end if;
+    end if;
+  end loop;
+
+  if v_n < 10 then
+    return query select 'largo'::text, 'Al menos 10 caracteres'::text;
+  end if;
+  if octet_length(v_p) > 72 then
+    return query select 'maximo'::text, 'Como máximo 72 bytes (las tildes y los emojis ocupan más de uno)'::text;
+  end if;
+  if char_length(translate(v_p, c_may, '')) = v_n then
+    return query select 'mayuscula'::text, 'Al menos una letra mayúscula'::text;
+  end if;
+  if char_length(translate(v_p, c_min, '')) = v_n then
+    return query select 'minuscula'::text, 'Al menos una letra minúscula'::text;
+  end if;
+  if char_length(translate(v_p, c_dig, '')) = v_n then
+    return query select 'numero'::text, 'Al menos un número'::text;
+  end if;
+  if char_length(translate(v_p, c_may || c_min || c_dig || c_esp, '')) = 0 then
+    return query select 'simbolo'::text, 'Al menos un símbolo, como ! ? # * -'::text;
+  end if;
+  if v_sec then
+    return query select 'secuencia'::text, 'Sin secuencias de 4 o más, como 1234, abcd o 4321'::text;
+  end if;
+  if v_rep then
+    return query select 'repetidos'::text, 'Sin 4 o más caracteres iguales seguidos, como aaaa'::text;
+  end if;
+  -- Común: solo sus letras ("Password1!" → "password").
+  if regexp_replace(v_bajas, '[^abcdefghijklmnopqrstuvwxyzáéíóúüñ]', '', 'g') = any (c_comunes) then
+    return query select 'comun'::text, 'Que no sea una contraseña común, como Password o Qwerty'::text;
+  end if;
+  if p_email is not null then
+    v_local := split_part(translate(btrim(p_email, c_esp), c_may, c_min), '@', 1);
+    -- Con 3 letras o menos ("ana@…") la regla rechazaría medio diccionario.
+    if char_length(v_local) >= 4 and strpos(v_bajas, v_local) > 0 then
+      return query select 'correo'::text, 'Que no contenga tu correo'::text;
+    end if;
+  end if;
+end $$;
+
+-- true si la contraseña cumple la regla. Es la que usan las funciones de
+-- cuentas (y la administración) antes de guardar un hash.
+create or replace function pulso_contrasena_valida(p_password text, p_email text default null) returns boolean
+language sql immutable set search_path = public, pg_temp as $$
+  select p_password is not null and not exists (select 1 from pulso_contrasena_fallas(p_password, p_email))
+$$;
+
+-- ─── Bloqueo por intentos fallidos (punto 4) ─────────────────────────────────
+-- 5 fallos seguidos bloquean el correo 15 minutos: mientras tanto ni la
+-- contraseña correcta entra. El contador vuelve a 0 al acertar, al restablecer
+-- la contraseña y cuando vence un bloqueo; un fallo de hace más de un día
+-- tampoco suma (si no, cuatro errores de hace meses y uno de hoy bloquearían).
+-- Las usan solo las funciones de abajo: la app no las puede ejecutar.
+
+create or replace function pulso_max_intentos() returns int
+language sql immutable as $$ select 5 $$;
+
+create or replace function pulso_minutos_bloqueo_cuenta() returns int
+language sql immutable as $$ select 15 $$;
+
+-- Minutos que le faltan al bloqueo de ese correo (redondeado hacia arriba), o
+-- null si no está bloqueado.
+create or replace function pulso_bloqueo_restante(p_email_hmac text) returns int
+language sql stable set search_path = public, pg_temp as $$
+  select greatest(ceil(extract(epoch from (i.bloqueada_hasta - now())) / 60), 1)::int
+    from intentos_acceso i
+   where i.email_hmac = p_email_hmac
+     and i.bloqueada_hasta > now()
+$$;
+
+-- Suma un fallo. `restantes` es cuántos intentos quedan antes del bloqueo;
+-- `bloqueada` es true si este fallo fue el que bloqueó.
+create or replace function pulso_registrar_fallo(p_email_hmac text)
+returns table (restantes int, bloqueada boolean)
+language plpgsql set search_path = public, pg_temp as $$
+declare
+  v_fallos int;
+begin
+  insert into intentos_acceso as i (email_hmac, fallos, ultimo_fallo_at)
+  values (p_email_hmac, 1, now())
+  on conflict (email_hmac) do update
+     set fallos = case
+                    when i.bloqueada_hasta <= now() or i.ultimo_fallo_at < now() - interval '1 day' then 1
+                    else i.fallos + 1
+                  end,
+         bloqueada_hasta = case when i.bloqueada_hasta > now() then i.bloqueada_hasta end,
+         ultimo_fallo_at = now()
+  returning i.fallos into v_fallos;
+
+  -- limpieza oportunista de correos que ya no están en juego
+  if random() < 0.01 then
+    delete from intentos_acceso
+     where ultimo_fallo_at < now() - interval '2 days'
+       and (bloqueada_hasta is null or bloqueada_hasta < now());
+  end if;
+
+  if v_fallos >= pulso_max_intentos() then
+    update intentos_acceso
+       set bloqueada_hasta = now() + make_interval(mins => pulso_minutos_bloqueo_cuenta())
+     where email_hmac = p_email_hmac;
+    return query select 0, true;
+  else
+    return query select pulso_max_intentos() - v_fallos, false;
+  end if;
+end $$;
+
+create or replace function pulso_limpiar_fallos(p_email_hmac text) returns void
+language sql set search_path = public, pg_temp as $$
+  delete from intentos_acceso where email_hmac = p_email_hmac
+$$;
+
+-- Un intento a la vez por correo (login, cambio de contraseña o de correo):
+-- sin esto, varios intentos en paralelo leerían el mismo contador y pasarían
+-- más de 5. El lock es de la transacción, así que se suelta solo.
+create or replace function pulso_turno_de_acceso(p_email_hmac text) returns void
+language sql set search_path = public, pg_temp as $$
+  select pg_advisory_xact_lock(hashtextextended('pulso_acceso:' || coalesce(p_email_hmac, ''), 0))
 $$;
 
 -- Registro: la cuenta queda sobre la identidad de la sesión (desbloqueada),
@@ -761,25 +991,30 @@ $$;
 --   'contrasena_invalida'
 -- Un registro que nunca se activó no retiene el correo: cuando su enlace
 -- vence, el correo se libera para quien lo pida de nuevo.
-create or replace function pulso_registrar_cuenta(p_sesion_hash text, p_email text, p_password text, p_token_hash text)
+-- El correo llega como índice ciego y cifrado (punto 19); `p_email` (ya
+-- normalizado) es solo para la regla "que no contenga tu correo": no se guarda.
+drop function if exists pulso_registrar_cuenta(text, text, text, text);
+
+create or replace function pulso_registrar_cuenta(
+  p_sesion_hash text, p_email_hmac text, p_email_cifrado text, p_email text, p_password text, p_token_hash text
+)
 returns text
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
   v_uid   text := pulso_resolver_sesion(p_sesion_hash);
-  v_email text := lower(btrim(p_email));
   v_otro  cuentas%rowtype;
 begin
   if v_uid is null then
     return 'sin_sesion';
   end if;
-  if not pulso_contrasena_valida(p_password) then
+  if not pulso_contrasena_valida(p_password, p_email) then
     return 'contrasena_invalida';
   end if;
   if exists (select 1 from cuentas c where c.uid = v_uid) then
     return 'ya_tiene_cuenta';
   end if;
 
-  select * into v_otro from cuentas c where c.email = v_email for update;
+  select * into v_otro from cuentas c where c.email_hmac = p_email_hmac for update;
   if found then
     if v_otro.verificada_at is not null
        or exists (select 1 from tokens_cuenta t
@@ -791,8 +1026,8 @@ begin
     delete from cuentas c where c.uid = v_otro.uid;
   end if;
 
-  insert into cuentas (uid, email, password_hash)
-  values (v_uid, v_email, crypt(p_password, gen_salt('bf', 12)));
+  insert into cuentas (uid, email_hmac, email_cifrado, password_hash)
+  values (v_uid, p_email_hmac, p_email_cifrado, crypt(p_password, gen_salt('bf', 12)));
   insert into tokens_cuenta (token_hash, uid, tipo, expira_at)
   values (p_token_hash, v_uid, 'activacion', now() + interval '24 hours');
   return 'ok';
@@ -827,7 +1062,8 @@ begin
 end $$;
 
 -- Nuevo enlace de activación para la cuenta (sin activar) de la sesión. Los
--- anteriores dejan de servir. Devuelve el correo al que mandarlo, o null.
+-- anteriores dejan de servir. Devuelve el correo (cifrado: lo descifra la
+-- app) al que mandarlo, o null.
 create or replace function pulso_reenviar_activacion(p_sesion_hash text, p_token_hash text)
 returns text
 language plpgsql security definer set search_path = public, pg_temp as $$
@@ -835,7 +1071,7 @@ declare
   v_uid   text := pulso_resolver_sesion(p_sesion_hash);
   v_email text;
 begin
-  select c.email into v_email from cuentas c where c.uid = v_uid and c.verificada_at is null;
+  select c.email_cifrado into v_email from cuentas c where c.uid = v_uid and c.verificada_at is null;
   if v_email is null then
     return null;
   end if;
@@ -846,11 +1082,14 @@ begin
   return v_email;
 end $$;
 
--- Cuenta de la sesión (desbloqueada), para mostrarla en la app.
+-- Cuenta de la sesión (desbloqueada), para mostrarla en la app. El correo va
+-- cifrado: lo descifra la app.
+drop function if exists pulso_cuenta_de_sesion(text);
+
 create or replace function pulso_cuenta_de_sesion(p_sesion_hash text)
-returns table (email text, verificada boolean)
+returns table (email_cifrado text, verificada boolean)
 language sql security definer set search_path = public, pg_temp as $$
-  select c.email, c.verificada_at is not null
+  select c.email_cifrado, c.verificada_at is not null
     from cuentas c
    where c.uid = pulso_resolver_sesion(p_sesion_hash)
 $$;
@@ -919,40 +1158,69 @@ end $$;
 
 -- Inicio de sesión con correo y contraseña. Si la contraseña es correcta y la
 -- cuenta está activada, crea una sesión nueva para la cuenta (ya desbloqueada:
--- la contraseña es la prueba) y revoca la de este equipo. Si esa sesión era de
--- una identidad sin cuenta, sus datos pasan a la cuenta.
--- `resultado`: 'ok', 'credenciales' (correo o contraseña mal, sin decir cuál)
--- o 'sin_verificar'. `uid_fusionado` es la identidad que se sumó, para que la
--- app mueva sus imágenes.
+-- la contraseña es la prueba), revoca la de este equipo y cierra las demás
+-- sesiones de la cuenta (punto 16: queda solo la del equipo que acaba de
+-- entrar). Si la sesión de este equipo era de una identidad sin cuenta, sus
+-- datos pasan a la cuenta.
+-- El correo llega como índice ciego (`p_email_hmac`, punto 19).
+-- `resultado`: 'ok', 'credenciales' (correo o contraseña mal, sin decir
+-- cuál), 'sin_verificar' o 'bloqueada' (punto 4: `minutos` que faltan).
+--   * `uid_cuenta`: la cuenta, si el correo tiene una (también en los rechazos,
+--     para la auditoría; la app no se lo dice al cliente).
+--   * `uid_fusionado`: la identidad que se sumó, para que la app mueva sus imágenes.
+--   * `intentos_restantes`: antes del bloqueo, tras un fallo.
+--   * `bloqueo_nuevo`: este fallo bloqueó el correo (la app avisa al dueño).
+--   * `sesiones_cerradas`: cuántas sesiones de la cuenta se cerraron.
+drop function if exists pulso_iniciar_sesion_cuenta(text, text, text, int, text);
+
 create or replace function pulso_iniciar_sesion_cuenta(
-  p_email text, p_password text, p_nuevo_hash text, p_dias int, p_actual_hash text
+  p_email_hmac text, p_password text, p_nuevo_hash text, p_dias int, p_actual_hash text
 )
-returns table (resultado text, uid_cuenta text, uid_fusionado text)
+returns table (resultado text, uid_cuenta text, uid_fusionado text, minutos int,
+               intentos_restantes int, bloqueo_nuevo boolean, sesiones_cerradas int)
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
-  v_c      cuentas%rowtype;
-  v_actual text;
+  v_c        cuentas%rowtype;
+  v_actual   text;
+  v_minutos  int;
+  v_fallo    record;
+  v_cerradas int;
 begin
-  select * into v_c from cuentas c where c.email = lower(btrim(p_email));
-  if not found then
+  perform pulso_turno_de_acceso(p_email_hmac);
+  select * into v_c from cuentas c where c.email_hmac = p_email_hmac;
+
+  -- Bloqueado: no se mira la contraseña (ni la correcta entra) ni suma fallos.
+  v_minutos := pulso_bloqueo_restante(p_email_hmac);
+  if v_minutos is not null then
+    return query select 'bloqueada'::text, v_c.uid, null::text, v_minutos, 0, false, 0;
+    return;
+  end if;
+
+  if v_c.uid is null then
     -- El mismo trabajo que con una cuenta real: que el tiempo de respuesta no
     -- diga si el correo está registrado.
     perform crypt(coalesce(p_password, ''), gen_salt('bf', 12));
-    return query select 'credenciales'::text, null::text, null::text;
+  end if;
+  if v_c.uid is null or p_password is null or crypt(p_password, v_c.password_hash) <> v_c.password_hash then
+    select * into v_fallo from pulso_registrar_fallo(p_email_hmac);
+    return query select case when v_fallo.bloqueada then 'bloqueada' else 'credenciales' end::text,
+                        v_c.uid, null::text,
+                        case when v_fallo.bloqueada then pulso_minutos_bloqueo_cuenta() end::int,
+                        v_fallo.restantes::int, v_fallo.bloqueada::boolean, 0;
     return;
   end if;
-  if p_password is null or crypt(p_password, v_c.password_hash) <> v_c.password_hash then
-    return query select 'credenciales'::text, null::text, null::text;
-    return;
-  end if;
+
+  -- La contraseña es correcta: el contador vuelve a 0 (aunque falte activar).
+  perform pulso_limpiar_fallos(p_email_hmac);
   if v_c.verificada_at is null then
-    return query select 'sin_verificar'::text, null::text, null::text;
+    return query select 'sin_verificar'::text, v_c.uid, null::text, null::int, null::int, false, 0;
     return;
   end if;
 
   if p_actual_hash is not null then
     -- Solo una sesión desbloqueada aporta sus datos: si la identidad tiene
     -- bloqueo con passkey, iniciar sesión no puede ser la forma de saltarlo.
+    -- Esta sesión no lleva motivo: la reemplaza la nueva en el mismo equipo.
     v_actual := pulso_resolver_sesion(p_actual_hash);
     update sesiones s set revocada_at = now()
      where s.token_hash = p_actual_hash and s.revocada_at is null;
@@ -964,22 +1232,31 @@ begin
     end if;
   end if;
 
+  -- Una sola sesión por cuenta: las de otros navegadores o teléfonos se
+  -- cierran con el motivo, para que la app le explique al otro equipo por qué
+  -- salió.
+  update sesiones s set revocada_at = now(), revocada_motivo = 'otro_inicio'
+   where s.uid = v_c.uid and s.revocada_at is null;
+  get diagnostics v_cerradas = row_count;
+
   insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
   values (p_nuevo_hash, v_c.uid,
           now() + make_interval(days => pulso_dias_validos(p_dias)),
           now() + make_interval(mins => pulso_minutos_desbloqueo()));
-  return query select 'ok'::text, v_c.uid, v_actual;
+  return query select 'ok'::text, v_c.uid, v_actual, null::int, null::int, false, v_cerradas;
 end $$;
 
 -- Pide el enlace de recuperación. Los anteriores dejan de servir. true si el
 -- correo es de una cuenta (la app responde lo mismo en los dos casos).
-create or replace function pulso_solicitar_recuperacion(p_email text, p_token_hash text)
+drop function if exists pulso_solicitar_recuperacion(text, text);
+
+create or replace function pulso_solicitar_recuperacion(p_email_hmac text, p_token_hash text)
 returns boolean
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
   v_uid text;
 begin
-  select c.uid into v_uid from cuentas c where c.email = lower(btrim(p_email));
+  select c.uid into v_uid from cuentas c where c.email_hmac = p_email_hmac;
   if v_uid is null then
     return false;
   end if;
@@ -990,17 +1267,40 @@ begin
   return true;
 end $$;
 
+-- Correo (cifrado) de la cuenta de un enlace de recuperación vigente, o null.
+-- La app lo necesita para aplicar la regla "que no contenga tu correo" antes
+-- de restablecer: quien tiene el enlace ya tiene ese correo.
+create or replace function pulso_correo_de_recuperacion(p_token_hash text)
+returns text
+language sql stable security definer set search_path = public, pg_temp as $$
+  select c.email_cifrado
+    from tokens_cuenta t
+    join cuentas c on c.uid = t.uid
+   where t.token_hash = p_token_hash
+     and t.tipo = 'recuperacion'
+     and t.usado_at is null
+     and t.expira_at > now()
+$$;
+
 -- Contraseña nueva con el token de recuperación. Cierra todas las sesiones de
--- la cuenta (si alguien entró con la contraseña vieja, queda afuera) y, como
--- el enlace llegó al correo, la deja activada. true si se cambió.
-create or replace function pulso_restablecer_contrasena(p_token_hash text, p_password text)
-returns boolean
+-- la cuenta con el motivo 'contrasena' (si alguien entró con la contraseña
+-- vieja, queda afuera), anula los demás enlaces (también un cambio de correo
+-- pendiente), levanta el bloqueo por intentos fallidos y, como el enlace llegó
+-- al correo, deja la cuenta activada.
+-- `resultado`: 'ok', 'enlace_invalido' o 'contrasena_invalida'.
+-- `p_email` (normalizado, el de `pulso_correo_de_recuperacion`) es solo para la regla.
+drop function if exists pulso_restablecer_contrasena(text, text);
+
+create or replace function pulso_restablecer_contrasena(p_token_hash text, p_password text, p_email text)
+returns table (resultado text, sesiones_cerradas int)
 language plpgsql security definer set search_path = public, pg_temp as $$
 declare
-  v_uid text;
+  v_uid      text;
+  v_cerradas int;
 begin
-  if not pulso_contrasena_valida(p_password) then
-    return false;
+  if not pulso_contrasena_valida(p_password, p_email) then
+    return query select 'contrasena_invalida'::text, 0;
+    return;
   end if;
   update tokens_cuenta t
      set usado_at = now()
@@ -1011,7 +1311,8 @@ begin
   returning t.uid into v_uid;
 
   if v_uid is null then
-    return false;
+    return query select 'enlace_invalido'::text, 0;
+    return;
   end if;
   update cuentas c
      set password_hash  = crypt(p_password, gen_salt('bf', 12)),
@@ -1019,30 +1320,223 @@ begin
          actualizada_at = now()
    where c.uid = v_uid;
   update tokens_cuenta t set usado_at = now() where t.uid = v_uid and t.usado_at is null;
-  update sesiones s set revocada_at = now() where s.uid = v_uid and s.revocada_at is null;
-  return true;
+  delete from intentos_acceso i using cuentas c where c.uid = v_uid and i.email_hmac = c.email_hmac;
+  update sesiones s set revocada_at = now(), revocada_motivo = 'contrasena'
+   where s.uid = v_uid and s.revocada_at is null;
+  get diagnostics v_cerradas = row_count;
+  return query select 'ok'::text, v_cerradas;
 end $$;
 
+-- Cambio de contraseña desde el perfil (punto 20): la contraseña actual, la
+-- nueva y la sesión. La actual equivocada cuenta para el bloqueo, como en el
+-- inicio de sesión. Si sale bien, cierra las DEMÁS sesiones de la cuenta con
+-- el motivo 'contrasena' (la de este equipo sigue) y anula los enlaces de
+-- recuperación pendientes.
+-- `resultado`: 'ok', 'sin_cuenta', 'credenciales', 'bloqueada',
+-- 'contrasena_invalida' o 'misma' (la nueva es igual a la actual).
+-- `p_email` (normalizado) es solo para la regla.
+create or replace function pulso_cambiar_contrasena(p_sesion_hash text, p_actual text, p_nueva text, p_email text)
+returns table (resultado text, minutos int, intentos_restantes int, bloqueo_nuevo boolean, sesiones_cerradas int)
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid      text := pulso_uid_con_cuenta(p_sesion_hash);
+  v_c        cuentas%rowtype;
+  v_minutos  int;
+  v_fallo    record;
+  v_cerradas int;
+begin
+  if v_uid is null then
+    return query select 'sin_cuenta'::text, null::int, null::int, false, 0;
+    return;
+  end if;
+  select * into v_c from cuentas c where c.uid = v_uid;
+  perform pulso_turno_de_acceso(v_c.email_hmac);
+
+  v_minutos := pulso_bloqueo_restante(v_c.email_hmac);
+  if v_minutos is not null then
+    return query select 'bloqueada'::text, v_minutos, 0, false, 0;
+    return;
+  end if;
+  if p_actual is null or crypt(p_actual, v_c.password_hash) <> v_c.password_hash then
+    select * into v_fallo from pulso_registrar_fallo(v_c.email_hmac);
+    return query select case when v_fallo.bloqueada then 'bloqueada' else 'credenciales' end::text,
+                        case when v_fallo.bloqueada then pulso_minutos_bloqueo_cuenta() end::int,
+                        v_fallo.restantes::int, v_fallo.bloqueada::boolean, 0;
+    return;
+  end if;
+  perform pulso_limpiar_fallos(v_c.email_hmac);
+
+  if not pulso_contrasena_valida(p_nueva, p_email) then
+    return query select 'contrasena_invalida'::text, null::int, null::int, false, 0;
+    return;
+  end if;
+  if crypt(p_nueva, v_c.password_hash) = v_c.password_hash then
+    return query select 'misma'::text, null::int, null::int, false, 0;
+    return;
+  end if;
+
+  update cuentas c
+     set password_hash = crypt(p_nueva, gen_salt('bf', 12)), actualizada_at = now()
+   where c.uid = v_uid;
+  update tokens_cuenta t set usado_at = now()
+   where t.uid = v_uid and t.tipo = 'recuperacion' and t.usado_at is null;
+  update sesiones s set revocada_at = now(), revocada_motivo = 'contrasena'
+   where s.uid = v_uid and s.token_hash <> p_sesion_hash and s.revocada_at is null;
+  get diagnostics v_cerradas = row_count;
+  return query select 'ok'::text, null::int, null::int, false, v_cerradas;
+end $$;
+
+-- true si otra cuenta tiene ese correo y lo retiene: activada, o sin activar
+-- con su enlace de activación todavía vigente (igual que en el registro).
+create or replace function pulso_correo_retenido(p_email_hmac text, p_uid text)
+returns boolean
+language sql stable set search_path = public, pg_temp as $$
+  select exists (
+    select 1 from cuentas c
+     where c.email_hmac = p_email_hmac
+       and c.uid <> p_uid
+       and (c.verificada_at is not null
+            or exists (select 1 from tokens_cuenta t
+                        where t.uid = c.uid and t.tipo = 'activacion'
+                          and t.usado_at is null and t.expira_at > now())))
+$$;
+
+-- Pedido de cambio de correo desde el perfil (punto 20): la contraseña actual
+-- (cuenta para el bloqueo) y el correo nuevo, cifrado y con su índice ciego.
+-- No cambia nada todavía: guarda un enlace de 24 horas que la app manda al
+-- correo NUEVO; el cambio rige al abrirlo (`pulso_confirmar_cambio_correo`).
+-- Los pedidos anteriores dejan de servir.
+-- `resultado`: 'ok', 'en_uso' (el correo nuevo es de otra cuenta: la app
+-- responde lo mismo que con 'ok' y no se guarda nada), 'mismo', 'sin_cuenta',
+-- 'credenciales' o 'bloqueada'.
+create or replace function pulso_solicitar_cambio_correo(
+  p_sesion_hash text, p_password text, p_nuevo_hmac text, p_nuevo_cifrado text, p_token_hash text
+)
+returns table (resultado text, minutos int, intentos_restantes int, bloqueo_nuevo boolean)
+language plpgsql security definer set search_path = public, pg_temp as $$
+declare
+  v_uid     text := pulso_uid_con_cuenta(p_sesion_hash);
+  v_c       cuentas%rowtype;
+  v_minutos int;
+  v_fallo   record;
+begin
+  if v_uid is null then
+    return query select 'sin_cuenta'::text, null::int, null::int, false;
+    return;
+  end if;
+  select * into v_c from cuentas c where c.uid = v_uid;
+  perform pulso_turno_de_acceso(v_c.email_hmac);
+
+  v_minutos := pulso_bloqueo_restante(v_c.email_hmac);
+  if v_minutos is not null then
+    return query select 'bloqueada'::text, v_minutos, 0, false;
+    return;
+  end if;
+  if p_password is null or crypt(p_password, v_c.password_hash) <> v_c.password_hash then
+    select * into v_fallo from pulso_registrar_fallo(v_c.email_hmac);
+    return query select case when v_fallo.bloqueada then 'bloqueada' else 'credenciales' end::text,
+                        case when v_fallo.bloqueada then pulso_minutos_bloqueo_cuenta() end::int,
+                        v_fallo.restantes::int, v_fallo.bloqueada::boolean;
+    return;
+  end if;
+  perform pulso_limpiar_fallos(v_c.email_hmac);
+
+  if p_nuevo_hmac = v_c.email_hmac then
+    return query select 'mismo'::text, null::int, null::int, false;
+    return;
+  end if;
+  if pulso_correo_retenido(p_nuevo_hmac, v_uid) then
+    return query select 'en_uso'::text, null::int, null::int, false;
+    return;
+  end if;
+
+  update tokens_cuenta t set usado_at = now()
+   where t.uid = v_uid and t.tipo = 'cambio_correo' and t.usado_at is null;
+  insert into tokens_cuenta (token_hash, uid, tipo, expira_at, nuevo_email_hmac, nuevo_email_cifrado)
+  values (p_token_hash, v_uid, 'cambio_correo', now() + interval '24 hours', p_nuevo_hmac, p_nuevo_cifrado);
+  return query select 'ok'::text, null::int, null::int, false;
+end $$;
+
+-- Confirma el cambio de correo con el enlace que llegó al correo nuevo. No
+-- pide sesión: el enlace se puede abrir en otro equipo, y es la prueba de que
+-- el correo es de quien lo pidió.
+-- `resultado`: 'ok', 'enlace_invalido' o 'en_uso' (mientras tanto el correo
+-- pasó a ser de otra cuenta). `uid` es la cuenta, para la auditoría.
+create or replace function pulso_confirmar_cambio_correo(p_token_hash text)
+returns table (resultado text, uid text)
+language plpgsql security definer set search_path = public, pg_temp as $$
+#variable_conflict use_column
+declare
+  v_t tokens_cuenta%rowtype;
+begin
+  update tokens_cuenta t
+     set usado_at = now()
+   where t.token_hash = p_token_hash
+     and t.tipo = 'cambio_correo'
+     and t.usado_at is null
+     and t.expira_at > now()
+  returning t.* into v_t;
+
+  if v_t.uid is null then
+    return query select 'enlace_invalido'::text, null::text;
+    return;
+  end if;
+  if pulso_correo_retenido(v_t.nuevo_email_hmac, v_t.uid) then
+    return query select 'en_uso'::text, v_t.uid;
+    return;
+  end if;
+
+  -- Un registro con ese correo que nunca se activó y ya venció no lo retiene.
+  delete from tokens_cuenta t
+   using cuentas c
+   where c.email_hmac = v_t.nuevo_email_hmac and c.uid <> v_t.uid and t.uid = c.uid;
+  delete from cuentas c where c.email_hmac = v_t.nuevo_email_hmac and c.uid <> v_t.uid;
+
+  update cuentas c
+     set email_hmac = v_t.nuevo_email_hmac, email_cifrado = v_t.nuevo_email_cifrado, actualizada_at = now()
+   where c.uid = v_t.uid;
+  return query select 'ok'::text, v_t.uid;
+exception
+  when unique_violation then
+    -- otro registro con el mismo correo justo ahora: gana el primero
+    return query select 'en_uso'::text, null::text;
+end $$;
+
+-- Las auxiliares (regla, intentos) solo las llaman las funciones de arriba.
 revoke execute on function
-  pulso_contrasena_valida(text),
-  pulso_registrar_cuenta(text, text, text, text),
+  pulso_contrasena_fallas(text, text),
+  pulso_contrasena_valida(text, text),
+  pulso_bloqueo_restante(text),
+  pulso_registrar_fallo(text),
+  pulso_limpiar_fallos(text),
+  pulso_turno_de_acceso(text),
+  pulso_correo_retenido(text, text),
+  pulso_registrar_cuenta(text, text, text, text, text, text),
   pulso_activar_cuenta(text),
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
   pulso_fusionar_identidad(text, text),
   pulso_iniciar_sesion_cuenta(text, text, text, int, text),
   pulso_solicitar_recuperacion(text, text),
-  pulso_restablecer_contrasena(text, text)
+  pulso_correo_de_recuperacion(text),
+  pulso_restablecer_contrasena(text, text, text),
+  pulso_cambiar_contrasena(text, text, text, text),
+  pulso_solicitar_cambio_correo(text, text, text, text, text),
+  pulso_confirmar_cambio_correo(text)
 from public;
 
 grant execute on function
-  pulso_registrar_cuenta(text, text, text, text),
+  pulso_registrar_cuenta(text, text, text, text, text, text),
   pulso_activar_cuenta(text),
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
   pulso_iniciar_sesion_cuenta(text, text, text, int, text),
   pulso_solicitar_recuperacion(text, text),
-  pulso_restablecer_contrasena(text, text)
+  pulso_correo_de_recuperacion(text),
+  pulso_restablecer_contrasena(text, text, text),
+  pulso_cambiar_contrasena(text, text, text, text),
+  pulso_solicitar_cambio_correo(text, text, text, text, text),
+  pulso_confirmar_cambio_correo(text)
 to pulso_app;
 
 -- ─── Cuenta obligatoria (21-oct-2026) ────────────────────────────────────────

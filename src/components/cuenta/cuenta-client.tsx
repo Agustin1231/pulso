@@ -2,31 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, LogOut, Mail, UserRound } from "lucide-react";
+import { Loader2, LogOut, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { refrescarEstado, reiniciarSesion, useEstadoSesion, useSesion } from "@/hooks/use-sesion";
 import { acceptDisclaimer, limpiarEquipo } from "@/lib/anonymous";
-import { Aviso, Campo, enviar, MarcoAcceso, mensajeDeError } from "./comun";
+import { Aviso, Campo, CampoContrasena, enviar, enviarConDetalle, MarcoAcceso, mensajeDeError, Seccion } from "./comun";
+import { CambiarContrasena, CambiarCorreo } from "./perfil-cuenta";
+import { ReglasContrasena } from "./reglas-contrasena";
 
 interface Cuenta {
   email:      string;
   verificada: boolean;
 }
 
-type Modo = "entrar" | "crear" | "recuperar";
+/** "revisar": después de crear la cuenta, revisa tu correo. */
+type Modo = "entrar" | "crear" | "recuperar" | "revisar";
 type AvisoTexto = { tipo: "ok" | "error"; texto: string } | null;
-
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-xl border border-border bg-surface p-4">
-      <div className="mb-3 flex items-center gap-2">
-        <UserRound className="h-4 w-4 text-teal" />
-        <h3 className="text-sm font-bold text-foreground">{titulo}</h3>
-      </div>
-      <div className="space-y-3 text-xs text-muted-foreground leading-relaxed">{children}</div>
-    </section>
-  );
-}
 
 function Cargando() {
   return <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Cargando…</p>;
@@ -76,8 +67,11 @@ export function CuentaClient() {
           <Mail className="h-4 w-4 text-muted-foreground" /> {cuenta.email}
         </p>
         <p>Cuenta activa. Entras desde cualquier equipo con tu correo y contraseña, y tus datos te siguen.</p>
+        <p>Por seguridad, tu cuenta tiene una sola sesión abierta: si entras desde otro equipo, aquí se cierra.</p>
       </Seccion>
-      <Seccion titulo="Cerrar sesión">
+      <CambiarContrasena email={cuenta.email} />
+      <CambiarCorreo email={cuenta.email} />
+      <Seccion titulo="Cerrar sesión" icono={LogOut}>
         <p>Sale de tu cuenta en este equipo y lo deja limpio. Tus datos siguen en tu cuenta.</p>
         <BotonCerrarSesion />
       </Seccion>
@@ -156,10 +150,12 @@ function SinCuenta() {
   const [repetida, setRepetida] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [aviso, setAviso] = useState<AvisoTexto>(null);
+  const [bloqueada, setBloqueada] = useState(false);
 
   function cambiar(m: Modo) {
     setModo(m);
     setAviso(null);
+    setBloqueada(false);
     setPassword("");
     setRepetida("");
   }
@@ -167,6 +163,18 @@ function SinCuenta() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setAviso(null);
+    setBloqueada(false);
+    // El formulario es `noValidate`: en vez del globo del navegador (en su
+    // idioma), los avisos van acá. El formato del correo lo juzga el servidor
+    // (400 si no es un correo, integrador, punto 2) y acá se explica.
+    if (!email.trim()) {
+      setAviso({ tipo: "error", texto: "Escribe tu correo." });
+      return;
+    }
+    if (modo !== "recuperar" && !password) {
+      setAviso({ tipo: "error", texto: "Escribe tu contraseña." });
+      return;
+    }
     if (modo === "crear" && password !== repetida) {
       setAviso({ tipo: "error", texto: "Las contraseñas no coinciden." });
       return;
@@ -174,25 +182,26 @@ function SinCuenta() {
     setEnviando(true);
 
     if (modo === "entrar") {
-      const error = await enviar("/api/cuenta/login", { email, password });
+      const { error, datos } = await enviarConDetalle("/api/cuenta/login", { email, password });
       if (!error) {
         reiniciarSesion();
         window.location.assign("/dashboard");
         return;
       }
-      setAviso({ tipo: "error", texto: mensajeDeError(error) });
+      setBloqueada(error === "cuenta_bloqueada");
+      setAviso({ tipo: "error", texto: mensajeDeError(error, datos) });
     } else if (modo === "crear") {
-      const error = await enviar("/api/cuenta/registro", { email, password });
+      const { error, datos } = await enviarConDetalle("/api/cuenta/registro", { email, password });
       if (error) {
-        setAviso({ tipo: "error", texto: mensajeDeError(error) });
+        setAviso({ tipo: "error", texto: mensajeDeError(error, datos) });
       } else {
-        setAviso({ tipo: "ok", texto: `Te mandamos un correo a ${email.trim()} con el enlace para activar tu cuenta.` });
+        // Misma pantalla tenga o no cuenta el correo (punto 6): la respuesta
+        // del servidor tampoco lo dice.
         setPassword("");
         setRepetida("");
-        // Pasa a la pantalla de "activa tu cuenta" (si el correo ya era de otra cuenta, se queda acá).
-        await refrescarEstado();
+        setModo("revisar");
       }
-    } else {
+    } else if (modo === "recuperar") {
       const error = await enviar("/api/cuenta/recuperar", { email });
       setAviso(error
         ? { tipo: "error", texto: mensajeDeError(error) }
@@ -201,31 +210,62 @@ function SinCuenta() {
     setEnviando(false);
   }
 
+  async function yaAbriElEnlace() {
+    // Activada → /dashboard; creada sin activar → pantalla de "activa tu cuenta".
+    await refrescarEstado();
+    setAviso({
+      tipo: "error",
+      texto: "Todavía no vemos una cuenta activada en este equipo. Abre el enlace del correo (revisa también spam); si ese correo ya tenía cuenta, inicia sesión.",
+    });
+  }
+
+  if (modo === "revisar") {
+    return (
+      <MarcoAcceso titulo="Revisa tu correo">
+        <Aviso tipo="ok">
+          Si <strong>{email.trim()}</strong> no tenía cuenta, te llegará el enlace de activación (vence en 24 horas);
+          si ya la tenía, te avisamos por correo.
+        </Aviso>
+        {aviso && <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso>}
+        <Button className="w-full" onClick={yaAbriElEnlace}>Ya abrí el enlace, continuar</Button>
+        <div className="flex flex-wrap justify-between gap-2">
+          <Button variant="link" size="sm" type="button" onClick={() => cambiar("entrar")}>Iniciar sesión</Button>
+          {/* Como en "activa tu cuenta": si la cuenta se creó, quedó en esta sesión; se empieza con una nueva. */}
+          <Button variant="link" size="sm" type="button" onClick={() => void cerrarSesion()}>Usar otro correo</Button>
+        </div>
+      </MarcoAcceso>
+    );
+  }
+
   return (
     <MarcoAcceso titulo={modo === "crear" ? "Crear cuenta" : modo === "entrar" ? "Iniciar sesión" : "Olvidé mi contraseña"}>
       <p className="text-xs text-muted-foreground leading-relaxed">
         {modo === "crear" && "Para usar Pulso necesitas una cuenta. Si ya usabas Pulso en este navegador, todo lo que guardaste queda en la cuenta nueva."}
         {modo === "entrar" && "Entra con tu correo y contraseña para ver y guardar tus datos."}
-        {modo === "recuperar" && "Te mandamos un enlace para crear una contraseña nueva."}
+        {modo === "recuperar" && "Te mandamos un enlace para crear una contraseña nueva. Si tu cuenta está bloqueada por intentos fallidos, también la desbloquea."}
       </p>
 
-      <form onSubmit={onSubmit} className="space-y-3">
-        <Campo etiqueta="Correo" type="email" autoComplete="email" required maxLength={254}
+      <form onSubmit={onSubmit} noValidate className="space-y-3">
+        <Campo etiqueta="Correo" type="email" inputMode="email" autoComplete="email" maxLength={254}
                value={email} onChange={(e) => setEmail(e.target.value)} />
         {modo !== "recuperar" && (
-          <Campo etiqueta="Contraseña" type="password" required maxLength={72}
-                 minLength={modo === "crear" ? 10 : undefined}
-                 autoComplete={modo === "crear" ? "new-password" : "current-password"}
-                 value={password} onChange={(e) => setPassword(e.target.value)} />
+          <CampoContrasena etiqueta="Contraseña" maxLength={modo === "crear" ? 128 : 72}
+                           autoComplete={modo === "crear" ? "new-password" : "current-password"}
+                           value={password} onChange={(e) => setPassword(e.target.value)} />
         )}
         {modo === "crear" && (
           <>
-            <Campo etiqueta="Repite la contraseña" type="password" required minLength={10} maxLength={72}
-                   autoComplete="new-password" value={repetida} onChange={(e) => setRepetida(e.target.value)} />
-            <p className="text-[11px] text-muted-foreground">Mínimo 10 caracteres.</p>
+            <ReglasContrasena password={password} email={email} />
+            <CampoContrasena etiqueta="Repite la contraseña" maxLength={128} autoComplete="new-password"
+                             value={repetida} onChange={(e) => setRepetida(e.target.value)} />
           </>
         )}
         {aviso && <Aviso tipo={aviso.tipo}>{aviso.texto}</Aviso>}
+        {bloqueada && (
+          <Button variant="outline" type="button" className="w-full" onClick={() => cambiar("recuperar")}>
+            Olvidé mi contraseña
+          </Button>
+        )}
         <Button type="submit" className="w-full" disabled={enviando}>
           {enviando && <Loader2 className="h-4 w-4 animate-spin" />}
           {modo === "crear" ? "Crear cuenta" : modo === "entrar" ? "Entrar" : "Mandar enlace"}

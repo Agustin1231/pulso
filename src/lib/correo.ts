@@ -4,7 +4,10 @@ import nodemailer, { type Transporter } from "nodemailer";
 import { mensajeError } from "@/lib/db/pool";
 
 /**
- * Correos de la cuenta (activación y recuperación) por SMTP.
+ * Correos de la cuenta (activación, recuperación y avisos de seguridad) por SMTP.
+ *
+ * El correo de la cuenta se guarda cifrado (integrador, punto 19): quien llama
+ * le pasa acá la dirección ya descifrada (ver `descifrarCorreo` en lib/cuenta.ts).
  *
  * Variables: SMTP_HOST, SMTP_PORT (465 = TLS directo, otro = STARTTLS),
  * SMTP_USER, SMTP_PASS y, opcional, SMTP_FROM. Con Gmail, SMTP_PASS es una
@@ -99,6 +102,77 @@ export function correoRecuperacion(url: string): Correo {
     ["Hola,", "Pediste crear una contraseña nueva para tu cuenta de Pulso. El enlace sirve una sola vez y vence en 1 hora."],
     { texto: "Crear contraseña nueva", url },
     "Si no lo pediste, ignora este correo. Tu contraseña sigue igual."
+  );
+}
+
+// ─── Seguridad de la cuenta (integrador, puntos 4 y 20) ──────────────────────
+// Avisos al dueño de la cuenta: si no fue él, se entera y sabe qué hacer.
+
+/** 5 intentos fallidos seguidos bloquearon la cuenta. */
+export function correoBloqueo(url: string, minutos: number): Correo {
+  return armar(
+    "Bloqueamos tu cuenta de Pulso por unos minutos",
+    [
+      "Hola,",
+      `Hubo 5 intentos seguidos con una contraseña equivocada en tu cuenta de Pulso, así que la bloqueamos por ${minutos} minutos. Mientras tanto nadie puede entrar, ni con la contraseña correcta.`,
+      "Si fuiste tú, espera un rato o crea una contraseña nueva con \"Olvidé mi contraseña\": eso la desbloquea enseguida. Si no fuiste tú, te recomendamos crear una contraseña nueva.",
+    ],
+    { texto: "Ir a Pulso", url },
+    "Nadie entró a tu cuenta: el bloqueo frena justamente eso."
+  );
+}
+
+/** La contraseña se cambió desde el perfil. */
+export function correoContrasenaCambiada(url: string): Correo {
+  return armar(
+    "Cambiaste la contraseña de Pulso",
+    [
+      "Hola,",
+      "La contraseña de tu cuenta de Pulso acaba de cambiar, y cerramos las sesiones abiertas en los demás equipos.",
+      "Si no fuiste tú, crea una contraseña nueva ya mismo con \"Olvidé mi contraseña\" en la pantalla de acceso.",
+    ],
+    { texto: "Ir a Pulso", url },
+    "Si fuiste tú, no tienes que hacer nada más."
+  );
+}
+
+/** Enlace para confirmar el correo nuevo: el cambio rige cuando se abre. */
+export function correoConfirmarCambio(url: string): Correo {
+  return armar(
+    "Confirma tu correo nuevo de Pulso",
+    [
+      "Hola,",
+      "Pediste usar este correo en tu cuenta de Pulso. Para confirmar el cambio abre este enlace. Sirve una sola vez y vence en 24 horas; hasta entonces sigues entrando con tu correo anterior.",
+    ],
+    { texto: "Confirmar mi correo nuevo", url },
+    "Si no lo pediste, ignora este correo: no se cambia nada."
+  );
+}
+
+/** Al correo de siempre: se pidió cambiarlo por otro. */
+export function correoAvisoCambio(url: string, nuevoEnmascarado: string): Correo {
+  return armar(
+    "Pidieron cambiar el correo de tu cuenta de Pulso",
+    [
+      "Hola,",
+      `Desde tu cuenta de Pulso se pidió cambiar este correo por ${nuevoEnmascarado}. El cambio solo rige si se confirma desde ese correo; hasta entonces todo sigue igual.`,
+      "Si no fuiste tú, alguien sabe tu contraseña: crea una nueva con \"Olvidé mi contraseña\". Eso también cancela el cambio.",
+    ],
+    { texto: "Ir a Pulso", url },
+    "Si fuiste tú, no tienes que hacer nada más."
+  );
+}
+
+/** Alguien quiso pasar su cuenta a un correo que ya tiene otra: se le avisa al dueño de ese correo. */
+export function correoCambioEnUso(url: string): Correo {
+  return armar(
+    "Ya tienes una cuenta en Pulso",
+    [
+      "Hola,",
+      "Desde otra cuenta de Pulso se intentó cambiar su correo por este, pero este correo ya tiene una cuenta, así que no se cambió nada.",
+    ],
+    { texto: "Ir a Pulso", url },
+    "No tienes que hacer nada: nadie entró a tu cuenta."
   );
 }
 

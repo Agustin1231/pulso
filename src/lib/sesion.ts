@@ -342,32 +342,53 @@ async function renovarOCrear(
   return { uid: rows[0].uid, origen: "nueva", token };
 }
 
+/**
+ * `uid` en los rechazos es la cuenta del correo si existe, solo para la
+ * auditoría: al cliente no se le dice (no tiene que saber si el correo está
+ * registrado).
+ */
 export type ResultadoLogin =
-  | { resultado: "ok"; uid: string; fusionado: string | null }
-  | { resultado: "credenciales" }
-  | { resultado: "sin_verificar" };
+  | { resultado: "ok"; uid: string; fusionado: string | null; sesionesCerradas: number }
+  | { resultado: "credenciales"; uid: string | null; intentosRestantes: number }
+  | { resultado: "bloqueada"; uid: string | null; minutos: number; bloqueoNuevo: boolean }
+  | { resultado: "sin_verificar"; uid: string | null };
 
 /**
- * Inicio de sesión con correo y contraseña. La base compara la contraseña y,
- * si está bien, abre una sesión nueva para la cuenta (ya desbloqueada) y
- * revoca la de este equipo. Si esa sesión era anónima, sus datos se suman a la
- * cuenta: `fusionado` es la identidad que se sumó, para mover sus imágenes.
+ * Inicio de sesión con correo (su índice ciego, ver `hmacCorreo` en
+ * lib/cuenta.ts) y contraseña. La base compara la contraseña y, si está bien,
+ * abre una sesión nueva para la cuenta (ya desbloqueada), revoca la de este
+ * equipo y cierra las demás sesiones de la cuenta (integrador, punto 16). Si
+ * la sesión de este equipo era anónima, sus datos se suman a la cuenta:
+ * `fusionado` es la identidad que se sumó, para mover sus imágenes.
+ *
+ * Cinco fallos seguidos bloquean el correo 15 minutos (punto 4): mientras
+ * tanto ni la contraseña correcta entra.
  *
  * Escribe la cookie: solo se puede llamar desde un route handler o una server action.
  */
-export async function iniciarSesionConCuenta(email: string, password: string): Promise<ResultadoLogin> {
+export async function iniciarSesionConCuenta(emailHmac: string, password: string): Promise<ResultadoLogin> {
   const actual = await tokenDeSolicitud();
   const token = randomBytes(32).toString("base64url");
-  const { rows } = await pool.query<{ resultado: string; uid_cuenta: string | null; uid_fusionado: string | null }>(
+  const { rows } = await pool.query<{
+    resultado: string; uid_cuenta: string | null; uid_fusionado: string | null; minutos: number | null;
+    intentos_restantes: number | null; bloqueo_nuevo: boolean | null; sesiones_cerradas: number | null;
+  }>(
     "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4, $5)",
-    [email, password, hashToken(token), DIAS_SESION, actual ? hashToken(actual) : null]
+    [emailHmac, password, hashToken(token), DIAS_SESION, actual ? hashToken(actual) : null]
   );
   const r = rows[0];
-  if (r?.resultado !== "ok" || !r.uid_cuenta) {
-    return r?.resultado === "sin_verificar" ? { resultado: "sin_verificar" } : { resultado: "credenciales" };
+  const uid = r?.uid_cuenta ?? null;
+  switch (r?.resultado) {
+    case "ok":
+      if (!uid) break;
+      await fijarCookie(token);
+      return { resultado: "ok", uid, fusionado: r.uid_fusionado, sesionesCerradas: r.sesiones_cerradas ?? 0 };
+    case "bloqueada":
+      return { resultado: "bloqueada", uid, minutos: r.minutos ?? 15, bloqueoNuevo: r.bloqueo_nuevo === true };
+    case "sin_verificar":
+      return { resultado: "sin_verificar", uid };
   }
-  await fijarCookie(token);
-  return { resultado: "ok", uid: r.uid_cuenta, fusionado: r.uid_fusionado };
+  return { resultado: "credenciales", uid, intentosRestantes: r?.intentos_restantes ?? 0 };
 }
 
 /**
