@@ -14,6 +14,7 @@
 import { describe, test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
+import http from "node:http";
 import {
   BASE, IP_CORRIDA, METRICA_OK, RANGOS, SALTEAR, SIN_ADMIN,
   admin, escribir, hoy, leer, limpiarIdentidades, limpiarLimitesDe, movil, nuevaIp,
@@ -71,7 +72,7 @@ describe("M01 sesión anónima por Bearer", { skip: SALTEAR }, () => {
     const token = await nuevoToken();
     const estado = async (auth) =>
       (await fetch(`${BASE}/api/movil/v1/sesion`, { headers: auth ? { Authorization: auth } : {} })).json();
-    assert.deepEqual(await estado(`Bearer ${token}`), { estado: "activa", bloqueo: { activo: false, bloqueada: false } });
+    assert.deepEqual(await estado(`Bearer ${token}`), { estado: "activa", bloqueo: { activo: false, bloqueada: false }, motivo: null });
     assert.equal((await estado(null)).estado, "sin_sesion");
     assert.equal((await estado(`Bearer ${"A".repeat(43)}`)).estado, "sin_sesion");
     assert.equal((await estado(`Bearer corto`)).estado, "sin_sesion");
@@ -778,8 +779,7 @@ describe("M11 supresión de datos (DELETE /api/mis-datos)", { skip: SALTEAR }, (
   test("borra todos los datos de la identidad, el token deja de valer y queda auditado", { skip: SIN_ADMIN }, async () => {
     // Límite `supresion`: 3 por hora por IP. Esta prueba usa una IP propia.
     const ip = nuevaIp();
-    const { cuerpo } = await sesionMovil({ ip });
-    const token = cuerpo.token;
+    const token = await nuevoToken(ip);
     const uid = await uidDe(token);
     await escribir("POST", "metricas", token, { tipo: "peso", valor: 70 });
     await escribir("PUT", "perfil", token, { edad: 30, sexo: null, altura_cm: null, fumador: null });
@@ -865,7 +865,26 @@ describe("Transversal: límites de escritura, cuotas y tamaño del cuerpo", { sk
   test("cuerpo de más de 256 KB en la API móvil: 413 cuerpo_demasiado_grande (sin tocar la base)", async () => {
     const token = await nuevoToken();
     const grande = { titulo: "R", contenido: "x".repeat(300 * 1024), imagen_url: null, ingredientes: [] };
-    await rechazo(movil("POST", "recetas", token, grande), 413, "cuerpo_demasiado_grande", "300 KB");
+    // Con node:http y no con fetch: el servidor responde 413 por el
+    // Content-Length sin leer el cuerpo y corta la conexión; el fetch de Node
+    // 26 (undici) da ECONNRESET en vez de devolver la respuesta que ya llegó.
+    const r = await new Promise((resolver, rechazar) => {
+      const datos = JSON.stringify(grande);
+      const req = http.request(new URL(`${BASE}/api/movil/v1/recetas`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`, "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(datos), "X-Forwarded-For": IP_CORRIDA,
+        },
+      }, (res) => {
+        let texto = "";
+        res.on("data", (c) => (texto += c));
+        res.on("end", () => resolver({ status: res.statusCode, json: JSON.parse(texto) }));
+      });
+      req.on("error", rechazar);
+      req.end(datos);
+    });
+    assert.deepEqual([r.status, r.json.error], [413, "cuerpo_demasiado_grande"], "300 KB");
     assert.deepEqual(await leer("recetas", token), []);
     // Justo por debajo del tope el cuerpo se lee y lo valida zod (contenido > 20 000 → 400).
     const casi = { ...grande, contenido: "x".repeat(200 * 1024) };

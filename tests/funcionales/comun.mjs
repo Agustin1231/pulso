@@ -4,6 +4,10 @@
 //   DATABASE_ADMIN_URL=postgres://postgres:…@127.0.0.1:55432/pulso \
 //   node --test --test-concurrency=1 tests/funcionales/
 //
+// Desde el 21-oct-2026 los datos exigen una cuenta activada: `nuevoToken` le
+// pone una a cada identidad de prueba (con DATABASE_ADMIN_URL, o con
+// MAILPIT_URL si no está la base).
+//
 // Corren SIEMPRE contra el servidor funcional local (base descartable `pulso`),
 // nunca contra producción: crean y borran identidades, inyectan fallas en el
 // doble de IA y vacían contadores de límites de tasa.
@@ -15,6 +19,7 @@ import pg from "pg";
 export const BASE = (process.env.BASE_URL ?? "http://127.0.0.1:3107").replace(/\/+$/, "");
 export const MOCK = (process.env.MOCK_IA_URL ?? "http://127.0.0.1:3190").replace(/\/+$/, "");
 export const ADMIN = process.env.DATABASE_ADMIN_URL;
+export const MAILPIT = (process.env.MAILPIT_URL ?? "").replace(/\/+$/, "");
 
 if (/agustinynatalia\.site/.test(BASE)) {
   throw new Error("Las pruebas funcionales crean y borran datos: no se corren contra producción.");
@@ -71,16 +76,63 @@ export async function sesionMovil({ token, ip = IP_CORRIDA } = {}) {
 }
 
 /**
- * Token de una identidad nueva (falla la prueba si no se pudo crear). Cada
- * identidad se crea desde su propia IP de documentación, como si fuera otro
- * teléfono: una corrida completa crea más de 30 y, desde una sola IP, el
- * límite `sesionIp` cortaría a mitad de camino.
+ * Token de una identidad nueva SIN cuenta (falla la prueba si no se pudo
+ * crear). Solo sirve para crear la cuenta o iniciar sesión: los datos
+ * responden 401 `cuenta_requerida`. Cada identidad se crea desde su propia IP
+ * de documentación, como si fuera otro teléfono: una corrida completa crea más
+ * de 30 y, desde una sola IP, el límite `sesionIp` cortaría a mitad de camino.
  */
-export async function nuevoToken(ip = nuevaIp()) {
+export async function nuevoTokenAnonimo(ip = nuevaIp()) {
   const { status, cuerpo } = await sesionMovil({ ip });
   assert.equal(status, 200, `no se pudo crear la sesión: ${JSON.stringify(cuerpo)}`);
   creados.push(cuerpo.token);
   return cuerpo.token;
+}
+
+/** Cumple la regla de contraseñas y no contiene la parte local de los correos de prueba. */
+const CLAVE_CUENTA = "Prueba-Funcional#7Qz";
+
+/**
+ * Token de una identidad nueva CON una cuenta activada: lo que tiene la app
+ * después de iniciar sesión. Como la app, registra la cuenta sobre su sesión
+ * anónima; la activa el dueño de la base (rápido) o, sin DATABASE_ADMIN_URL,
+ * el enlace del correo que llega a Mailpit.
+ */
+export async function nuevoToken(ip = nuevaIp()) {
+  const token = await nuevoTokenAnonimo(ip);
+  const email = `funcional-${randomBytes(5).toString("hex")}@pulso.test`;
+  const reg = await fetch(`${BASE}/api/cuenta/registro`, {
+    method: "POST",
+    headers: { "X-Forwarded-For": ip, Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password: CLAVE_CUENTA }),
+  });
+  assert.equal(reg.status, 200, `no se pudo registrar la cuenta: ${await reg.text()}`);
+
+  if (ADMIN) {
+    await admin().query(
+      "update cuentas set verificada_at = now() where uid = (select uid from sesiones where token_hash = $1)",
+      [hashToken(token)]
+    );
+    return token;
+  }
+  assert.ok(MAILPIT, "para activar la cuenta de prueba hace falta DATABASE_ADMIN_URL o MAILPIT_URL");
+  for (let i = 0; i < 40; i++) {
+    const lista = await (await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:"${email}"`)}`)).json();
+    const id = lista.messages?.[0]?.ID;
+    const texto = id ? (await (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json()).Text ?? "" : "";
+    const enlace = texto.match(/token=([A-Za-z0-9_-]{43})/)?.[1];
+    if (enlace) {
+      const act = await fetch(`${BASE}/api/cuenta/activar`, {
+        method: "POST",
+        headers: { "X-Forwarded-For": ip, "Content-Type": "application/json" },
+        body: JSON.stringify({ token: enlace }),
+      });
+      assert.equal(act.status, 200, `no se pudo activar la cuenta: ${await act.text()}`);
+      return token;
+    }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  assert.fail(`no llegó el correo de activación a ${email}`);
 }
 
 /**
