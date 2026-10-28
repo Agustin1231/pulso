@@ -154,10 +154,15 @@ async function manejar(metodo: string, req: Request, { params }: Params): Promis
 
   try {
     // Las acciones devuelven vacío sin sesión (así lo espera la web); la app
-    // necesita distinguir "no hay datos" de "no hay sesión".
+    // necesita distinguir "no hay datos" de "no hay sesión". Mismos códigos que
+    // `rutaProtegida`: con una sesión anónima (sin cuenta activada), 401
+    // `cuenta_requerida`, y la app manda a iniciar sesión.
     if (!(await uidDeSesion())) {
       const { estado } = await estadoSesion();
-      const [status, motivo] = estado === "bloqueada" ? [423, "sesion_bloqueada"] : [401, "sesion_requerida"];
+      const [status, motivo] =
+        estado === "bloqueada" ? [423, "sesion_bloqueada"] :
+        estado === "activa"    ? [401, "cuenta_requerida"] :
+                                 [401, "sesion_requerida"];
       await auditar({ accion, resultado: "denegado", ip, detalle: { motivo } });
       return json({ error: motivo }, status);
     }

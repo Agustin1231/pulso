@@ -114,7 +114,19 @@ export async function reenviarActivacion(): Promise<{ email: string; token: stri
 
 export async function cuentaDeSesion(): Promise<Cuenta | null> {
   const sesion = await hashDeSesion();
-  if (!sesion) return null;
+  return sesion ? cuentaDeHash(sesion) : null;
+}
+
+/**
+ * La cuenta de un token dado: el que la app nativa va a usar después de que
+ * `/api/movil/v1/sesion` rotó su sesión (la petición todavía trae el viejo).
+ */
+export async function cuentaDeToken(token: string): Promise<Cuenta | null> {
+  return cuentaDeHash(hashDeToken(token));
+}
+
+/** Con el bloqueo con passkey activo y sin desbloquear, null: no se entrega ni el correo. */
+async function cuentaDeHash(sesion: string): Promise<Cuenta | null> {
   const { rows } = await pool.query<{ email_cifrado: string; verificada: boolean }>(
     "select * from pulso_cuenta_de_sesion($1)",
     [sesion]

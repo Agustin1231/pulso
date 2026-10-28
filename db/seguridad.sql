@@ -1198,13 +1198,20 @@ end $$;
 --   * `intentos_restantes`: antes del bloqueo, tras un fallo.
 --   * `bloqueo_nuevo`: este fallo bloqueó el correo (la app avisa al dueño).
 --   * `sesiones_cerradas`: cuántas sesiones de la cuenta se cerraron.
--- La firma vieja tenía `p_dias`: el vencimiento ahora sale de la configuración
--- (punto 10). Se borran las dos para poder cambiar el tipo de retorno.
+-- `p_cliente`: 'web' (cookie) o 'movil' (la app nativa, que recibe el token en
+-- el cuerpo): la sesión nueva queda marcada con él, como las de
+-- `pulso_crear_sesion`.
+-- Las firmas viejas se borran: la de `p_dias` (el vencimiento ahora sale de la
+-- configuración, punto 10) y la de 4 parámetros, sin `p_cliente`, que dejaba
+-- toda sesión con cuenta como 'web' aunque la abriera la app nativa. Con el
+-- valor por defecto, una llamada de 4 parámetros sigue funcionando (y es la
+-- misma sesión web de antes): la app vieja anda contra la base nueva.
 drop function if exists pulso_iniciar_sesion_cuenta(text, text, text, int, text);
 drop function if exists pulso_iniciar_sesion_cuenta(text, text, text, text);
 
 create or replace function pulso_iniciar_sesion_cuenta(
-  p_email_hmac text, p_password text, p_nuevo_hash text, p_actual_hash text
+  p_email_hmac text, p_password text, p_nuevo_hash text, p_actual_hash text,
+  p_cliente text default 'web'
 )
 returns table (resultado text, uid_cuenta text, uid_fusionado text, minutos int,
                intentos_restantes int, bloqueo_nuevo boolean, sesiones_cerradas int)
@@ -1269,10 +1276,11 @@ begin
    where s.uid = v_c.uid and s.revocada_at is null;
   get diagnostics v_cerradas = row_count;
 
-  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta)
+  insert into sesiones (token_hash, uid, expira_at, desbloqueada_hasta, cliente)
   values (p_nuevo_hash, v_c.uid,
           now() + pulso_vigencia_token(),
-          now() + make_interval(mins => pulso_minutos_desbloqueo()));
+          now() + make_interval(mins => pulso_minutos_desbloqueo()),
+          coalesce(p_cliente, 'web'));
   return query select 'ok'::text, v_c.uid, v_actual, null::int, null::int, false, v_cerradas;
 end $$;
 
@@ -1546,7 +1554,7 @@ revoke execute on function
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
   pulso_fusionar_identidad(text, text),
-  pulso_iniciar_sesion_cuenta(text, text, text, text),
+  pulso_iniciar_sesion_cuenta(text, text, text, text, text),
   pulso_solicitar_recuperacion(text, text),
   pulso_correo_de_recuperacion(text),
   pulso_restablecer_contrasena(text, text, text),
@@ -1560,7 +1568,7 @@ grant execute on function
   pulso_activar_cuenta(text),
   pulso_reenviar_activacion(text, text),
   pulso_cuenta_de_sesion(text),
-  pulso_iniciar_sesion_cuenta(text, text, text, text),
+  pulso_iniciar_sesion_cuenta(text, text, text, text, text),
   pulso_solicitar_recuperacion(text, text),
   pulso_correo_de_recuperacion(text),
   pulso_restablecer_contrasena(text, text, text),

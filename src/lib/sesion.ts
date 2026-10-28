@@ -30,10 +30,11 @@ import { pool } from "@/lib/db/pool";
  * en db/plataforma.sql), así que un cambio del administrador rige enseguida:
  *   - el TOKEN deja de servir tras `token_inactividad_minutos` sin ninguna
  *     petición autenticada (cada una corre el vencimiento);
- *   - la SESIÓN WEB se cierra tras `sesion_inactividad_minutos` sin que el
- *     usuario toque la app. La actividad la informa el latido del cliente
- *     (`latidoDeSesion`), no las peticiones de fondo. La app nativa no tiene
- *     latido: sus sesiones son `cliente = 'movil'` y esa regla no les aplica.
+ *   - la SESIÓN con cuenta se cierra tras `sesion_inactividad_minutos` sin
+ *     que el usuario toque la app. La actividad la informa el latido del
+ *     cliente (`latidoDeSesion`), no las peticiones de fondo. Vale para la web
+ *     y para la app nativa, que manda el mismo latido; sus sesiones quedan
+ *     marcadas `cliente = 'movil'` solo para la auditoría y la administración.
  * Cuando una sesión deja de servir, la base guarda por qué (`revocada_motivo`)
  * y `motivoDeFin` se lo cuenta al navegador que la tenía.
  */
@@ -76,7 +77,7 @@ function motivoValido(m: unknown): MotivoFin | null {
 /** Los dos tiempos de inactividad vigentes y cuánto hace que el usuario no interactúa. */
 export interface InactividadSesion {
   vigente:        boolean;
-  /** Segundos desde la última interacción registrada; null si la regla no aplica (app nativa, sin cuenta). */
+  /** Segundos desde la última interacción registrada; null si la regla no aplica (sesión sin cuenta). */
   inactivaSeg:    number | null;
   tokenMinutos:   number;
   sesionMinutos:  number;
@@ -347,7 +348,7 @@ export async function inactividadDeSesion(): Promise<InactividadSesion> {
 }
 
 /**
- * Latido del cliente web: el usuario interactuó hace `haceSeg` segundos. Corre
+ * Latido del cliente (web o app nativa): el usuario interactuó hace `haceSeg` segundos. Corre
  * la actividad de la sesión (punto 11) y el vencimiento del token (punto 10).
  * Ninguna otra petición mueve la actividad.
  */
@@ -402,7 +403,8 @@ export async function asegurarSesion(
  * Lo mismo para la app nativa: toma el token del Bearer (nunca de una cookie)
  * y devuelve en el cuerpo el que hay que guardar. `token` es null cuando el
  * cliente tiene que seguir con el que ya tiene. Sus sesiones nuevas quedan
- * marcadas como 'movil': sin latido, no se cierran por inactividad del usuario.
+ * marcadas como 'movil'. `motivo` es, como en la web, por qué dejó de servir el
+ * token que mandó la app (si mandó uno que ya no sirve).
  */
 export async function asegurarSesionMovil(): Promise<{ uid: string; origen: OrigenSesion; token: string | null; motivo: MotivoFin | null }> {
   return renovarOCrear(await tokenDeBearer(), null, "movil");
@@ -472,10 +474,11 @@ async function renovarOCrear(
 /**
  * `uid` en los rechazos es la cuenta del correo si existe, solo para la
  * auditoría: al cliente no se le dice (no tiene que saber si el correo está
- * registrado).
+ * registrado). `token` es el de la sesión nueva: solo la app nativa lo recibe
+ * en el cuerpo; la web lo tiene en la cookie y nunca lo ve.
  */
 export type ResultadoLogin =
-  | { resultado: "ok"; uid: string; fusionado: string | null; sesionesCerradas: number }
+  | { resultado: "ok"; uid: string; fusionado: string | null; sesionesCerradas: number; token: string }
   | { resultado: "credenciales"; uid: string | null; intentosRestantes: number }
   | { resultado: "bloqueada"; uid: string | null; minutos: number; bloqueoNuevo: boolean }
   | { resultado: "sin_verificar"; uid: string | null };
@@ -491,25 +494,35 @@ export type ResultadoLogin =
  * Cinco fallos seguidos bloquean el correo 15 minutos (punto 4): mientras
  * tanto ni la contraseña correcta entra.
  *
- * Escribe la cookie: solo se puede llamar desde un route handler o una server action.
+ * `cliente`:
+ *   - 'web': la sesión de este equipo es la de la petición (cookie, o Bearer si
+ *     viene) y el token nuevo va a la cookie. Solo se puede llamar desde un
+ *     route handler o una server action.
+ *   - 'movil': la de este equipo es SOLO la del Bearer (una cookie no cuenta:
+ *     la app nativa no tiene) y no se toca ninguna cookie: el token nuevo se
+ *     devuelve en `token` para que la ruta se lo dé a la app.
  */
-export async function iniciarSesionConCuenta(emailHmac: string, password: string): Promise<ResultadoLogin> {
-  const actual = await tokenDeSolicitud();
+export async function iniciarSesionConCuenta(
+  emailHmac: string,
+  password: string,
+  cliente: "web" | "movil" = "web"
+): Promise<ResultadoLogin> {
+  const actual = cliente === "movil" ? await tokenDeBearer() : await tokenDeSolicitud();
   const token = randomBytes(32).toString("base64url");
   const { rows } = await pool.query<{
     resultado: string; uid_cuenta: string | null; uid_fusionado: string | null; minutos: number | null;
     intentos_restantes: number | null; bloqueo_nuevo: boolean | null; sesiones_cerradas: number | null;
   }>(
-    "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4)",
-    [emailHmac, password, hashToken(token), actual ? hashToken(actual) : null]
+    "select * from pulso_iniciar_sesion_cuenta($1, $2, $3, $4, $5)",
+    [emailHmac, password, hashToken(token), actual ? hashToken(actual) : null, cliente]
   );
   const r = rows[0];
   const uid = r?.uid_cuenta ?? null;
   switch (r?.resultado) {
     case "ok":
       if (!uid) break;
-      await fijarCookie(token);
-      return { resultado: "ok", uid, fusionado: r.uid_fusionado, sesionesCerradas: r.sesiones_cerradas ?? 0 };
+      if (cliente === "web") await fijarCookie(token);
+      return { resultado: "ok", uid, fusionado: r.uid_fusionado, sesionesCerradas: r.sesiones_cerradas ?? 0, token };
     case "bloqueada":
       return { resultado: "bloqueada", uid, minutos: r.minutos ?? 15, bloqueoNuevo: r.bloqueo_nuevo === true };
     case "sin_verificar":

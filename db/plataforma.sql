@@ -48,15 +48,17 @@ grant execute on function pulso_config(text) to pulso_app;
 --   * Token (punto 10): deja de servir cuando pasan `token_inactividad_minutos`
 --     sin ninguna petición autenticada (`ultimo_uso`). Cada petición corre el
 --     vencimiento.
---   * Sesión en la app (punto 11): una sesión WEB con cuenta se cierra cuando
+--   * Sesión en la app (punto 11): una sesión con cuenta se cierra cuando
 --     pasan `sesion_inactividad_minutos` sin que el usuario toque la app
 --     (`actividad_at`). Esa columna la mueve solo el latido del cliente, que se
 --     manda únicamente si hubo mouse, teclado, toques o scroll (y abrir o
---     recargar la página): las peticiones de fondo no cuentan. Así, cerrar el
---     navegador y volver después también pide entrar de nuevo.
---     La app nativa no manda latidos (su sesión queda abierta como la de
---     cualquier app del teléfono, con el bloqueo con passkey si se activó):
---     sus sesiones se marcan `cliente = 'movil'` y esta regla no se les aplica.
+--     recargar la página, o abrir la app nativa o volver a ella): las
+--     peticiones de fondo no cuentan. Así, cerrar el navegador (o dejar el
+--     teléfono) y volver después también pide entrar de nuevo.
+--     Vale para los dos clientes: la app nativa manda el mismo latido que la
+--     web (`POST /api/sesion/latido`, solo si el usuario tocó la pantalla).
+--     Hasta el 27-oct-2026 la app nativa no tenía cuentas ni latido y sus
+--     sesiones (`cliente = 'movil'`) quedaban afuera de esta regla.
 --
 -- `revocada_motivo` (db/seguridad.sql) guarda por qué se cerró cada sesión; el
 -- navegador que la tenía se entera con `pulso_motivo_sesion` y /acceso se lo
@@ -72,7 +74,7 @@ language sql stable set search_path = public, pg_temp as $$
   select make_interval(mins => coalesce(pulso_config('token_inactividad_minutos'), 259200))
 $$;
 
--- Cuánto puede pasar una sesión web sin que el usuario interactúe.
+-- Cuánto puede pasar una sesión con cuenta sin que el usuario interactúe.
 create or replace function pulso_inactividad_sesion() returns interval
 language sql stable set search_path = public, pg_temp as $$
   select make_interval(mins => coalesce(pulso_config('sesion_inactividad_minutos'), 30))
@@ -83,7 +85,8 @@ $$;
 -- sesión dejó de servir, lo deja escrito y en la auditoría, una sola vez:
 --   * token vencido: fija `expira_at` en el momento en que venció (la purga y
 --     las demás funciones lo miran) → 'sesion.vencer';
---   * sesión web inactiva: la revoca con motivo 'inactividad' → 'sesion.revocar'.
+--   * sesión con cuenta inactiva (web o app nativa): la revoca con motivo
+--     'inactividad' → 'sesion.revocar'.
 --     La activación de la cuenta cuenta como actividad: quien la activa desde
 --     el enlace del correo y vuelve a la pestaña donde se registró no tiene
 --     que entrar de nuevo.
@@ -122,21 +125,21 @@ begin
     return v_vacia;
   end if;
 
-  if v_s.cliente = 'web' then
-    select greatest(v_s.actividad_at, c.verificada_at) into v_actividad
-      from cuentas c
-     where c.uid = v_s.uid and c.verificada_at is not null;
-    if v_actividad <= now() - pulso_inactividad_sesion() then
-      update sesiones s set revocada_at = now(), revocada_motivo = 'inactividad'
-       where s.token_hash = p_token_hash and s.revocada_at is null;
-      if found then
-        insert into auditoria (uid, accion, resultado, detalle)
-        values (v_s.uid, 'sesion.revocar', 'ok',
-                jsonb_build_object('motivo', 'inactividad', 'cliente', v_s.cliente,
-                                   'minutos', (extract(epoch from pulso_inactividad_sesion()) / 60)::int));
-      end if;
-      return v_vacia;
+  -- Sin una cuenta activada `v_actividad` queda en null y la regla no aplica:
+  -- una sesión anónima no tiene nada que proteger.
+  select greatest(v_s.actividad_at, c.verificada_at) into v_actividad
+    from cuentas c
+   where c.uid = v_s.uid and c.verificada_at is not null;
+  if v_actividad <= now() - pulso_inactividad_sesion() then
+    update sesiones s set revocada_at = now(), revocada_motivo = 'inactividad'
+     where s.token_hash = p_token_hash and s.revocada_at is null;
+    if found then
+      insert into auditoria (uid, accion, resultado, detalle)
+      values (v_s.uid, 'sesion.revocar', 'ok',
+              jsonb_build_object('motivo', 'inactividad', 'cliente', v_s.cliente,
+                                 'minutos', (extract(epoch from pulso_inactividad_sesion()) / 60)::int));
     end if;
+    return v_vacia;
   end if;
 
   if p_deslizar and v_s.rotada_at is null
@@ -176,7 +179,7 @@ end $$;
 
 -- Lo que necesita el vigía de sesión del cliente (punto 11), sin mover nada:
 -- si la sesión sirve, hace cuántos segundos fue la última interacción que
--- registró el servidor (null si la regla no aplica: app nativa o sin cuenta) y
+-- registró el servidor (null si la regla no aplica: sesión sin cuenta) y
 -- los dos tiempos vigentes. Con varias pestañas, la cuenta regresiva de cada
 -- una se ancla en este valor: una pestaña que estuvo congelada en segundo plano
 -- no cierra la sesión que el usuario está usando en otra.
@@ -187,7 +190,7 @@ declare
   v_s         sesiones := pulso_sesion_vigente(p_token_hash, false);
   v_actividad timestamptz;
 begin
-  if v_s.uid is not null and v_s.cliente = 'web' then
+  if v_s.uid is not null then
     select greatest(v_s.actividad_at, c.verificada_at) into v_actividad
       from cuentas c
      where c.uid = v_s.uid and c.verificada_at is not null;
@@ -199,7 +202,7 @@ begin
     (extract(epoch from pulso_inactividad_sesion()) / 60)::int;
 end $$;
 
--- Latido del cliente web: el usuario interactuó con la app hace `p_hace_seg`
+-- Latido del cliente (web o app nativa): el usuario interactuó con la app hace `p_hace_seg`
 -- segundos (el cliente los junta y manda un latido cada tanto, no uno por
 -- evento). Corre `actividad_at` sin ir nunca hacia atrás y, como toda petición
 -- autenticada, el vencimiento del token. Escritura espaciada: no más de una

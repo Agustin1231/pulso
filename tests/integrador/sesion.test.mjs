@@ -346,7 +346,7 @@ describe("punto 10: el token vence por inactividad según la configuración", { 
 
 // ─── Punto 11 · Inactividad del usuario ───────────────────────────────────────
 
-describe("punto 11: la sesión web se cierra si el usuario no interactúa", { skip: SALTEAR }, () => {
+describe("punto 11: la sesión se cierra si el usuario no interactúa (web y app nativa)", { skip: SALTEAR }, () => {
   after(restaurarConfig);
 
   test("las peticiones de fondo no cuentan como actividad: pasado el límite, se rechaza y se revoca", async () => {
@@ -404,12 +404,20 @@ describe("punto 11: la sesión web se cierra si el usuario no interactúa", { sk
     assert.equal(r.json.motivo, "cierre");
   });
 
-  test("la app nativa no tiene latido: la regla no se le aplica", async () => {
+  test("la app nativa también: sin latido se cierra igual, y su latido (con el Bearer) la mantiene", async () => {
+    // Hasta el 27-oct-2026 la app nativa no tenía latido y la regla no le
+    // aplicaba; ahora manda el mismo que la web (tests/integrador/movil.test.mjs).
     await fijarConfig({ token: 259200, sesion: 1 });
-    const { bearer } = await cuentaMovil();
-    await atrasar(bearer, { actividad: 7200 });
-    assert.equal((await datos({ bearer })).status, 200);
-    assert.equal((await fila(bearer)).revocada_at, null);
+    const quieta = await cuentaMovil();
+    await atrasar(quieta.bearer, { actividad: 7200 });
+    assert.equal((await datos(quieta)).status, 401);
+    assert.equal((await fila(quieta.bearer)).revocada_motivo, "inactividad");
+
+    const usada = await cuentaMovil();
+    await atrasar(usada.bearer, { actividad: 55 });
+    assert.equal((await pedir("POST", "/api/sesion/latido", { ...usada, cuerpo: { hace: 1 } })).status, 200);
+    await atrasar(usada.bearer, { uso: 0 });
+    assert.equal((await datos(usada)).status, 200);
   });
 
   test("una sesión sin cuenta no se cierra por inactividad (no tiene nada que proteger)", async () => {
@@ -516,13 +524,13 @@ describe("puntos 16 y 18: el navegador que tenía la sesión se entera de por qu
 describe("en tiempo real: token e inactividad en 1 minuto", { skip: SALTEAR }, () => {
   after(restaurarConfig);
 
-  test("pasado el minuto: sin peticiones vence el token; con peticiones de fondo y sin latido se cierra; con latido sigue", { timeout: 120_000 }, async () => {
+  test("pasado el minuto: sin peticiones vence el token; con peticiones de fondo y sin latido se cierra; con latido sigue (web y app)", { timeout: 120_000 }, async () => {
     await fijarConfig({ token: 1, sesion: 1 });
     const fondo = await cuentaWeb();         // lecturas cada 15 s, sin latido
     const actividadFondo = Date.now();       // ~ su última actividad: la activación de la cuenta
     const quieta = await cuentaWeb();        // nada en todo el minuto
     const latiendo = await cuentaWeb();      // latido cada 15 s (el usuario interactúa)
-    const movil = await cuentaMovil();       // la app nativa leyendo cada 15 s
+    const movil = await cuentaMovil();       // la app nativa en uso: lecturas y latido cada 15 s
     const movilQuieta = await cuentaMovil(); // la app nativa sin usar
     for (const s of [quieta, fondo, latiendo, movil, movilQuieta]) assert.equal((await datos(s)).status, 200);
 
@@ -537,6 +545,7 @@ describe("en tiempo real: token e inactividad en 1 minuto", { skip: SALTEAR }, (
       if (pasaron > 63) assert.equal(r.status, 401, `lectura de fondo a los ${pasaron} s`);
       if (r.status === 401) cerradaPorInactividad = true;
       assert.equal((await pedir("POST", "/api/sesion/latido", { ...latiendo, cuerpo: { hace: 1 } })).status, 200);
+      assert.equal((await pedir("POST", "/api/sesion/latido", { ...movil, cuerpo: { hace: 1 } })).status, 200);
       assert.equal((await datos(movil)).status, 200);
     }
     assert.ok(cerradaPorInactividad);

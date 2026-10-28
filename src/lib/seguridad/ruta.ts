@@ -182,6 +182,14 @@ interface OpcionesPublica<T> {
   cuerpo: z.ZodType<T, z.ZodTypeDef, unknown>;
   /** Límites a consumir, armados con la IP y el cuerpo ya validado (ej. por correo). */
   limites: (ip: string, cuerpo: T) => Limite[];
+  /** Se suma al detalle de cada evento que deja esta envoltura (ej. `{ cliente: "movil" }`). */
+  detalle?: Record<string, unknown>;
+  /**
+   * El 400 trae también `campos`: los nombres de los campos inválidos (nunca
+   * sus valores). Lo usa la app nativa para marcar el campo; la web valida
+   * en el formulario y no lo necesita.
+   */
+  camposEnRespuesta?: boolean;
 }
 
 /**
@@ -198,9 +206,9 @@ export function rutaPublica<T>(
 ): (req: Request) => Promise<Response> {
   return async (req) => {
     const ip = await ipCliente();
-    const denegar = async (status: number, error: string, detalle?: Record<string, unknown>) => {
-      await auditar({ accion: op.nombre, resultado: "denegado", ip, detalle: { motivo: error, ...detalle } });
-      return json({ error }, status, status === 429 ? { "Retry-After": "3600" } : undefined);
+    const denegar = async (status: number, error: string, detalle?: Record<string, unknown>, extra?: Record<string, unknown>) => {
+      await auditar({ accion: op.nombre, resultado: "denegado", ip, detalle: { motivo: error, ...op.detalle, ...detalle } });
+      return json({ error, ...extra }, status, status === 429 ? { "Retry-After": "3600" } : undefined);
     };
 
     if (!(await origenValido())) return denegar(403, "origen_no_permitido");
@@ -214,7 +222,8 @@ export function rutaPublica<T>(
     }
     const r = op.cuerpo.safeParse(crudo);
     if (!r.success) {
-      return denegar(400, "datos_invalidos", { campos: r.error.issues.map((i) => i.path.join(".")) });
+      const campos = r.error.issues.map((i) => i.path.join("."));
+      return denegar(400, "datos_invalidos", { campos }, op.camposEnRespuesta ? { campos } : undefined);
     }
 
     try {
@@ -223,7 +232,7 @@ export function rutaPublica<T>(
       return await manejador({ req, ip, cuerpo: r.data });
     } catch (err) {
       console.error(`[api] ${op.nombre}:`, mensajeError(err));
-      await auditar({ accion: op.nombre, resultado: "error", ip });
+      await auditar({ accion: op.nombre, resultado: "error", ip, detalle: op.detalle });
       await registrarError(`api:${op.nombre}`, err, { ip });
       return json({ error: "error_interno" }, 500);
     }
