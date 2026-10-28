@@ -29,7 +29,8 @@ export const runtime = "nodejs";
  * como abrir o recargar la página en la web.
  *
  * Responde `{ ok, origen, token, bloqueo, motivo, cuenta }`:
- *   - `token`: el que la app tiene que guardar, o null si sigue con el suyo.
+ *   - `token`: el que la app tiene que guardar (con `existente`, el mismo que
+ *     mandó). null solo en la gracia de un token recién rotado: sigue con el suyo.
  *   - `motivo`: si la app mandó un token que ya no sirve, por qué
  *     ('cierre', 'otro_inicio', 'inactividad', 'contrasena', 'admin' o
  *     'vencida'; null si no había una cuenta que perder). La app lo muestra

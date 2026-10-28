@@ -401,8 +401,9 @@ export async function asegurarSesion(
 
 /**
  * Lo mismo para la app nativa: toma el token del Bearer (nunca de una cookie)
- * y devuelve en el cuerpo el que hay que guardar. `token` es null cuando el
- * cliente tiene que seguir con el que ya tiene. Sus sesiones nuevas quedan
+ * y devuelve en el cuerpo el que hay que guardar (con 'existente', el mismo
+ * que mandó). `token` es null solo dentro de los 2 minutos de gracia de un
+ * token ya rotado: el cliente sigue con el que tiene. Sus sesiones nuevas quedan
  * marcadas como 'movil'. `motivo` es, como en la web, por qué dejó de servir el
  * token que mandó la app (si mandó uno que ya no sirve).
  */
