@@ -325,7 +325,8 @@ La app nativa (Kotlin + Jetpack Compose, repo aparte en `../Pulso - celular`) us
 
 | Ruta | Qué hace |
 |---|---|
-| `POST /api/movil/v1/sesion` | Crea, renueva o rota la sesión. El token va y vuelve en el cuerpo/Bearer; nunca pone cookies |
+| `POST /api/movil/v1/sesion` | Crea, renueva o rota la sesión. El token va y vuelve en el cuerpo/Bearer; nunca pone cookies. Trae `motivo` (por qué dejó de servir el token anterior) y `cuenta` |
+| `POST /api/movil/v1/cuenta/login` | Iniciar sesión con correo y contraseña: el login de la web con el token nuevo en el cuerpo |
 | `GET` / `DELETE /api/movil/v1/sesion` | Estado de la sesión / cerrar sesión en ese teléfono |
 | `/api/movil/v1/[...ruta]` | REST sobre las **mismas** server actions de `lib/db` (métricas, informe, perfil, consentimiento, recetas, mercado, rutinas, hábitos) |
 
@@ -333,7 +334,9 @@ La app nativa (Kotlin + Jetpack Compose, repo aparte en `../Pulso - celular`) us
 - Por eso las rutas de IA (`/api/recetas`, `/api/tips`, …), `/api/mis-datos` y `/api/img/...` la app las usa **tal cual**.
 - El router REST no reimplementa nada: valida con los zod de cada acción, corre con RLS y audita igual. Solo agrega el mapeo a HTTP (400 datos inválidos, 401 sin sesión, 404, 423 bloqueada) y responde 401 cuando no hay sesión en vez del `[]` que esperan los componentes web.
 
-Pruebas: los tests `app nativa: …` de `tests/seguridad/http.test.mjs`.
+Para los datos hace falta una cuenta activada, como en la web: la app la crea con `/api/cuenta/registro` sobre su sesión y entra con `/api/movil/v1/cuenta/login`. El vigía de inactividad es el mismo (latido a `/api/sesion/latido`). Contratos y pruebas: `docs/integrador/movil.md`.
+
+Pruebas: `tests/integrador/movil.test.mjs`, `tests/funcionales/api-movil.test.mjs` y los tests `app nativa: …` de `tests/seguridad/http.test.mjs`.
 
 ---
 

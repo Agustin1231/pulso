@@ -5,6 +5,10 @@ autenticación), **10** (vencimiento del token por inactividad), **11** (cierre 
 inactividad del usuario), **18** (cerrar sesión en una pestaña y navegar en otra) y el **aviso** del
 punto 16 (por qué se cerró la sesión).
 
+> **27-oct-2026:** la app nativa ya tiene cuentas (`POST /api/movil/v1/cuenta/login`) y manda el mismo
+> latido que la web, así que la regla de inactividad del punto 11 ahora vale también para sus
+> sesiones. Contratos y guion de la app en [movil.md](movil.md).
+
 ## Qué se hizo
 
 ### En la base (la autoridad)
@@ -15,7 +19,7 @@ petición**: un cambio del administrador rige desde la petición siguiente, sin 
 | Clave | Qué controla | Valor inicial | Límites |
 |---|---|---|---|
 | `token_inactividad_minutos` | Cuánto puede pasar el token sin **ninguna petición autenticada** | 259 200 (180 días) | 1 – 525 600 |
-| `sesion_inactividad_minutos` | Cuánto puede pasar una sesión web sin que **el usuario interactúe** | 30 | 1 – 1440 |
+| `sesion_inactividad_minutos` | Cuánto puede pasar una sesión con cuenta (web o app nativa) sin que **el usuario interactúe** | 30 | 1 – 1440 |
 
 - `sesiones` suma dos columnas: `cliente` (`'web'` o `'movil'`) y `actividad_at` (última interacción
   del usuario). `revocada_motivo` (de la base común) guarda por qué se cerró cada sesión.
@@ -25,16 +29,18 @@ petición**: un cambio del administrador rige desde la petición siguiente, sin 
   igual para cada ruta, cada server action, la web y la app nativa:
   1. **Token** (punto 10): si `ultimo_uso` tiene más de `token_inactividad_minutos`, la sesión venció.
      Se deja escrito (`expira_at` en el momento en que venció) y se audita `sesion.vencer`.
-  2. **Sesión web con cuenta** (punto 11): si la última interacción (`actividad_at`, o la activación
-     de la cuenta si es más reciente) tiene más de `sesion_inactividad_minutos`, se **revoca** con
-     motivo `'inactividad'` y se audita `sesion.revocar`. No se aplica a las sesiones de la app
-     nativa (`cliente = 'movil'`, no tienen latido) ni a las anónimas (no tienen nada que proteger).
+  2. **Sesión con cuenta** (punto 11), de la web o de la app nativa: si la última interacción
+     (`actividad_at`, o la activación de la cuenta si es más reciente) tiene más de
+     `sesion_inactividad_minutos`, se **revoca** con motivo `'inactividad'` y se audita
+     `sesion.revocar` (con `cliente`). No se aplica a las anónimas (no tienen nada que proteger).
+     Hasta el 27-oct-2026 tampoco se aplicaba a la app nativa, que no tenía latido.
   3. **Deslizamiento**: cada petición autenticada corre el vencimiento del token, con escrituras
      espaciadas (como mucho una cada 1/20 de la vigencia, tope 1 minuto: con 180 días, una por minuto
      de uso; con 1 minuto, una cada 3 s). Consultar el estado (`GET /api/sesion`) **no** es uso.
 - `actividad_at` la mueve solo **`pulso_latido`** (el latido del cliente, que se manda únicamente si
-  hubo mouse, teclado, toques, rueda o scroll) y abrir o recargar la página (`pulso_renovar_o_rotar`).
-  Las lecturas, los guardados y los sondeos de fondo no la tocan.
+  hubo mouse, teclado, toques, rueda o scroll) y abrir o recargar la página, o abrir la app nativa o
+  volver a ella (`pulso_renovar_o_rotar`). Las lecturas, los guardados y los sondeos de fondo no la
+  tocan.
 - `pulso_motivo_sesion(hash)` dice por qué dejó de servir una sesión con cuenta: `cierre`,
   `otro_inicio`, `inactividad`, `contrasena`, `admin` o `vencida`.
 - `pulso_revocar_sesion(hash, motivo)` (cerrar sesión) guarda `'cierre'` o `'inactividad'`; el
@@ -180,7 +186,7 @@ node --test --test-concurrency=1 tests/integrador/sesion.test.mjs
 activación), cambia los dos tiempos en `configuracion` (y los restaura) y mueve fechas de `sesiones`
 para simular el paso del tiempo. Un caso espera el minuto de verdad (~80 s): una sesión quieta vence
 por token, una con lecturas de fondo y sin latido se cierra por inactividad, una con latido sigue, y
-la app nativa en uso sigue mientras la que no se usa vence.
+la app nativa en uso (con su latido) sigue mientras la que no se usa vence.
 
 Cubre: atributos de la cookie y token fuera de la URL y del cuerpo; las pantallas sin cookie o con
 una cookie inventada redirigen a /acceso; la configuración se lee en cada petición; el token vence a
@@ -188,7 +194,8 @@ una cookie inventada redirigen a /acceso; la configuración se lee en cada petic
 sondeo no cuenta; la creación, la rotación y el login usan el valor configurado; la app nativa vence
 igual y conserva `cliente = 'movil'` al rotar; las peticiones de fondo no cuentan como actividad y
 pasado el límite la sesión se revoca con `inactividad`; el latido sí (respeta `hace` y no va hacia
-atrás) y valida su cuerpo; la app nativa y las sesiones sin cuenta no se cierran por inactividad;
+atrás) y valida su cuerpo; la app nativa sin latido se cierra igual y con latido sigue; las sesiones
+sin cuenta no se cierran por inactividad;
 activar la cuenta cuenta como actividad; volver con una sesión inactiva informa el motivo y crea una
 anónima; `DELETE ?motivo=` solo acepta `cierre`/`inactividad`; los motivos `cierre`, `otro_inicio`,
 `contrasena` y `admin` se informan en GET y en POST (una sola vez); sin motivo para sesiones sin

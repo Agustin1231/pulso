@@ -222,6 +222,7 @@ correr contra `agustinynatalia.site` o el puerto 5433.
   computador (y al revés). Es lo pedido en el punto 16.
 - **La clave `PULSO_CLAVE_DATOS`** es ahora imprescindible para entrar: sin
   ella no se calcula el índice ciego. Guardarla aparte del respaldo de la base.
-- La app nativa todavía no inicia sesión con cuenta: si lo hace con
-  `/api/cuenta/login` y Bearer, la cookie nueva no le sirve (habría que
-  devolverle el token en el cuerpo, como `/api/movil/v1/sesion`).
+- ~~La app nativa todavía no inicia sesión con cuenta~~ (resuelto el
+  27-oct-2026): entra con `POST /api/movil/v1/cuenta/login`, el mismo manejador
+  que `/api/cuenta/login` (src/lib/login.ts) con el token nuevo en el cuerpo en
+  vez de la cookie. Ver docs/integrador/movil.md.
