@@ -331,7 +331,7 @@ function Descripcion({ evento, correos }: { evento: EventoAuditoria; correos: Co
         {typeof d.permiso === "string" && <> (hace falta {d.permiso.split(" o ").map(nombrePermiso).join(" o ")})</>}
         {objetivo && <> · sobre {objetivo}</>}
         {typeof d.nombre === "string" && <> · rol «{d.nombre}»</>}
-        {lista(d.reglas).length > 0 && <> · {lista(d.reglas).join(" ")}</>}
+        {lista(d.reglas).length > 0 && <> · {lista(d.reglas).join("; ")}</>}
       </p>
     );
   }
