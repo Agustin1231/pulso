@@ -1,0 +1,17 @@
+AUC por partición: todos 0.805 ± 0.017 | 40-69 0.748 ± 0.025
+Umbral elegido en entrenamiento: 0.110 ± 0.008
+Todos: {'sens': '0.813 ± 0.036', 'esp': '0.655 ± 0.024', 'vpp': '0.241 ± 0.013', 'vpn': '0.963 ± 0.006', 'pos': '0.400 ± 0.023'}
+40-69: {'sens': '0.713 ± 0.055', 'esp': '0.656 ± 0.039', 'vpp': '0.216 ± 0.019', 'vpn': '0.945 ± 0.011', 'pos': '0.387 ± 0.038'}
+Calibración todos: pendiente 0.97 intercepto -0.00 Brier 0.0910 pred 11.8% obs 11.8%
+Calibración 40-69: pendiente 1.02 intercepto +0.07 Brier 0.0943 pred 11.0% obs 11.7%
+Categorías 40-69:
+          n  pred   obs
+cat                    
+<5%     776   2.9   2.6
+5-10%   776   7.3   7.2
+10-20%  801  14.1  16.7
+>=20%   366  29.3  29.5
+Pesos todos: AUC 0.841 prev pond 9.0% pred pond 9.2%
+Pesos 40-69: AUC 0.771 prev pond 9.9% pred pond 9.6%
+Casos completos 18+: 5043 de 8153 examinados (38.1% excluidos); edad 53.6 vs 49.8; hombres 45.4% vs 44.0%
+Antecedente CV excluidos con desenlace conocido 13.1% (n=2708) vs incluidos 11.8%; edad excluidos con desenlace 53.4

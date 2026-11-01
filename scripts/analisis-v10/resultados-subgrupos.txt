@@ -1,0 +1,16 @@
+== Modelo entrenado con todos los adultos (18+), evaluado por subgrupo (predicciones fuera de muestra)
+7 variables, todos                                         n= 5043 casos= 597 (11.8%)  AUC 0.805 ± 0.001  Brier 0.0910  pendiente 0.97  intercepto -0.00  pred 11.8% obs 11.8%
+7 variables, solo 40-69                                    n= 2719 casos= 318 (11.7%)  AUC 0.747 ± 0.001  Brier 0.0943  pendiente 1.02  intercepto +0.07  pred 11.0% obs 11.7%
+solo edad y sexo, solo 40-69                               n= 2719 casos= 318 (11.7%)  AUC 0.675 ± 0.001  Brier 0.0992  pendiente 1.04  intercepto +0.10  pred 10.7% obs 11.7%
+solo estilo de vida, solo 40-69                            n= 2719 casos= 318 (11.7%)  AUC 0.642 ± 0.003  Brier 0.1001  pendiente 1.22  intercepto -0.03  pred 12.0% obs 11.7%
+7 variables, 18-39                                         n= 1308 casos=  15 ( 1.1%)  AUC 0.831 ± 0.005  Brier 0.0111  pendiente 1.33  intercepto -0.29  pred  1.5% obs  1.1%
+7 variables, 40-49                                         n=  650 casos=  24 ( 3.7%)  AUC 0.780 ± 0.006  Brier 0.0326  pendiente 1.45  intercepto -0.11  pred  4.1% obs  3.7%
+7 variables, 50-59                                         n=  783 casos=  86 (11.0%)  AUC 0.669 ± 0.003  Brier 0.0962  pendiente 0.72  intercepto +0.21  pred  9.2% obs 11.0%
+7 variables, 60-69                                         n= 1286 casos= 208 (16.2%)  AUC 0.712 ± 0.002  Brier 0.1244  pendiente 1.10  intercepto +0.04  pred 15.6% obs 16.2%
+7 variables, 70-80                                         n= 1016 casos= 264 (26.0%)  AUC 0.643 ± 0.002  Brier 0.1849  pendiente 0.75  intercepto -0.07  pred 27.3% obs 26.0%
+== Modelo entrenado y evaluado solo con 40-69
+7 variables                                                n= 2719 casos= 318 (11.7%)  AUC 0.744 ± 0.002  Brier 0.0943  pendiente 0.96  intercepto -0.00  pred 11.7% obs 11.7%
+solo edad y sexo                                           n= 2719 casos= 318 (11.7%)  AUC 0.674 ± 0.001  Brier 0.0992  pendiente 0.98  intercepto -0.00  pred 11.7% obs 11.7%
+solo estilo de vida                                        n= 2719 casos= 318 (11.7%)  AUC 0.649 ± 0.003  Brier 0.0999  pendiente 0.93  intercepto +0.00  pred 11.7% obs 11.7%
+ΔAUC 7 vars vs edad+sexo en 40-69 (entrenado en 40-69): +0.070 IC95 [+0.045, +0.096]
+Deciles (40-69, modelo 40-69): 1.6/1.5 | 2.9/1.8 | 4.4/5.9 | 6.0/6.6 | 7.8/6.6 | 10.0/7.7 | 12.5/18.0 | 15.8/16.5 | 20.8/20.6 | 35.2/31.6

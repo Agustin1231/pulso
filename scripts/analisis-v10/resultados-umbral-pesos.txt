@@ -1,0 +1,21 @@
+== 40-69, umbral de Youden elegido en el entrenamiento y medido en la prueba (50 particiones)
+  umbral  0.114 ± 0.008
+  sens    0.715 ± 0.066
+  esp     0.648 ± 0.034
+  vpp     0.212 ± 0.014
+  vpn     0.945 ± 0.011
+  pos     0.394 ± 0.035
+== Comparación optimista (umbral elegido sobre las mismas predicciones): umbral 0.110 sens 0.752 esp 0.640 VPP 0.216 VPN 0.951
+== Categorías de riesgo (40-69, fuera de muestra)
+          n  casos   obs
+cat                     
+<5%     777     20   2.6
+5-10%   723     51   7.1
+10-20%  786    122  15.5
+>=20%   433    125  28.9
+== Pesos: 0 sin peso de 2719
+  AUC 40-69 sin pesos 0.744 | con WTMEC2YR 0.770
+  prevalencia sin pesos 11.7% | ponderada 9.9% | riesgo predicho ponderado 10.2%
+== Casos completos 40-69: 2719 incluidos de 3986 examinados (31.8% excluidos)
+  edad media incluidos 56.8 vs excluidos 55.1 | % hombres 44.6 vs 45.3
+  antecedente CV en excluidos con desenlace conocido: 11.6% (n=1248) vs incluidos 11.7%
