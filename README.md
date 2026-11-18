@@ -1,5 +1,7 @@
 # Pulso — Tu corazón, tus hábitos, tu vida.
 
+**Autores:** Agustín Peralta Guarín y Natalia Moncaleano Montero. Proyecto Integrador, Ingeniería de Sistemas, Universidad de San Buenaventura, Bogotá.
+
 App de salud cardiovascular potenciada por IA. Monitorea tus métricas, descubre recetas cardioprotectoras, genera rutinas de ejercicio y construye hábitos saludables — sin cuenta y sin datos identificatorios.
 
 > **Sobre los datos:** no se pide nombre, email, teléfono ni contraseña. La identidad es un UUID anónimo generado en el dispositivo. Aun así la app **sí almacena datos de salud** que vos ingresás (peso, frecuencia cardíaca, horas de sueño, nivel de estrés) asociados a ese UUID.
